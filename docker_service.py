@@ -28,6 +28,8 @@ class ContainerInfo:
     latest_tag: Optional[str] = None
     update_status: str = "unknown"  # up_to_date | update_available | error | unknown
     error_message: Optional[str] = None
+    # Digest of the locally running image (sha256:...)
+    local_digest: Optional[str] = None
     # Raw config for recreation
     raw_config: dict = field(default_factory=dict)
 
@@ -89,6 +91,16 @@ class DockerService:
             image_str: str = container.image.tags[0] if container.image.tags else container.attrs["Config"]["Image"]
             repository, tag = self._split_image(image_str)
 
+            # Capture the local image digest (first RepoDigest, strip the repo prefix)
+            local_digest: Optional[str] = None
+            try:
+                repo_digests = container.image.attrs.get("RepoDigests", [])
+                if repo_digests:
+                    # RepoDigests look like "nginx@sha256:abc123..."
+                    local_digest = repo_digests[0].split("@")[-1]
+            except Exception:
+                pass
+
             raw_config = {
                 "image": image_str,
                 "name": container.name,
@@ -114,6 +126,7 @@ class DockerService:
                 repository=repository,
                 tag=tag,
                 status=container.status,
+                local_digest=local_digest,
                 raw_config=raw_config,
             )
         except Exception as exc:

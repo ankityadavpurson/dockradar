@@ -29,23 +29,60 @@
     @apply animate-shimmer rounded;
   }
 
-  /* ── Status badge ── */
-  .badge-up_to_date       { @apply text-accent-green bg-accent-green/10 border border-accent-green/20; }
-  .badge-update_available { @apply text-accent-yellow bg-accent-yellow/10 border border-accent-yellow/20; }
-  .badge-error            { @apply text-accent-red bg-accent-red/10 border border-accent-red/20; }
-  .badge-unknown          { @apply text-ink-secondary bg-white/5 border border-border; }
+  /*
+   * IMPORTANT: Tailwind v3 does NOT support opacity modifiers (e.g. /8, /20)
+   * inside @apply. All opacity-based colors below use plain rgba() instead.
+   */
 
-  /* ── Docker status dot ── */
+  /* ── Status badges ── */
+  .badge-up_to_date {
+    color: #51cf66;
+    background: rgba(81, 207, 102, 0.10);
+    border: 1px solid rgba(81, 207, 102, 0.20);
+  }
+  .badge-update_available {
+    color: #ffd43b;
+    background: rgba(255, 212, 59, 0.10);
+    border: 1px solid rgba(255, 212, 59, 0.20);
+  }
+  .badge-error {
+    color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.10);
+    border: 1px solid rgba(255, 107, 107, 0.20);
+  }
+  .badge-unknown {
+    color: #7a8799;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #1c2a3a;
+  }
+
+  /* ── Docker status dots ── */
   .dot-running { @apply bg-accent-green; box-shadow: 0 0 6px #51cf66; }
   .dot-exited  { @apply bg-accent-red; }
   .dot-paused  { @apply bg-accent-yellow; }
   .dot-created { @apply bg-blue-300; }
-  .dot-dead    { @apply bg-accent-red opacity-50; }
+  .dot-dead    { background: rgba(255, 107, 107, 0.5); }
 
-  /* ── Tag pill ── */
-  .tag-new     { @apply font-mono text-[11px] px-2 py-0.5 rounded text-accent-cyan bg-accent-cyan/8 border border-accent-cyan/20; }
-  .tag-old     { @apply font-mono text-[11px] px-2 py-0.5 rounded text-accent-red bg-accent-red/8 border border-accent-red/20 line-through opacity-70; }
-  .tag-neutral { @apply font-mono text-[11px] px-2 py-0.5 rounded text-ink-secondary bg-white/5 border border-border; }
+  /* ── Tag pills ── */
+  .tag-new {
+    @apply font-mono text-[11px] px-2 py-0.5 rounded;
+    color: #06ffa5;
+    background: rgba(6, 255, 165, 0.08);
+    border: 1px solid rgba(6, 255, 165, 0.2);
+  }
+  .tag-old {
+    @apply font-mono text-[11px] px-2 py-0.5 rounded line-through;
+    color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.08);
+    border: 1px solid rgba(255, 107, 107, 0.2);
+    opacity: 0.7;
+  }
+  .tag-neutral {
+    @apply font-mono text-[11px] px-2 py-0.5 rounded;
+    color: #7a8799;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #1c2a3a;
+  }
 
   /* ── Buttons ── */
   .btn {
@@ -55,15 +92,39 @@
   }
   .btn:not(:disabled):hover { transform: translateY(-1px); }
 
-  .btn-blue   { @apply text-black bg-gradient-to-br from-accent-blue to-[#008fb3]; box-shadow: 0 4px 14px rgba(0,212,255,.22); }
-  .btn-blue:not(:disabled):hover   { box-shadow: 0 6px 20px rgba(0,212,255,.4); }
-  .btn-green  { @apply text-black bg-gradient-to-br from-accent-green to-[#37b24d]; box-shadow: 0 4px 14px rgba(81,207,102,.22); }
-  .btn-green:not(:disabled):hover  { box-shadow: 0 6px 20px rgba(81,207,102,.4); }
-  .btn-yellow { @apply text-black bg-gradient-to-br from-accent-yellow to-[#e5a000]; box-shadow: 0 4px 14px rgba(255,212,59,.22); }
-  .btn-yellow:not(:disabled):hover { box-shadow: 0 6px 20px rgba(255,212,59,.4); }
-  .btn-ghost  { @apply text-ink-primary bg-white/5 border border-border; }
-  .btn-ghost:not(:disabled):hover  { @apply bg-white/10; }
-  .btn-red    { @apply text-black bg-gradient-to-br from-accent-red to-[#cc3333]; box-shadow: 0 4px 14px rgba(255,107,107,.22); }
+  .btn-blue {
+    @apply text-black;
+    background: linear-gradient(135deg, #00d4ff, #008fb3);
+    box-shadow: 0 4px 14px rgba(0, 212, 255, 0.22);
+  }
+  .btn-blue:not(:disabled):hover { box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4); }
+
+  .btn-green {
+    @apply text-black;
+    background: linear-gradient(135deg, #51cf66, #37b24d);
+    box-shadow: 0 4px 14px rgba(81, 207, 102, 0.22);
+  }
+  .btn-green:not(:disabled):hover { box-shadow: 0 6px 20px rgba(81, 207, 102, 0.4); }
+
+  .btn-yellow {
+    @apply text-black;
+    background: linear-gradient(135deg, #ffd43b, #e5a000);
+    box-shadow: 0 4px 14px rgba(255, 212, 59, 0.22);
+  }
+  .btn-yellow:not(:disabled):hover { box-shadow: 0 6px 20px rgba(255, 212, 59, 0.4); }
+
+  .btn-ghost {
+    @apply text-ink-primary border border-border;
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .btn-ghost:not(:disabled):hover { background: rgba(255, 255, 255, 0.10); }
+
+  .btn-red {
+    @apply text-black;
+    background: linear-gradient(135deg, #ff6b6b, #cc3333);
+    box-shadow: 0 4px 14px rgba(255, 107, 107, 0.22);
+  }
+  .btn-red:not(:disabled):hover { box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4); }
 
   .btn-sm { @apply px-3 py-1.5 text-xs rounded-md; }
   .btn-xs { @apply px-2 py-1 text-[11px] rounded; }

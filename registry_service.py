@@ -18,6 +18,14 @@ DOCKERHUB_API = "https://hub.docker.com/v2"
 DOCKERHUB_TOKEN_URL = "https://auth.docker.io/token"
 DOCKERHUB_REGISTRY = "https://registry-1.docker.io/v2"
 
+# Accept header required by Docker Registry v2 to return digests
+MANIFEST_ACCEPT = (
+    "application/vnd.docker.distribution.manifest.v2+json,"
+    "application/vnd.docker.distribution.manifest.list.v2+json,"
+    "application/vnd.oci.image.manifest.v1+json,"
+    "application/vnd.oci.image.index.v1+json"
+)
+
 
 class RegistryCache:
     """Simple TTL cache for registry results."""
@@ -50,10 +58,13 @@ class RegistryService:
         self._session = requests.Session()
         self._session.headers.update({"User-Agent": "DockRadar/1.0"})
 
-    def get_latest_tag(self, repository: str, current_tag: str) -> tuple[str, str]:
+    def get_latest_tag(self, repository: str, current_tag: str, local_digest: Optional[str] = None) -> tuple[str, str]:
         """
         Return (latest_tag, status) where status is:
         'up_to_date' | 'update_available' | 'error'
+
+        When current_tag is 'latest', local_digest is used to detect real
+        upstream changes even when the tag name itself hasn't changed.
         """
         cache_key = f"{repository}:{current_tag}"
         cached = self._cache.get(cache_key)
@@ -61,23 +72,20 @@ class RegistryService:
             logger.debug("Cache hit for %s", cache_key)
             return cached
 
-        result = self._fetch_latest_tag(repository, current_tag)
+        result = self._fetch_latest_tag(repository, current_tag, local_digest)
         self._cache.set(cache_key, result)
         return result
 
-    def _fetch_latest_tag(self, repository: str, current_tag: str) -> tuple[str, str]:
+    def _fetch_latest_tag(self, repository: str, current_tag: str, local_digest: Optional[str] = None) -> tuple[str, str]:
         """Determine the latest available tag for a repository."""
         try:
-            # Normalize repository
             repo = self._normalize_repo(repository)
             is_official = "/" not in repo
 
-            # Only check Docker Hub for now
             if self._is_dockerhub(repository):
-                return self._check_dockerhub(repo, current_tag, is_official)
+                return self._check_dockerhub(repo, current_tag, is_official, local_digest)
             else:
-                # For private / non-Hub registries, attempt registry v2 API
-                return self._check_registry_v2(repository, current_tag)
+                return self._check_registry_v2(repository, current_tag, local_digest)
 
         except requests.RequestException as exc:
             logger.warning("Network error checking registry for %s: %s", repository, exc)
@@ -86,16 +94,21 @@ class RegistryService:
             logger.warning("Unexpected error checking registry for %s: %s", repository, exc)
             return "unknown", "error"
 
-    def _check_dockerhub(self, repo: str, current_tag: str, is_official: bool) -> tuple[str, str]:
-        """Check Docker Hub for the latest tag."""
-        # For 'latest' tag, check if the digest has changed via tag list
-        namespace = "library" if is_official else repo.split("/")[0]
-        image = repo if "/" in repo else repo
+    def _check_dockerhub(self, repo: str, current_tag: str, is_official: bool, local_digest: Optional[str] = None) -> tuple[str, str]:
+        """Check Docker Hub for updates.
+
+        Strategy (in order):
+        1. Tag comparison  — if a newer tag exists, report update_available immediately.
+        2. Digest comparison — if tags are identical, compare manifest digests to catch
+                               silent image rebuilds (important for 'latest').
+        3. Fallback         — if digest fetch fails, trust the tag match as up_to_date.
+        """
         if is_official:
             image_path = f"library/{repo}"
         else:
             image_path = repo
 
+        # ── Step 1: Tag comparison ────────────────────────────────────────────
         url = f"{DOCKERHUB_API}/repositories/{image_path}/tags"
         params = {"page_size": 25, "ordering": "last_updated"}
 
@@ -107,47 +120,138 @@ class RegistryService:
 
         data = resp.json()
         results = data.get("results", [])
-
         if not results:
             return "unknown", "error"
 
-        # Find current tag in results
         tag_map = {t["name"]: t for t in results}
 
-        # Determine the "best" latest tag to compare against
         if current_tag == "latest":
-            latest_entry = tag_map.get("latest")
-            if latest_entry:
-                latest_tag = "latest"
-            else:
-                latest_tag = results[0]["name"] if results else "unknown"
+            latest_tag = "latest"
         else:
-            # Try to find a newer semantic version
             latest_tag = self._find_latest_semver(list(tag_map.keys()), current_tag)
 
         if latest_tag == "unknown":
             return "unknown", "error"
 
-        if latest_tag == current_tag:
-            logger.info("%s is up to date (tag: %s)", repo, current_tag)
-            return current_tag, "up_to_date"
-        else:
-            logger.info("Update available for %s: %s → %s", repo, current_tag, latest_tag)
+        if latest_tag != current_tag:
+            # A newer tag exists — no need to check digest
+            logger.info("Tag update available for %s: %s → %s", repo, current_tag, latest_tag)
             return latest_tag, "update_available"
 
-    def _check_registry_v2(self, repository: str, current_tag: str) -> tuple[str, str]:
-        """Check a generic Docker v2 registry."""
+        # ── Step 2: Digest comparison (tags are identical) ────────────────────
+        if local_digest:
+            remote_digest = self._get_remote_digest_dockerhub(image_path, current_tag)
+            if remote_digest:
+                if remote_digest != local_digest:
+                    logger.info(
+                        "%s:%s same tag but digest mismatch — image was rebuilt\n  local : %s\n  remote: %s",
+                        repo, current_tag, local_digest[:19], remote_digest[:19],
+                    )
+                    return current_tag, "update_available"
+                else:
+                    logger.info("%s:%s tag and digest both match — fully up to date", repo, current_tag)
+                    return current_tag, "up_to_date"
+            # Digest fetch failed — trust the tag match
+            logger.debug("%s:%s digest fetch failed, trusting tag match", repo, current_tag)
+
+        # ── Step 3: Fallback — tags matched, no digest available ──────────────
+        return current_tag, "up_to_date"
+
+    def _get_remote_digest_dockerhub(self, image_path: str, tag: str) -> Optional[str]:
+        """
+        Fetch the manifest digest for image_path:tag from Docker Hub registry.
+        Returns the Docker-Content-Digest header value (sha256:...) or None on failure.
+        """
+        try:
+            # Step 1: get an anonymous pull token from Docker Hub auth
+            token_resp = self._session.get(
+                DOCKERHUB_TOKEN_URL,
+                params={
+                    "service": "registry.docker.io",
+                    "scope": f"repository:{image_path}:pull",
+                },
+                timeout=10,
+            )
+            token_resp.raise_for_status()
+            token = token_resp.json().get("token")
+            if not token:
+                return None
+
+            # Step 2: HEAD request to the registry manifest endpoint
+            manifest_url = f"{DOCKERHUB_REGISTRY}/{image_path}/manifests/{tag}"
+            resp = self._session.head(
+                manifest_url,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Accept": MANIFEST_ACCEPT,
+                },
+                timeout=10,
+            )
+            if resp.status_code != 200:
+                logger.debug("Manifest HEAD returned %d for %s:%s", resp.status_code, image_path, tag)
+                return None
+
+            digest = resp.headers.get("Docker-Content-Digest")
+            logger.debug("Remote digest for %s:%s → %s", image_path, tag, (digest or "none")[:19])
+            return digest
+
+        except Exception as exc:
+            logger.debug("Could not fetch remote digest for %s:%s — %s", image_path, tag, exc)
+            return None
+
+    def _check_registry_v2(self, repository: str, current_tag: str, local_digest: Optional[str] = None) -> tuple[str, str]:
+        """Check a generic Docker v2 registry.
+
+        Strategy (in order):
+        1. Tag comparison  — list tags and find a newer one.
+        2. Digest comparison — if tags are identical, compare manifest digests.
+        3. Fallback         — trust the tag match if digest is unavailable.
+        """
         registry, name = self._split_registry(repository)
+
+        # ── Step 1: Tag comparison ────────────────────────────────────────────
         url = f"https://{registry}/v2/{name}/tags/list"
         resp = self._session.get(url, timeout=10)
         if resp.status_code in (401, 403):
             return "unknown", "error"
         resp.raise_for_status()
+
         tags = resp.json().get("tags", [])
-        latest = self._find_latest_semver(tags, current_tag)
-        if latest == current_tag:
-            return current_tag, "up_to_date"
-        return latest, "update_available"
+        latest_tag = self._find_latest_semver(tags, current_tag)
+
+        if latest_tag != current_tag:
+            return latest_tag, "update_available"
+
+        # ── Step 2: Digest comparison (tags are identical) ────────────────────
+        if local_digest:
+            remote_digest = self._get_remote_digest_v2(registry, name, current_tag)
+            if remote_digest:
+                if remote_digest != local_digest:
+                    logger.info(
+                        "%s/%s:%s same tag but digest mismatch — image was rebuilt",
+                        registry, name, current_tag,
+                    )
+                    return current_tag, "update_available"
+                return current_tag, "up_to_date"
+
+        # ── Step 3: Fallback ──────────────────────────────────────────────────
+        return current_tag, "up_to_date"
+
+    def _get_remote_digest_v2(self, registry: str, name: str, tag: str) -> Optional[str]:
+        """Fetch manifest digest from a generic v2 registry (unauthenticated)."""
+        try:
+            url = f"https://{registry}/v2/{name}/manifests/{tag}"
+            resp = self._session.head(
+                url,
+                headers={"Accept": MANIFEST_ACCEPT},
+                timeout=10,
+            )
+            if resp.status_code != 200:
+                return None
+            return resp.headers.get("Docker-Content-Digest")
+        except Exception as exc:
+            logger.debug("Could not fetch remote digest for %s/%s:%s — %s", registry, name, tag, exc)
+            return None
 
     @staticmethod
     def _normalize_repo(repository: str) -> str:

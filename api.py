@@ -69,6 +69,7 @@ class ContainerOut(BaseModel):
     status: str
     latest_tag: Optional[str] = None
     update_status: str
+    local_digest: Optional[str] = None
 
     @classmethod
     def from_info(cls, c: ContainerInfo) -> "ContainerOut":
@@ -82,6 +83,7 @@ class ContainerOut(BaseModel):
             status=c.status,
             latest_tag=c.latest_tag,
             update_status=c.update_status,
+            local_digest=c.local_digest,
         )
 
 
@@ -123,7 +125,7 @@ def _do_scan():
         api_state.progress.append(
             f"  [{i+1}/{len(containers)}] Checking {c.name} ({c.image_name})..."
         )
-        latest_tag, update_status = registry_svc.get_latest_tag(c.repository, c.tag)
+        latest_tag, update_status = registry_svc.get_latest_tag(c.repository, c.tag, c.local_digest)
         c.latest_tag    = latest_tag
         c.update_status = update_status
 
@@ -270,7 +272,7 @@ def update_container(name: str):
 
     # Check registry for latest tag if not already done
     if not container.latest_tag or container.latest_tag == "unknown":
-        latest_tag, update_status = registry_svc.get_latest_tag(container.repository, container.tag)
+        latest_tag, update_status = registry_svc.get_latest_tag(container.repository, container.tag, container.local_digest)
         container.latest_tag    = latest_tag
         container.update_status = update_status
 
