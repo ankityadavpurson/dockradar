@@ -1,0 +1,135 @@
+"""
+DockRadar - FastAPI Backend Server
+Docker image monitoring and update dashboard.
+
+Run with:
+    python server.py
+    # or
+    uvicorn server:app --host 0.0.0.0 --port 8080 --reload
+
+API docs: http://localhost:8080/docs
+Frontend: http://localhost:5173  (vite dev server)
+          http://localhost:8080  (production, served from /frontend/dist)
+"""
+
+import logging
+import sys
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
+
+import uvicorn
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+from config import config
+from api import router as api_router
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+
+def setup_logging():
+    fmt = logging.Formatter(
+        fmt="%(asctime)s [%(levelname)-8s] %(name)s — %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    root = logging.getLogger()
+    root.setLevel(logging.INFO)
+
+    console = logging.StreamHandler(sys.stdout)
+    console.setFormatter(fmt)
+    root.addHandler(console)
+
+    try:
+        fh = RotatingFileHandler(
+            config.LOG_FILE, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
+        )
+        fh.setFormatter(fmt)
+        root.addHandler(fh)
+    except (OSError, PermissionError) as exc:
+        logging.warning("Could not create log file %s: %s", config.LOG_FILE, exc)
+
+    for noisy in ("urllib3", "docker", "apscheduler", "watchfiles", "asyncio"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
+
+
+setup_logging()
+logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# FastAPI app
+# ---------------------------------------------------------------------------
+
+app = FastAPI(
+    title="DockRadar API",
+    description="Docker image monitoring and update dashboard.",
+    version="2.0.0",
+)
+
+# CORS — allow Vite dev server during development
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",   # Vite dev
+        "http://localhost:8080",   # production
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:8080",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# REST API routes
+app.include_router(api_router)
+
+# ---------------------------------------------------------------------------
+# Serve built React frontend in production
+# ---------------------------------------------------------------------------
+
+DIST = Path(__file__).parent / "frontend" / "dist"
+
+if DIST.exists():
+    app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
+
+    @app.get("/", include_in_schema=False)
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_spa(full_path: str = ""):
+        # Don't intercept API routes
+        if full_path.startswith("api/") or full_path in ("docs", "redoc", "openapi.json"):
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404)
+        index = DIST / "index.html"
+        if index.exists():
+            return FileResponse(index)
+        return {"error": "Frontend not built. Run: cd frontend && npm run build"}
+else:
+    @app.get("/", include_in_schema=False)
+    async def root():
+        return {
+            "message": "DockRadar API is running.",
+            "docs": "/docs",
+            "frontend": "Run `cd frontend && npm install && npm run dev` for the UI.",
+        }
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    logger.info("=" * 60)
+    logger.info("  DockRadar v2  (FastAPI + React)")
+    logger.info("  API  : http://%s:%d/api", config.HOST, config.PORT)
+    logger.info("  Docs : http://%s:%d/docs", config.HOST, config.PORT)
+    logger.info("  UI   : http://localhost:5173  (npm run dev)")
+    logger.info("=" * 60)
+
+    uvicorn.run(
+        "server:app",
+        host=config.HOST,
+        port=config.PORT,
+        reload=False,
+        log_level="warning",
+    )
