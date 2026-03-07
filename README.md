@@ -1,5 +1,10 @@
 # 🐳 DockRadar v2
 
+[![CI](https://github.com/YOUR_USERNAME/dockradar/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/dockradar/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](https://www.python.org/)
+[![React](https://img.shields.io/badge/React-18-61dafb)](https://react.dev/)
+
 **Docker image monitoring and update dashboard.**
 
 A production-quality full-stack application with a **FastAPI** backend and a **React + Vite + Tailwind CSS** frontend. Monitors your Docker containers for outdated images and lets you update them from a clean browser UI.
@@ -209,8 +214,8 @@ Then enable the TCP socket in Docker Desktop:
 If Docker is running inside WSL, run the backend **inside WSL** where `/var/run/docker.sock` is natively available — no `DOCKER_HOST` needed:
 
 ```bash
-# Inside your WSL terminal
-cd /mnt/c/Dev/DockRadar
+# Inside your WSL terminal — adjust the path to wherever you cloned the repo
+cd /mnt/c/path/to/dockradar
 source venv/bin/activate
 python server.py
 ```

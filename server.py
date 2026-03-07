@@ -26,6 +26,8 @@ from fastapi.responses import FileResponse
 from config import config
 from api import router as api_router
 
+__version__ = "2.0.0"
+
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
@@ -65,7 +67,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="DockRadar API",
     description="Docker image monitoring and update dashboard.",
-    version="2.0.0",
+    version=__version__,
 )
 
 # CORS — allow Vite dev server during development
