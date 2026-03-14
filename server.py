@@ -14,6 +14,7 @@ Frontend: http://localhost:5173  (vite dev server)
 
 import logging
 import sys
+from contextlib import asynccontextmanager
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
@@ -24,9 +25,21 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from config import config
-from api import router as api_router
+from api import router as api_router, scheduler_svc, _do_scan
 
 __version__ = "2.0.0"
+
+
+# ---------------------------------------------------------------------------
+# Application lifespan — start/stop the scheduler
+# ---------------------------------------------------------------------------
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Start the background scheduler on startup, stop it on shutdown."""
+    scheduler_svc.start(_do_scan)
+    yield
+    scheduler_svc.stop()
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -68,6 +81,7 @@ app = FastAPI(
     title="DockRadar API",
     description="Docker image monitoring and update dashboard.",
     version=__version__,
+    lifespan=lifespan,
 )
 
 # CORS — allow Vite dev server during development

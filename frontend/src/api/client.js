@@ -38,3 +38,20 @@ export const api = {
   updateSelected:   (names)      => request('POST',   '/update/selected', { names }),
   updateAll:        ()           => request('POST',   '/update/all'),
 }
+
+// Compose
+export const composeApi = {
+  list:          ()                              => request('GET',    '/compose'),
+  upload:        async (file) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch('/api/compose', { method: 'POST', body: fd })
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.detail || `HTTP ${res.status}`) }
+    return res.json()
+  },
+  deleteFile:    (fileId)                        => request('DELETE', `/compose/${fileId}`),
+  associations:  ()                              => request('GET',    '/compose/associations'),
+  associate:     (containerName, fileId, svc)    => request('POST',   '/compose/associate', { container_name: containerName, file_id: fileId, service_name: svc }),
+  disassociate:  (containerName)                 => request('DELETE', `/compose/associate/${containerName}`),
+  updateViaCompose: (name)                       => request('POST',   `/containers/${name}/compose-update`),
+}

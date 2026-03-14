@@ -1,5 +1,4 @@
-import React from 'react'
-import { Search, RefreshCw, ArrowUpCircle, UploadCloud, Filter } from 'lucide-react'
+import { ArrowUpCircle, FileCode2, RefreshCw, Search, UploadCloud } from 'lucide-react'
 
 export default function Toolbar({
   isBusy,
@@ -14,6 +13,7 @@ export default function Toolbar({
   onUpdateAll,
   onSelectAll,
   onClearSelection,
+  onOpenCompose,
 }) {
   return (
     <div className="flex items-center gap-3 flex-wrap bg-bg-card border border-border
@@ -57,6 +57,18 @@ export default function Toolbar({
             {outdatedCount}
           </span>
         )}
+      </button>
+
+      <div className="w-px h-7 bg-border shrink-0" />
+
+      {/* Compose files */}
+      <button
+        className="btn btn-ghost"
+        onClick={onOpenCompose}
+        title="Manage docker-compose files and link them to containers"
+      >
+        <FileCode2 size={14} />
+        Compose
       </button>
 
       {/* Spacer */}

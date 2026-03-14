@@ -1,12 +1,13 @@
-import React, { useState, useMemo } from 'react'
-import { useContainers } from './hooks/useContainers'
-import Header from './components/Header'
-import Toolbar from './components/Toolbar'
-import ContainerTable from './components/ContainerTable'
-import ProgressLog from './components/ProgressLog'
+import { useMemo, useState } from 'react'
+import ComposeManager from './components/ComposeManager'
 import ConfirmDialog from './components/ConfirmDialog'
+import ContainerTable from './components/ContainerTable'
+import Header from './components/Header'
 import InfoBar from './components/InfoBar'
+import ProgressLog from './components/ProgressLog'
 import Toast from './components/Toast'
+import Toolbar from './components/Toolbar'
+import { useContainers } from './hooks/useContainers'
 
 export default function App() {
   const {
@@ -14,6 +15,7 @@ export default function App() {
     selected, loading, isBusy, error, toast,
     triggerScan, updateOne, updateSelected, updateAll, deleteContainer,
     toggleSelect, selectAll, clearSelection,
+    associations, fetchAssociations, composeUpdateOne,
   } = useContainers()
 
   const [search, setSearch]               = useState('')
@@ -22,6 +24,8 @@ export default function App() {
   const [confirmDelete, setConfirmDelete]   = useState(null)  // ContainerInfo | null
   const [confirmAll, setConfirmAll]         = useState(false)
   const [confirmSel, setConfirmSel]         = useState(false)
+  const [showCompose, setShowCompose]       = useState(false)
+  const [confirmCompose, setConfirmCompose] = useState(null) // ContainerInfo | null
 
   // ── Filtered containers ───────────────────────────────────────────────────
   const visible = useMemo(() => {
@@ -79,6 +83,7 @@ export default function App() {
           onUpdateAll={() => setConfirmAll(true)}
           onSelectAll={() => selectAll(visible)}
           onClearSelection={clearSelection}
+          onOpenCompose={() => setShowCompose(true)}
         />
 
         {/* Info bar */}
@@ -102,6 +107,8 @@ export default function App() {
             onToggleSelect={toggleSelect}
             onConfirmUpdate={c => setConfirmUpdate(c)}
             onConfirmDelete={c => setConfirmDelete(c)}
+            associations={associations}
+            onComposeUpdate={c => setConfirmCompose(c)}
           />
         </div>
 
@@ -159,6 +166,25 @@ Original configuration (ports, volumes, env vars, restart policy) will be preser
         onConfirm={() => { updateSelected(); setConfirmSel(false) }}
         onCancel={() => setConfirmSel(false)}
       />
+
+      {/* Compose update confirm */}
+      <ConfirmDialog
+        open={!!confirmCompose}
+        title={`Update ${confirmCompose?.name} via compose?`}
+        message={`This will run docker compose pull + up -d for the linked service.\nDocker Compose will manage the container lifecycle.`}
+        confirmLabel="Compose Update"
+        confirmClass="btn-blue"
+        onConfirm={() => { composeUpdateOne(confirmCompose.name); setConfirmCompose(null) }}
+        onCancel={() => setConfirmCompose(null)}
+      />
+
+      {/* Compose Manager */}
+      {showCompose && (
+        <ComposeManager
+          containers={containers}
+          onClose={() => { setShowCompose(false); fetchAssociations() }}
+        />
+      )}
 
       {/* Toast */}
       <Toast toast={toast} />

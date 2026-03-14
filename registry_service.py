@@ -200,45 +200,79 @@ class RegistryService:
             return None
 
     def _check_registry_v2(self, repository: str, current_tag: str, local_digest: Optional[str] = None) -> tuple[str, str]:
-        """Check a generic Docker v2 registry.
+        """Check a generic Docker v2 registry (lscr.io, ghcr.io, gcr.io, etc.).
 
         Strategy (in order):
-        1. Tag comparison  — list tags and find a newer one.
+        1. Tag comparison  — list tags, handling Bearer auth challenges automatically.
         2. Digest comparison — if tags are identical, compare manifest digests.
-        3. Fallback         — trust the tag match if digest is unavailable.
+        3. Digest-only fallback — if tag listing is unavailable (auth required with
+           no public token), fall back to a digest-only check which many registries
+           allow anonymously (e.g. lscr.io manifest endpoint with a Bearer token).
+        4. Final fallback   — trust the tag match if nothing else works.
         """
         registry, name = self._split_registry(repository)
 
-        # ── Step 1: Tag comparison ────────────────────────────────────────────
+        # ── Step 1: Tag comparison (with automatic Bearer auth) ───────────────
         url = f"https://{registry}/v2/{name}/tags/list"
         resp = self._session.get(url, timeout=10)
-        if resp.status_code in (401, 403):
-            return "unknown", "error"
-        resp.raise_for_status()
 
-        tags = resp.json().get("tags", [])
-        latest_tag = self._find_latest_semver(tags, current_tag)
+        # Handle Bearer auth challenge (common on lscr.io, ghcr.io, etc.)
+        if resp.status_code == 401:
+            token = self._get_bearer_token_v2(resp, registry, name)
+            if token:
+                resp = self._session.get(
+                    url,
+                    headers={"Authorization": f"Bearer {token}"},
+                    timeout=10,
+                )
 
-        if latest_tag != current_tag:
-            return latest_tag, "update_available"
+        if resp.status_code == 200:
+            tags = resp.json().get("tags", [])
+            latest_tag = self._find_latest_semver(tags, current_tag)
 
-        # ── Step 2: Digest comparison (tags are identical) ────────────────────
-        if local_digest:
+            if latest_tag != current_tag:
+                return latest_tag, "update_available"
+
+            # ── Step 2: Digest comparison (tags are identical) ────────────────
+            if local_digest:
+                remote_digest = self._get_remote_digest_v2(registry, name, current_tag)
+                if remote_digest:
+                    if remote_digest != local_digest:
+                        logger.info(
+                            "%s/%s:%s same tag but digest mismatch — image was rebuilt",
+                            registry, name, current_tag,
+                        )
+                        return current_tag, "update_available"
+                    return current_tag, "up_to_date"
+
+            return current_tag, "up_to_date"
+
+        # ── Step 3: Tag list unavailable — try digest-only check ──────────────
+        # Some registries (e.g. lscr.io with latest tag) allow manifest fetches
+        # even when tag listing is restricted.
+        if resp.status_code in (401, 403) and local_digest:
+            logger.debug(
+                "%s tag listing returned %d — falling back to digest-only check",
+                registry, resp.status_code,
+            )
             remote_digest = self._get_remote_digest_v2(registry, name, current_tag)
             if remote_digest:
                 if remote_digest != local_digest:
                     logger.info(
-                        "%s/%s:%s same tag but digest mismatch — image was rebuilt",
+                        "%s/%s:%s digest mismatch (tag list unavailable) — update available",
                         registry, name, current_tag,
                     )
                     return current_tag, "update_available"
+                logger.info("%s/%s:%s digest matches — up to date", registry, name, current_tag)
                 return current_tag, "up_to_date"
 
-        # ── Step 3: Fallback ──────────────────────────────────────────────────
-        return current_tag, "up_to_date"
+        # ── Step 4: Nothing worked ────────────────────────────────────────────
+        if resp.status_code not in (200, 401, 403):
+            logger.warning("Unexpected status %d from %s for %s", resp.status_code, registry, name)
+        return "unknown", "error"
 
     def _get_remote_digest_v2(self, registry: str, name: str, tag: str) -> Optional[str]:
-        """Fetch manifest digest from a generic v2 registry (unauthenticated)."""
+        """Fetch manifest digest from a generic v2 registry, handling Bearer auth."""
         try:
             url = f"https://{registry}/v2/{name}/manifests/{tag}"
             resp = self._session.head(
@@ -246,11 +280,55 @@ class RegistryService:
                 headers={"Accept": MANIFEST_ACCEPT},
                 timeout=10,
             )
+            # Handle Bearer auth challenge
+            if resp.status_code == 401:
+                token = self._get_bearer_token_v2(resp, registry, name)
+                if token:
+                    resp = self._session.head(
+                        url,
+                        headers={"Authorization": f"Bearer {token}", "Accept": MANIFEST_ACCEPT},
+                        timeout=10,
+                    )
             if resp.status_code != 200:
                 return None
             return resp.headers.get("Docker-Content-Digest")
         except Exception as exc:
             logger.debug("Could not fetch remote digest for %s/%s:%s — %s", registry, name, tag, exc)
+            return None
+
+    def _get_bearer_token_v2(self, challenge_resp: "requests.Response", registry: str, name: str) -> Optional[str]:
+        """
+        Parse a WWW-Authenticate Bearer challenge and fetch an anonymous token.
+
+        Works for registries like lscr.io, ghcr.io, gcr.io that use the
+        standard Docker token auth spec (https://distribution.github.io/distribution/spec/auth/token/).
+        """
+        import re as _re
+        auth_header = challenge_resp.headers.get("WWW-Authenticate", "")
+        if not auth_header.startswith("Bearer "):
+            return None
+        try:
+            realm = _re.search(r'realm="([^"]+)"', auth_header)
+            service = _re.search(r'service="([^"]+)"', auth_header)
+            scope = _re.search(r'scope="([^"]+)"', auth_header)
+
+            if not realm:
+                return None
+
+            params: dict = {}
+            if service:
+                params["service"] = service.group(1)
+            if scope:
+                params["scope"] = scope.group(1)
+            else:
+                params["scope"] = f"repository:{name}:pull"
+
+            token_resp = self._session.get(realm.group(1), params=params, timeout=10)
+            token_resp.raise_for_status()
+            data = token_resp.json()
+            return data.get("token") or data.get("access_token")
+        except Exception as exc:
+            logger.debug("Could not get Bearer token from %s: %s", registry, exc)
             return None
 
     @staticmethod

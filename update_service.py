@@ -95,25 +95,34 @@ class UpdateService:
         raw_config["image"] = full_image
 
         report("Recreating container ...")
-        new_container = self._docker.recreate_container(raw_config)
-        create_ok = new_container is not None
+        try:
+            new_container = self._docker.recreate_container(raw_config)
+            create_ok = new_container is not None
+        except RuntimeError as exc:
+            # Container was created but entered restarting/exited/dead state
+            result.add_step("Recreate container", False)
+            result.error = str(exc)
+            report(f"✗ Container started but failed to stay running:\n{exc}")
+            return result
+
         result.add_step("Recreate container", create_ok)
         if not create_ok:
             result.error = "Failed to recreate container"
             report(f"✗ Recreate failed: {result.error}")
             return result
 
-        # Verify
+        # Verify — recreate_container already polled for status, but do a
+        # final check here to set result.success accurately.
         status = self._docker.get_container_status(container.name)
-        started = status in ("running", "created")
+        started = status == "running"
         result.add_step("Verify running", started)
 
         if started:
             result.success = True
-            report(f"✓ Container updated successfully → {full_image}")
+            report(f"✓ Container updated and running → {full_image}")
         else:
             result.error = f"Container recreated but status is '{status}'"
-            report(f"⚠ Container recreated but status is '{status}'")
+            report(f"⚠ Container recreated but status is '{status}' — check container logs")
 
         return result
 

@@ -68,43 +68,133 @@ dockradar/
 
 ## Quick Start
 
-### 1. Backend
+### Prerequisites
+
+- Python 3.11 or higher
+- Node.js 18 or higher
+- Docker running locally or on a remote machine
+
+---
+
+### 1. Clone the repository
 
 ```bash
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env as needed
-
-# Start the API server
-python server.py
-# API available at http://localhost:8080
-# Docs at        http://localhost:8080/docs
+git clone https://github.com/YOUR_USERNAME/dockradar.git
+cd dockradar
 ```
 
-### 2. Frontend (development)
+---
+
+### 2. Start the backend
+
+Use the start script for your platform. Each script will automatically:
+- Create a virtual environment in `./venv` (first run only)
+- Activate it
+- Install all dependencies from `requirements.txt`
+- Create `.env` from `.env.example` if one doesn't exist yet
+- Start `server.py`
+
+**Linux / macOS / WSL**
+
+```bash
+chmod +x start.sh   # first time only
+./start.sh
+```
+
+**Windows — PowerShell** *(recommended)*
+
+```powershell
+# First time only — allow local scripts to run:
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+.\start.ps1
+```
+
+**Windows — Command Prompt**
+
+```cmd
+start.bat
+```
+
+```
+API  → http://localhost:8080
+Docs → http://localhost:8080/docs
+```
+
+> **First run:** If no `.env` file exists, the script creates one from `.env.example` and exits. Review `.env`, then run the script again to start the server.
+
+---
+
+### 3. Configure environment
+
+Edit the `.env` file that was created in the previous step. At minimum, review `DOCKER_HOST` — see the [Docker Setup](#docker-setup) section below for your platform.
+
+---
+
+### 4. Frontend (development)
 
 ```bash
 cd frontend
 npm install
 npm run dev
-# UI available at http://localhost:5173
 ```
 
-Vite proxies all `/api` requests to `http://localhost:8080` automatically.
+```
+UI → http://localhost:5173
+```
 
-### 3. Frontend (production build)
+Vite proxies all `/api` requests to `http://localhost:8080` automatically — no CORS issues during development.
+
+---
+
+### 5. Frontend (production build)
+
+Build the React app and let FastAPI serve it on the same port as the API:
 
 ```bash
 cd frontend
 npm run build
-# Built files go to frontend/dist/
-# FastAPI will serve them at http://localhost:8080
+# Built files → frontend/dist/
+# FastAPI serves them at http://localhost:8080
 ```
 
 ---
+
+### Manual setup (without start scripts)
+
+If you prefer to manage the virtual environment yourself:
+
+**Linux / macOS / WSL**
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+python server.py
+```
+
+**Windows (PowerShell)**
+
+```powershell
+python -m venv venv
+venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+Copy-Item .env.example .env
+python server.py
+```
+
+**Windows (Command Prompt)**
+
+```cmd
+python -m venv venv
+venv\Scripts\activate.bat
+pip install -r requirements.txt
+copy .env.example .env
+python server.py
+```
+
+> To deactivate the virtual environment at any time, run `deactivate`.
 
 ## Update Detection
 

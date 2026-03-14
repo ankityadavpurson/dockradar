@@ -71,3 +71,7 @@ frontend/.cache/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# ── Compose file storage ─────────────────────────────────────────────────────
+# Uploaded compose files and association data are runtime data, not source code
+compose_files/

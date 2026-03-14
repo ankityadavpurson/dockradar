@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { api } from '../api/client'
+import { api, composeApi } from '../api/client'
 
 /**
  * Central data hook.
@@ -13,6 +13,8 @@ export function useContainers() {
   const [loading, setLoading]         = useState(false)
   const [error, setError]             = useState(null)
   const [toast, setToast]             = useState(null)   // { msg, type }
+  // compose associations: { container_name -> { file_id, service_name, filename } }
+  const [associations, setAssociations]   = useState({})
   const pollRef                        = useRef(null)
 
   // ── Toast helper ──────────────────────────────────────────────────────────
@@ -42,6 +44,17 @@ export function useContainers() {
     }
   }, [])
 
+
+  // ── Fetch compose associations ────────────────────────────────────────────
+  const fetchAssociations = useCallback(async () => {
+    try {
+      const list = await composeApi.associations()
+      const map = {}
+      for (const a of list) map[a.container_name] = a
+      setAssociations(map)
+    } catch { /* ignore */ }
+  }, [])
+
   // ── Poll scan status while busy ───────────────────────────────────────────
   const startPolling = useCallback(() => {
     if (pollRef.current) return
@@ -63,13 +76,14 @@ export function useContainers() {
   useEffect(() => {
     fetchHealth()
     fetchContainers()
+    fetchAssociations()
     // Refresh health every 30s
     const hInterval = setInterval(fetchHealth, 30_000)
     return () => {
       clearInterval(hInterval)
       if (pollRef.current) clearInterval(pollRef.current)
     }
-  }, [fetchHealth, fetchContainers])
+  }, [fetchHealth, fetchContainers, fetchAssociations])
 
   // ── Actions ───────────────────────────────────────────────────────────────
   const triggerScan = useCallback(async () => {
@@ -126,6 +140,16 @@ export function useContainers() {
     }
   }, [notify, startPolling])
 
+  const composeUpdateOne = useCallback(async (name) => {
+    try {
+      notify(`Starting compose update for ${name}…`, 'info')
+      await composeApi.updateViaCompose(name)
+      startPolling()
+    } catch (e) {
+      notify(e.message, 'error')
+    }
+  }, [notify, startPolling])
+
   const deleteContainer = useCallback(async (name) => {
     try {
       await api.deleteContainer(name)
@@ -173,5 +197,8 @@ export function useContainers() {
     selectAll,
     clearSelection,
     fetchContainers,
+    associations,
+    fetchAssociations,
+    composeUpdateOne,
   }
 }

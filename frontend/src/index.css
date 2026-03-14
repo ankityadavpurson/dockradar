@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,125 +9,139 @@
 
   html, body, #root {
     min-height: 100vh;
-    background-color: #07090f;
-    color: #dde3f0;
-    font-family: 'Syne', sans-serif;
+    background-color: #000000;
+    color: #ededed;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: #0d1117; }
-  ::-webkit-scrollbar-thumb { background: #1c2a3a; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #00d4ff; }
+  /* Scrollbar — thin, monochrome */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: #000; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: #555; }
 
-  ::selection { background: rgba(0, 212, 255, 0.2); }
+  ::selection { background: rgba(255,255,255,0.15); }
 }
 
 @layer components {
-  /* ── Skeleton shimmer ── */
+
+  /* ── Skeleton ── */
   .skeleton {
-    background: linear-gradient(90deg, #111827 25%, #161f30 50%, #111827 75%);
+    background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%);
     background-size: 400px 100%;
     @apply animate-shimmer rounded;
   }
 
-  /*
-   * IMPORTANT: Tailwind v3 does NOT support opacity modifiers (e.g. /8, /20)
-   * inside @apply. All opacity-based colors below use plain rgba() instead.
-   */
-
   /* ── Status badges ── */
   .badge-up_to_date {
-    color: #51cf66;
-    background: rgba(81, 207, 102, 0.10);
-    border: 1px solid rgba(81, 207, 102, 0.20);
+    color: #50e3c2;
+    background: rgba(80, 227, 194, 0.08);
+    border: 1px solid rgba(80, 227, 194, 0.18);
   }
   .badge-update_available {
-    color: #ffd43b;
-    background: rgba(255, 212, 59, 0.10);
-    border: 1px solid rgba(255, 212, 59, 0.20);
+    color: #f5a623;
+    background: rgba(245, 166, 35, 0.08);
+    border: 1px solid rgba(245, 166, 35, 0.18);
   }
   .badge-error {
-    color: #ff6b6b;
-    background: rgba(255, 107, 107, 0.10);
-    border: 1px solid rgba(255, 107, 107, 0.20);
+    color: #ff4444;
+    background: rgba(255, 68, 68, 0.08);
+    border: 1px solid rgba(255, 68, 68, 0.18);
   }
   .badge-unknown {
-    color: #7a8799;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid #1c2a3a;
+    color: #666;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid #222;
   }
 
   /* ── Docker status dots ── */
-  .dot-running { @apply bg-accent-green; box-shadow: 0 0 6px #51cf66; }
-  .dot-exited  { @apply bg-accent-red; }
-  .dot-paused  { @apply bg-accent-yellow; }
-  .dot-created { @apply bg-blue-300; }
-  .dot-dead    { background: rgba(255, 107, 107, 0.5); }
+  .dot-running { background: #50e3c2; box-shadow: 0 0 5px rgba(80,227,194,0.5); }
+  .dot-exited  { background: #ff4444; }
+  .dot-paused  { background: #f5a623; }
+  .dot-created { background: #aaa; }
+  .dot-dead    { background: rgba(255,68,68,0.4); }
 
   /* ── Tag pills ── */
   .tag-new {
     @apply font-mono text-[11px] px-2 py-0.5 rounded;
-    color: #06ffa5;
-    background: rgba(6, 255, 165, 0.08);
-    border: 1px solid rgba(6, 255, 165, 0.2);
+    color: #50e3c2;
+    background: rgba(80,227,194,0.07);
+    border: 1px solid rgba(80,227,194,0.18);
   }
   .tag-old {
     @apply font-mono text-[11px] px-2 py-0.5 rounded line-through;
-    color: #ff6b6b;
-    background: rgba(255, 107, 107, 0.08);
-    border: 1px solid rgba(255, 107, 107, 0.2);
+    color: #666;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid #222;
     opacity: 0.7;
   }
   .tag-neutral {
     @apply font-mono text-[11px] px-2 py-0.5 rounded;
-    color: #7a8799;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid #1c2a3a;
+    color: #666;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid #222;
   }
 
-  /* ── Buttons ── */
+  /* ── Buttons — Next.js style ── */
+  /*
+   * Primary: solid white bg, black text
+   * Secondary: transparent, white border
+   * Ghost: no border, subtle hover
+   */
   .btn {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold
-           font-display transition-all duration-150 cursor-pointer border-0
-           disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none;
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-md text-[13px] font-medium
+           transition-all duration-150 cursor-pointer border
+           disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none
+           select-none whitespace-nowrap;
   }
-  .btn:not(:disabled):hover { transform: translateY(-1px); }
 
+  /* Primary — white fill */
+  .btn-primary {
+    background: #fff;
+    color: #000;
+    border-color: #fff;
+  }
+  .btn-primary:not(:disabled):hover { background: #e6e6e6; border-color: #e6e6e6; }
+
+  /* Outlined — white border, transparent fill */
   .btn-blue {
-    @apply text-black;
-    background: linear-gradient(135deg, #00d4ff, #008fb3);
-    box-shadow: 0 4px 14px rgba(0, 212, 255, 0.22);
+    background: transparent;
+    color: #ededed;
+    border-color: #333;
   }
-  .btn-blue:not(:disabled):hover { box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4); }
-
-  .btn-green {
-    @apply text-black;
-    background: linear-gradient(135deg, #51cf66, #37b24d);
-    box-shadow: 0 4px 14px rgba(81, 207, 102, 0.22);
-  }
-  .btn-green:not(:disabled):hover { box-shadow: 0 6px 20px rgba(81, 207, 102, 0.4); }
-
-  .btn-yellow {
-    @apply text-black;
-    background: linear-gradient(135deg, #ffd43b, #e5a000);
-    box-shadow: 0 4px 14px rgba(255, 212, 59, 0.22);
-  }
-  .btn-yellow:not(:disabled):hover { box-shadow: 0 6px 20px rgba(255, 212, 59, 0.4); }
+  .btn-blue:not(:disabled):hover { background: #1a1a1a; border-color: #555; }
 
   .btn-ghost {
-    @apply text-ink-primary border border-border;
-    background: rgba(255, 255, 255, 0.05);
+    background: transparent;
+    color: #888;
+    border-color: #222;
   }
-  .btn-ghost:not(:disabled):hover { background: rgba(255, 255, 255, 0.10); }
+  .btn-ghost:not(:disabled):hover { background: #111; color: #ededed; border-color: #333; }
+
+  /* Semantic — keep colored but muted/subtle */
+  .btn-green {
+    background: transparent;
+    color: #50e3c2;
+    border-color: rgba(80,227,194,0.3);
+  }
+  .btn-green:not(:disabled):hover { background: rgba(80,227,194,0.07); border-color: rgba(80,227,194,0.5); }
+
+  .btn-yellow {
+    background: transparent;
+    color: #f5a623;
+    border-color: rgba(245,166,35,0.3);
+  }
+  .btn-yellow:not(:disabled):hover { background: rgba(245,166,35,0.07); border-color: rgba(245,166,35,0.5); }
 
   .btn-red {
-    @apply text-black;
-    background: linear-gradient(135deg, #ff6b6b, #cc3333);
-    box-shadow: 0 4px 14px rgba(255, 107, 107, 0.22);
+    background: transparent;
+    color: #ff4444;
+    border-color: rgba(255,68,68,0.3);
   }
-  .btn-red:not(:disabled):hover { box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4); }
+  .btn-red:not(:disabled):hover { background: rgba(255,68,68,0.07); border-color: rgba(255,68,68,0.5); }
 
-  .btn-sm { @apply px-3 py-1.5 text-xs rounded-md; }
-  .btn-xs { @apply px-2 py-1 text-[11px] rounded; }
+  .btn-sm  { @apply px-3 py-1.5 text-xs rounded; }
+  .btn-xs  { @apply px-2 py-1 text-[11px] rounded; }
 }

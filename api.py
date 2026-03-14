@@ -20,7 +20,7 @@ import asyncio
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, File
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -28,6 +28,7 @@ from docker_service import DockerService, ContainerInfo
 from registry_service import RegistryService
 from update_service import UpdateService
 from scheduler_service import SchedulerService
+from compose_service import ComposeService
 from config import config
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,7 @@ logger = logging.getLogger(__name__)
 docker_svc    = DockerService()
 registry_svc  = RegistryService()
 update_svc    = UpdateService(docker_svc)
+compose_svc   = ComposeService()
 scheduler_svc = SchedulerService()
 
 # ---------------------------------------------------------------------------
@@ -106,6 +108,19 @@ class UpdateResultOut(BaseModel):
     steps: list[dict]
     error: Optional[str] = None
 
+
+
+class AssociateRequest(BaseModel):
+    container_name: str
+    file_id: str
+    service_name: str
+
+
+class AssociationOut(BaseModel):
+    container_name: str
+    file_id: str
+    service_name: str
+    filename: str
 
 # ---------------------------------------------------------------------------
 # Background workers
@@ -372,4 +387,139 @@ def delete_container(name: str):
         "stopped": stopped,
         "removed": removed,
         "success": stopped and removed,
+    }
+
+
+# ── POST /api/compose ────────────────────────────────────────────────────────
+
+@router.post("/compose", summary="Upload a docker-compose file")
+async def upload_compose_file(file: UploadFile = File(...)):
+    """
+    Upload and store a docker-compose YAML file.
+    The file is validated and saved to disk. Existing files with the same
+    name are overwritten.
+    """
+    if not file.filename.endswith((".yml", ".yaml")):
+        raise HTTPException(status_code=400, detail="Only .yml / .yaml files are accepted.")
+
+    content = (await file.read()).decode("utf-8")
+
+    try:
+        cf = compose_svc.save_file(file.filename, content)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+    return {"message": "Compose file saved.", "compose_file": cf.to_dict()}
+
+
+# ── GET /api/compose ─────────────────────────────────────────────────────────
+
+@router.get("/compose", summary="List stored compose files")
+def list_compose_files():
+    """Return all stored compose files and their service names."""
+    return compose_svc.list_files()
+
+
+# ── DELETE /api/compose/{file_id} ────────────────────────────────────────────
+
+@router.delete("/compose/{file_id}", summary="Delete a stored compose file")
+def delete_compose_file(file_id: str):
+    """Delete a stored compose file and remove all its container associations."""
+    ok = compose_svc.delete_file(file_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail=f"Compose file '{file_id}' not found.")
+    return {"message": f"Compose file '{file_id}' deleted."}
+
+
+# ── GET /api/compose/associations ────────────────────────────────────────────
+
+@router.get("/compose/associations", summary="List all container–service associations")
+def list_associations():
+    """Return all container → compose service mappings."""
+    raw = compose_svc.all_associations()
+    result = []
+    for container_name, assoc in raw.items():
+        cf = compose_svc.get_file(assoc["file_id"])
+        result.append({
+            "container_name": container_name,
+            "file_id":        assoc["file_id"],
+            "service_name":   assoc["service_name"],
+            "filename":       cf.filename if cf else "unknown",
+        })
+    return result
+
+
+# ── POST /api/compose/associate ──────────────────────────────────────────────
+
+@router.post("/compose/associate", summary="Associate a container with a compose service")
+def associate_container(body: AssociateRequest):
+    """
+    Link a container name to a service inside a stored compose file.
+    This tells DockRadar to use `docker compose` for updates on this container.
+    """
+    ok = compose_svc.associate(body.container_name, body.file_id, body.service_name)
+    if not ok:
+        raise HTTPException(
+            status_code=404,
+            detail=f"File '{body.file_id}' or service '{body.service_name}' not found.",
+        )
+    return {
+        "message": f"Associated '{body.container_name}' with {body.file_id}/{body.service_name}."
+    }
+
+
+# ── DELETE /api/compose/associate/{name} ─────────────────────────────────────
+
+@router.delete("/compose/associate/{name}", summary="Remove a container's compose association")
+def disassociate_container(name: str):
+    """Remove the compose service link for a container."""
+    compose_svc.disassociate(name)
+    return {"message": f"Association removed for '{name}'."}
+
+
+# ── POST /api/containers/{name}/compose-update ───────────────────────────────
+
+@router.post(
+    "/containers/{name}/compose-update",
+    summary="Update a container via docker compose",
+)
+def compose_update_container(name: str, background_tasks: BackgroundTasks):
+    """
+    Run `docker compose pull <service>` + `docker compose up -d <service>`
+    for the compose service associated with this container.
+    Returns immediately and runs in the background.
+    Poll GET /api/scan/status for progress.
+    """
+    if api_state.scanning or api_state.updating:
+        raise HTTPException(status_code=409, detail="A scan or update is already running.")
+
+    if compose_svc.get_association(name) is None:
+        raise HTTPException(
+            status_code=400,
+            detail=f"No compose file associated with '{name}'. Use /api/compose/associate first.",
+        )
+
+    def _run():
+        api_state.updating = True
+        api_state.progress.clear()
+
+        def cb(msg: str):
+            api_state.progress.append(f"[{name}] {msg}")
+            logger.info("[API] [%s] %s", name, msg)
+
+        success, message = compose_svc.update_via_compose(name, progress_cb=cb)
+        api_state.updating = False
+
+        if success:
+            api_state.progress.append(f"[{name}] \u2713 Compose update complete.")
+        else:
+            api_state.progress.append(f"[{name}] \u2717 Compose update failed: {message}")
+
+        # Re-scan so the UI reflects the new state
+        _do_scan()
+
+    background_tasks.add_task(_run)
+    return {
+        "message": f"Compose update started for '{name}'.",
+        "poll": "/api/scan/status",
     }

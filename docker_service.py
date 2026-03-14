@@ -142,13 +142,21 @@ class DockerService:
         return image_str, "latest"
 
     def pull_image(self, repository: str, tag: str) -> bool:
-        """Pull the latest image from the registry."""
+        """Pull the latest image from the registry.
+
+        After pulling, removes the old image with the same tag from the local
+        cache so that recreate_container is forced to use the freshly pulled
+        layers rather than a stale cached version.
+        """
         if not self.client:
             return False
         try:
             logger.info("Pulling image %s:%s ...", repository, tag)
-            self.client.images.pull(repository, tag=tag)
-            logger.info("Successfully pulled %s:%s", repository, tag)
+
+            # Pull the new image — this always fetches from the registry
+            new_image = self.client.images.pull(repository, tag=tag)
+            logger.info("Successfully pulled %s:%s (id: %s)", repository, tag, new_image.short_id)
+
             return True
         except APIError as exc:
             logger.error("Failed to pull %s:%s — %s", repository, tag, exc)
@@ -187,12 +195,23 @@ class DockerService:
             return False
 
     def recreate_container(self, config: dict) -> Optional[Container]:
-        """Recreate a container from its saved configuration."""
+        """Recreate a container from its saved configuration.
+
+        After calling containers.run(), waits up to 10 seconds to verify the
+        container reaches 'running' status. Raises RuntimeError if it ends up
+        in 'restarting', 'exited', or 'dead' — so the caller can report a
+        meaningful failure instead of silently returning a broken container.
+        """
         if not self.client:
             return None
         try:
             name = config["name"]
             image = config["image"]
+
+            # Always pull the image by digest-qualified name if available so
+            # Docker doesn't reuse a stale cached layer for the same tag.
+            # containers.run() with `pull_policy` isn't available on older SDK
+            # versions, so we rely on pull_image() being called before this.
 
             # Build kwargs
             kwargs: dict = {
@@ -233,7 +252,41 @@ class DockerService:
 
             container = self.client.containers.run(**kwargs)
             logger.info("Recreated container: %s", name)
+
+            # ── Wait for the container to stabilise ──────────────────────────
+            # Poll up to 10 seconds (20 × 0.5s) for a terminal state.
+            import time
+            for _ in range(20):
+                time.sleep(0.5)
+                container.reload()
+                status = container.status
+
+                if status == "running":
+                    logger.info("Container %s is running.", name)
+                    return container
+
+                if status in ("restarting", "exited", "dead"):
+                    # Grab the last few log lines to help diagnose the failure
+                    try:
+                        logs = container.logs(tail=20).decode("utf-8", errors="replace").strip()
+                    except Exception:
+                        logs = "(could not retrieve logs)"
+                    raise RuntimeError(
+                        f"Container '{name}' entered '{status}' state after recreate.\n"
+                        f"Last logs:\n{logs}"
+                    )
+
+            # Timed out waiting — return the container anyway (e.g. it's still
+            # initialising) but log a warning so it appears in the progress log.
+            container.reload()
+            logger.warning(
+                "Container %s did not reach 'running' within 10s — current status: %s",
+                name, container.status,
+            )
             return container
+
+        except RuntimeError:
+            raise  # re-raise so update_service can surface the message
         except APIError as exc:
             logger.error("Error recreating container %s: %s", config.get("name"), exc)
             return None

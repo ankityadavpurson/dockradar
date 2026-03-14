@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ArrowUpCircle, Trash2, ChevronUp, ChevronDown, ShieldCheck, Tag } from 'lucide-react'
+import { ArrowUpCircle, Trash2, ChevronUp, ChevronDown, ShieldCheck, Tag, FileCode2 } from 'lucide-react'
 
 const STATUS_CFG = {
   up_to_date:       { label: 'Up to date',       dot: 'bg-accent-green',  text: 'text-accent-green',  bg: 'rgba(81,207,102,0.10)',  border: 'rgba(81,207,102,0.20)'  },
@@ -20,7 +20,7 @@ const COLS = [
   { key: 'name',          label: 'Container',     sortable: true  },
   { key: 'repository',    label: 'Image',         sortable: true  },
   { key: 'tag',           label: 'Tag / Digest',  sortable: false },
-  { key: '_version',      label: 'Match',         sortable: false },
+  { key: '_version',      label: 'Version Check', sortable: false },
   { key: 'update_status', label: 'Update Status', sortable: true  },
   { key: 'status',        label: 'Docker Status', sortable: true  },
   { key: '_actions',      label: 'Actions',       sortable: false },
@@ -111,6 +111,8 @@ export default function ContainerTable({
   onToggleSelect,
   onConfirmUpdate,
   onConfirmDelete,
+  associations = {},
+  onComposeUpdate,
 }) {
   const [sortKey, setSortKey] = useState('name')
   const [sortDir, setSortDir] = useState('asc')
@@ -185,9 +187,11 @@ export default function ContainerTable({
         {/* ── tbody ── */}
         <tbody>
           {sorted.map((c, idx) => {
-            const s     = STATUS_CFG[c.update_status] ?? STATUS_CFG.unknown
-            const ddot  = DOCKER_DOT[c.status] ?? 'bg-ink-secondary'
-            const isSel = selected.has(c.id)
+            const s           = STATUS_CFG[c.update_status] ?? STATUS_CFG.unknown
+            const ddot        = DOCKER_DOT[c.status] ?? 'bg-ink-secondary'
+            const isSel       = selected.has(c.id)
+            const assoc       = associations[c.name]
+            const hasCompose  = !!assoc
 
             return (
               <tr
@@ -208,7 +212,19 @@ export default function ContainerTable({
 
                 {/* container name */}
                 <td className="px-4 py-4">
-                  <div className="font-mono font-semibold text-[13px] text-ink-primary">{c.name}</div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono font-semibold text-[13px] text-ink-primary">{c.name}</span>
+                    {hasCompose && (
+                      <span
+                        title={`Compose: ${assoc.filename} / ${assoc.service_name}`}
+                        className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-mono"
+                        style={{ background: 'rgba(0,212,255,0.08)', color: '#00d4ff', border: '1px solid rgba(0,212,255,0.2)' }}
+                      >
+                        <FileCode2 size={8} />
+                        compose
+                      </span>
+                    )}
+                  </div>
                   <div className="font-mono text-[10px] text-ink-muted mt-0.5">{c.short_id}</div>
                 </td>
 
@@ -269,15 +285,28 @@ export default function ContainerTable({
                 <td className="px-4 py-4">
                   <div className="flex items-center gap-2">
                     {c.update_status === 'update_available' && (
-                      <button
-                        className="btn btn-yellow btn-xs"
-                        disabled={isBusy}
-                        onClick={() => onConfirmUpdate(c)}
-                        title={`Update ${c.name}`}
-                      >
-                        <ArrowUpCircle size={11} />
-                        Update
-                      </button>
+                      hasCompose ? (
+                        <button
+                          className="btn btn-xs"
+                          disabled={isBusy}
+                          onClick={() => onComposeUpdate && onComposeUpdate(c)}
+                          title={`Update via compose: ${assoc.filename} / ${assoc.service_name}`}
+                          style={{ background: 'rgba(0,212,255,0.10)', color: '#00d4ff', border: '1px solid rgba(0,212,255,0.25)' }}
+                        >
+                          <FileCode2 size={11} />
+                          Compose
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn-yellow btn-xs"
+                          disabled={isBusy}
+                          onClick={() => onConfirmUpdate(c)}
+                          title={`Update ${c.name}`}
+                        >
+                          <ArrowUpCircle size={11} />
+                          Update
+                        </button>
+                      )
                     )}
                     <button
                       className="btn btn-ghost btn-xs"
