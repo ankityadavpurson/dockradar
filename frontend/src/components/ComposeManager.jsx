@@ -40,9 +40,29 @@ function StatusMsg({ msg, isError, onDismiss }) {
   )
 }
 
+/**
+ * Build display labels for the file dropdown.
+ * When two files share the same filename, append the first 8 chars of the
+ * file_id (which is a timestamp prefix) so the user can tell them apart.
+ * e.g. "docker-compose.yml · 17103842"
+ */
+function buildFileLabels(composeFiles) {
+  const nameCount = {}
+  for (const f of composeFiles) {
+    nameCount[f.filename] = (nameCount[f.filename] || 0) + 1
+  }
+  return composeFiles.reduce((acc, f) => {
+    acc[f.file_id] = nameCount[f.filename] > 1
+      ? `${f.filename} · ${f.file_id.slice(0, 10)}`
+      : f.filename
+    return acc
+  }, {})
+}
+
 function ServicePicker({ composeFiles, selectedFileId, selectedService, onChange }) {
-  const file = composeFiles.find(f => f.file_id === selectedFileId)
+  const file     = composeFiles.find(f => f.file_id === selectedFileId)
   const services = file?.services || []
+  const labels   = buildFileLabels(composeFiles)
 
   const selectStyle = {
     background: '#0a0a0a', border: '1px solid #1a1a1a',
@@ -56,7 +76,9 @@ function ServicePicker({ composeFiles, selectedFileId, selectedService, onChange
       <div className="relative flex-1">
         <select value={selectedFileId} onChange={e => onChange(e.target.value, '')} style={selectStyle}>
           <option value="">— file —</option>
-          {composeFiles.map(f => <option key={f.file_id} value={f.file_id}>{f.filename}</option>)}
+          {composeFiles.map(f => (
+            <option key={f.file_id} value={f.file_id}>{labels[f.file_id]}</option>
+          ))}
         </select>
         <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#333' }} />
       </div>
@@ -245,24 +267,36 @@ export default function ComposeManager({ containers, onClose }) {
               <span className="text-[10px] font-mono uppercase tracking-wider mb-1" style={{ color: '#333' }}>
                 Stored files
               </span>
-              {composeFiles.map(f => (
-                <div key={f.file_id} className="flex items-center justify-between px-3 py-2 rounded"
-                  style={{ background: '#111', border: '1px solid #1a1a1a' }}>
-                  <div className="flex items-center gap-2 min-w-0">
-                    <FileCode2 size={12} style={{ color: '#5a5a5a', flexShrink: 0 }} />
-                    <span className="font-mono text-[12px] truncate" style={{ color: '#aaa' }}>{f.filename}</span>
-                    <span className="text-[11px] shrink-0" style={{ color: '#333' }}>
-                      {f.services.length} service{f.services.length !== 1 ? 's' : ''}: {f.services.slice(0, 4).join(', ')}{f.services.length > 4 ? '…' : ''}
-                    </span>
+              {(() => {
+                const labels = buildFileLabels(composeFiles)
+                return composeFiles.map(f => (
+                  <div key={f.file_id} className="flex items-center justify-between px-3 py-2 rounded"
+                    style={{ background: '#111', border: '1px solid #1a1a1a' }}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileCode2 size={12} style={{ color: '#5a5a5a', flexShrink: 0 }} />
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-mono text-[12px] truncate" style={{ color: '#aaa' }}>
+                          {f.filename}
+                        </span>
+                        {labels[f.file_id] !== f.filename && (
+                          <span className="font-mono text-[9px]" style={{ color: '#606060' }}>
+                            #{f.file_id.slice(0, 10)}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] shrink-0" style={{ color: '#606060' }}>
+                        {f.services.length} service{f.services.length !== 1 ? 's' : ''}: {f.services.slice(0, 4).join(', ')}{f.services.length > 4 ? '…' : ''}
+                      </span>
+                    </div>
+                    <button onClick={() => handleDeleteFile(f.file_id)}
+                      className="ml-2 shrink-0 transition-colors" style={{ color: '#5a5a5a' }}
+                      onMouseEnter={e => e.currentTarget.style.color = '#ff4444'}
+                      onMouseLeave={e => e.currentTarget.style.color = '#5a5a5a'}>
+                      <Trash2 size={12} />
+                    </button>
                   </div>
-                  <button onClick={() => handleDeleteFile(f.file_id)}
-                    className="ml-2 shrink-0 transition-colors" style={{ color: '#5a5a5a' }}
-                    onMouseEnter={e => e.currentTarget.style.color = '#ff4444'}
-                    onMouseLeave={e => e.currentTarget.style.color = '#5a5a5a'}>
-                    <Trash2 size={12} />
-                  </button>
-                </div>
-              ))}
+                ))
+              })()}
             </div>
           )}
 

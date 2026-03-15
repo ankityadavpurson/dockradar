@@ -9,6 +9,7 @@ import logging
 import os
 import shutil
 import subprocess
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 # Directory where uploaded compose files are stored (relative to project root)
 COMPOSE_STORE_DIR = Path("compose_files")
 ASSOCIATIONS_FILE = COMPOSE_STORE_DIR / "associations.json"
+METADATA_FILE     = COMPOSE_STORE_DIR / "metadata.json"   # file_id → original filename
 
 
 class ComposeFile:
@@ -54,9 +56,10 @@ class ComposeFile:
     def to_dict(self) -> dict:
         service_names = list(self.services.keys())
         return {
-            "file_id":  self.file_id,
-            "filename": self.filename,
-            "services": service_names,
+            "file_id":   self.file_id,
+            "filename":  self.filename,
+            "services":  service_names,
+            "label":     self.filename,   # display label — same as filename, FE can add suffix
         }
 
 
@@ -81,14 +84,32 @@ class ComposeService:
     # ── File management ───────────────────────────────────────────────────────
 
     def _load_existing(self):
-        """Load any compose files that were previously saved to disk."""
-        for p in list(sorted(COMPOSE_STORE_DIR.glob("*.yml"))) + list(sorted(COMPOSE_STORE_DIR.glob("*.yaml"))):
-            file_id = p.stem
+        """Load any compose files that were previously saved to disk.
+
+        The metadata sidecar (metadata.json) stores the original upload filename
+        for each file_id so that duplicate filenames (e.g. two docker-compose.yml
+        from different projects) are preserved correctly.
+        """
+        # Load the metadata sidecar first so we can restore original filenames
+        meta: dict[str, str] = {}
+        if METADATA_FILE.exists():
             try:
-                content = p.read_text(encoding="utf-8")
-                cf = ComposeFile(file_id=file_id, filename=p.name, path=p, content=content)
+                meta = json.loads(METADATA_FILE.read_text(encoding="utf-8"))
+            except Exception as exc:
+                logger.warning("Could not load metadata: %s", exc)
+
+        yml_files  = list(sorted(COMPOSE_STORE_DIR.glob("*.yml")))
+        yaml_files = list(sorted(COMPOSE_STORE_DIR.glob("*.yaml")))
+        for p in yml_files + yaml_files:
+            if p.name in ("associations.json", "metadata.json"):
+                continue
+            file_id = p.stem   # e.g. "1710000000_docker-compose"
+            original_name = meta.get(file_id, p.name)
+            try:
+                file_content = p.read_text(encoding="utf-8")
+                cf = ComposeFile(file_id=file_id, filename=original_name, path=p, content=file_content)
                 self._files[file_id] = cf
-                logger.info("Loaded compose file: %s (%d services)", p.name, len(cf.services))
+                logger.info("Loaded compose file: %s as '%s' (%d services)", p.name, original_name, len(cf.services))
             except Exception as exc:
                 logger.warning("Could not load compose file %s: %s", p, exc)
 
@@ -122,7 +143,11 @@ class ComposeService:
     def save_file(self, filename: str, content: str) -> ComposeFile:
         """
         Save a new compose file to disk and register it.
-        If a file with the same name already exists it is overwritten.
+
+        Each upload gets a unique file_id based on a millisecond timestamp so
+        that two files with the same name (e.g. docker-compose.yml from different
+        projects) can coexist. The original filename is preserved in metadata.json.
+
         Returns the ComposeFile object.
         """
         # Validate YAML before saving
@@ -133,16 +158,42 @@ class ComposeService:
         except yaml.YAMLError as exc:
             raise ValueError(f"Invalid YAML: {exc}") from exc
 
-        # Use a sanitised filename stem as the file_id
-        safe_stem = Path(filename).stem.replace(" ", "_")
-        file_id   = safe_stem
-        dest_path = COMPOSE_STORE_DIR / f"{safe_stem}.yml"
+        # Unique file_id: timestamp + sanitised stem, e.g. "1710000000_docker-compose"
+        safe_stem = Path(filename).stem.replace(" ", "_").replace("/", "_")
+        file_id   = f"{int(time.time())}_{safe_stem}"
+        dest_path = COMPOSE_STORE_DIR / f"{file_id}.yml"
 
         dest_path.write_text(content, encoding="utf-8")
+
+        # Persist the original filename to the metadata sidecar
+        self._save_metadata(file_id, filename)
+
         cf = ComposeFile(file_id=file_id, filename=filename, path=dest_path, content=content)
         self._files[file_id] = cf
-        logger.info("Saved compose file: %s (%d services)", filename, len(cf.services))
+        logger.info("Saved compose file: %s → %s (%d services)", filename, dest_path.name, len(cf.services))
         return cf
+
+    def _save_metadata(self, file_id: str, filename: str):
+        """Append a file_id → original filename entry to the metadata sidecar."""
+        try:
+            meta: dict = {}
+            if METADATA_FILE.exists():
+                meta = json.loads(METADATA_FILE.read_text(encoding="utf-8"))
+            meta[file_id] = filename
+            METADATA_FILE.write_text(json.dumps(meta, indent=2), encoding="utf-8")
+        except Exception as exc:
+            logger.warning("Could not save metadata: %s", exc)
+
+    def _delete_metadata(self, file_id: str):
+        """Remove a file_id entry from the metadata sidecar."""
+        try:
+            if not METADATA_FILE.exists():
+                return
+            meta = json.loads(METADATA_FILE.read_text(encoding="utf-8"))
+            meta.pop(file_id, None)
+            METADATA_FILE.write_text(json.dumps(meta, indent=2), encoding="utf-8")
+        except Exception as exc:
+            logger.warning("Could not update metadata: %s", exc)
 
     def delete_file(self, file_id: str) -> bool:
         """Delete a stored compose file and remove all its associations."""
@@ -153,6 +204,8 @@ class ComposeService:
             cf.path.unlink(missing_ok=True)
         except Exception as exc:
             logger.warning("Could not delete compose file %s: %s", cf.path, exc)
+
+        self._delete_metadata(file_id)
 
         # Remove any associations pointing to this file
         self._associations = {
