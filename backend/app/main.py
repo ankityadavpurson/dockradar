@@ -1,80 +1,58 @@
 """
-DockRadar - FastAPI Backend Server
-Docker image monitoring and update dashboard.
+DockRadar - Application Entry Point
 
-Run with:
-    python server.py
-    # or
-    uvicorn server:app --host 0.0.0.0 --port 8080 --reload
+Run:
+    python -m app.main
+    # or from the backend/ directory:
+    uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload
 
 API docs: http://localhost:8080/docs
-Frontend: http://localhost:5173  (vite dev server)
-          http://localhost:8080  (production, served from /frontend/dist)
+Frontend: http://localhost:5173  (Vite dev server)
+          http://localhost:8080  (production build, served from /frontend/dist)
 """
 
-import logging
-import sys
 from contextlib import asynccontextmanager
-from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
-from config import config
-from api import router as api_router, scheduler_svc, _do_scan
+from app.api.routes import router as api_router, scheduler_svc, _do_scan
+from app.core.config import config
+from app.core.logging import setup_logging
 
 __version__ = "2.0.0"
 
+# Initialise logging before anything else
+setup_logging()
+
+import logging
+logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
-# Application lifespan — start/stop the scheduler
+# Lifespan — start/stop the scheduler
 # ---------------------------------------------------------------------------
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Start the background scheduler on startup, stop it on shutdown."""
+    """Start the background scheduler on startup, stop it cleanly on shutdown."""
+    logger.info("=" * 60)
+    logger.info("  DockRadar v%s", __version__)
+    logger.info("  API  : http://%s:%d/api", config.HOST, config.PORT)
+    logger.info("  Docs : http://%s:%d/docs", config.HOST, config.PORT)
+    logger.info("  UI   : http://localhost:5173  (npm run dev)")
+    logger.info("=" * 60)
     scheduler_svc.start(_do_scan)
     yield
     scheduler_svc.stop()
 
-# ---------------------------------------------------------------------------
-# Logging
-# ---------------------------------------------------------------------------
-
-def setup_logging():
-    fmt = logging.Formatter(
-        fmt="%(asctime)s [%(levelname)-8s] %(name)s — %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-    root = logging.getLogger()
-    root.setLevel(logging.INFO)
-
-    console = logging.StreamHandler(sys.stdout)
-    console.setFormatter(fmt)
-    root.addHandler(console)
-
-    try:
-        fh = RotatingFileHandler(
-            config.LOG_FILE, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
-        )
-        fh.setFormatter(fmt)
-        root.addHandler(fh)
-    except (OSError, PermissionError) as exc:
-        logging.warning("Could not create log file %s: %s", config.LOG_FILE, exc)
-
-    for noisy in ("urllib3", "docker", "apscheduler", "watchfiles", "asyncio"):
-        logging.getLogger(noisy).setLevel(logging.WARNING)
-
-
-setup_logging()
-logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# FastAPI app
+# FastAPI application
 # ---------------------------------------------------------------------------
 
 app = FastAPI(
@@ -84,12 +62,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — allow Vite dev server during development
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",   # Vite dev
-        "http://localhost:8080",   # production
+        "http://localhost:5173",    # Vite dev server
+        "http://localhost:8080",    # Production
         "http://127.0.0.1:5173",
         "http://127.0.0.1:8080",
     ],
@@ -98,14 +75,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# REST API routes
 app.include_router(api_router)
 
+
 # ---------------------------------------------------------------------------
-# Serve built React frontend in production
+# Serve the built React frontend in production
 # ---------------------------------------------------------------------------
 
-DIST = Path(__file__).parent / "frontend" / "dist"
+# The frontend dist folder is relative to the project root (one level up from backend/)
+DIST = Path(__file__).parent.parent.parent / "frontend" / "dist"
 
 if DIST.exists():
     app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
@@ -113,7 +91,6 @@ if DIST.exists():
     @app.get("/", include_in_schema=False)
     @app.get("/{full_path:path}", include_in_schema=False)
     async def serve_spa(full_path: str = ""):
-        # Don't intercept API routes
         if full_path.startswith("api/") or full_path in ("docs", "redoc", "openapi.json"):
             from fastapi import HTTPException
             raise HTTPException(status_code=404)
@@ -130,20 +107,14 @@ else:
             "frontend": "Run `cd frontend && npm install && npm run dev` for the UI.",
         }
 
+
 # ---------------------------------------------------------------------------
-# Entry point
+# Direct execution
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    logger.info("=" * 60)
-    logger.info("  DockRadar v2  (FastAPI + React)")
-    logger.info("  API  : http://%s:%d/api", config.HOST, config.PORT)
-    logger.info("  Docs : http://%s:%d/docs", config.HOST, config.PORT)
-    logger.info("  UI   : http://localhost:5173  (npm run dev)")
-    logger.info("=" * 60)
-
     uvicorn.run(
-        "server:app",
+        "app.main:app",
         host=config.HOST,
         port=config.PORT,
         reload=False,

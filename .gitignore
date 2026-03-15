@@ -75,3 +75,7 @@ Desktop.ini
 # ── Compose file storage ─────────────────────────────────────────────────────
 # Uploaded compose files and association data are runtime data, not source code
 compose_files/
+
+# ── Backend runtime data ───────────────────────────────────────────────────
+backend/compose_files/
+backend/*.log

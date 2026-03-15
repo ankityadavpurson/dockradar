@@ -19,7 +19,7 @@
 $ErrorActionPreference = "Stop"
 
 $VenvDir      = "venv"
-$Requirements = "requirements.txt"
+$Requirements = "backend/requirements.txt"
 $EnvFile      = ".env"
 $EnvExample   = ".env.example"
 
@@ -90,4 +90,5 @@ Write-Host "  Docs -> http://localhost:8080/docs" -ForegroundColor Cyan
 Write-Host "  UI   -> http://localhost:5173  (run: cd frontend; npm run dev)" -ForegroundColor Cyan
 Write-Host ""
 
-python server.py
+Set-Location backend
+python -m app.main

@@ -7,7 +7,7 @@ pull → stop → remove → recreate → start
 import logging
 from typing import Callable, Optional
 
-from docker_service import DockerService, ContainerInfo
+from app.services.docker import DockerService, ContainerInfo
 
 logger = logging.getLogger(__name__)
 

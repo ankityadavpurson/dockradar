@@ -18,7 +18,7 @@ set -e  # exit on any error
 
 VENV_DIR="venv"
 PYTHON="python3"
-REQUIREMENTS="requirements.txt"
+REQUIREMENTS="backend/requirements.txt"
 ENV_FILE=".env"
 ENV_EXAMPLE=".env.example"
 
@@ -54,10 +54,12 @@ fi
 # ── Activate ──────────────────────────────────────────────────
 # shellcheck disable=SC1091
 source "$VENV_DIR/bin/activate"
+
 success "Virtual environment activated."
 
 # ── Install / update dependencies (only when requirements.txt changed) ───────
-MARKER="$VENV_DIR/.installed_marker"
+# Marker lives next to the venv (project root)
+MARKER="../$VENV_DIR/.installed_marker"
 
 needs_install=false
 if [ ! -f "$MARKER" ]; then
@@ -96,4 +98,7 @@ echo -e "  ${CYAN}Docs${NC} → http://localhost:8080/docs"
 echo -e "  ${CYAN}UI  ${NC} → http://localhost:5173  (run: cd frontend && npm run dev)"
 echo ""
 
-exec python server.py
+# Run as a module so Python resolves the app package correctly
+# Change into backend/ so the `app` package is importable
+cd backend
+exec python -m app.main

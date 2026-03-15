@@ -17,7 +17,7 @@
 setlocal enabledelayedexpansion
 
 set VENV_DIR=venv
-set REQUIREMENTS=requirements.txt
+set REQUIREMENTS=backend\requirements.txt
 set ENV_FILE=.env
 set ENV_EXAMPLE=.env.example
 
@@ -100,5 +100,6 @@ echo   Docs -^> http://localhost:8080/docs
 echo   UI   -^> http://localhost:5173  (run: cd frontend ^&^& npm run dev)
 echo.
 
-python server.py
+cd backend
+python -m app.main
 pause

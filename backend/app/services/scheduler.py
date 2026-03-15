@@ -9,7 +9,7 @@ from typing import Callable, Optional
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-from config import config
+from app.core.config import config
 
 logger = logging.getLogger(__name__)
 

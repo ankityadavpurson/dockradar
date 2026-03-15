@@ -1,5 +1,5 @@
 """
-DockRadar - Configuration Module
+DockRadar - Configuration
 Loads and validates environment variables for the application.
 """
 
@@ -16,16 +16,17 @@ class Config:
     SCAN_INTERVAL_HOURS: int = int(os.getenv("SCAN_INTERVAL_HOURS", "6"))
 
     # SMTP / Email
-    SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
-    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
-    SMTP_USER: str = os.getenv("SMTP_USER", "")
+    SMTP_HOST: str     = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    SMTP_PORT: int     = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USER: str     = os.getenv("SMTP_USER", "")
     SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
-    EMAIL_FROM: str = os.getenv("EMAIL_FROM", "dockradar@example.com")
-    EMAIL_TO: str = os.getenv("EMAIL_TO", "")
+    EMAIL_FROM: str    = os.getenv("EMAIL_FROM", "dockradar@example.com")
+    EMAIL_TO: str      = os.getenv("EMAIL_TO", "")
 
     # Application
-    HOST: str = os.getenv("HOST", "0.0.0.0")
-    PORT: int = int(os.getenv("PORT", "8080"))
+    HOST: str     = os.getenv("HOST", "0.0.0.0")
+    PORT: int     = int(os.getenv("PORT", "8080"))
+    # Log file is resolved relative to the backend/ directory at runtime
     LOG_FILE: str = os.getenv("LOG_FILE", "dockradar.log")
 
     # Docker

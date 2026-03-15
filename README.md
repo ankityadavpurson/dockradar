@@ -28,24 +28,32 @@ A production-quality full-stack application with a **FastAPI** backend and a **R
 ```
 dockradar/
 │
-├── server.py               ← FastAPI entry point
-├── api.py                  ← All REST endpoints
-├── config.py               ← Environment config
-├── docker_service.py       ← Docker SDK wrapper + digest capture
-├── registry_service.py     ← Docker Hub API, tag + digest comparison, cache
-├── update_service.py       ← Container update lifecycle
-├── email_service.py        ← SMTP notifications
-├── scheduler_service.py    ← APScheduler background scans
+├── backend/                        ← Python / FastAPI backend
+│   ├── app/
+│   │   ├── main.py                 ← FastAPI app + lifespan + SPA serving
+│   │   ├── api/
+│   │   │   └── routes.py           ← All REST endpoints + background workers
+│   │   ├── core/
+│   │   │   ├── config.py           ← Environment variable loading
+│   │   │   └── logging.py          ← Logging setup
+│   │   └── services/
+│   │       ├── docker.py           ← Docker SDK wrapper + digest capture
+│   │       ├── registry.py         ← Registry tag + digest comparison, cache
+│   │       ├── update.py           ← Container update lifecycle
+│   │       ├── compose.py          ← docker-compose file management
+│   │       ├── scheduler.py        ← APScheduler background scans
+│   │       └── email.py            ← SMTP notifications
+│   └── requirements.txt
 │
-├── frontend/
+├── frontend/                       ← React + Vite + Tailwind CSS
 │   ├── src/
 │   │   ├── App.jsx
 │   │   ├── main.jsx
 │   │   ├── index.css
 │   │   ├── api/
-│   │   │   └── client.js         ← API fetch functions
+│   │   │   └── client.js           ← All API fetch calls
 │   │   ├── hooks/
-│   │   │   └── useContainers.js  ← Data + state hook
+│   │   │   └── useContainers.js    ← Central state + polling hook
 │   │   └── components/
 │   │       ├── Header.jsx
 │   │       ├── Toolbar.jsx
@@ -53,14 +61,21 @@ dockradar/
 │   │       ├── ProgressLog.jsx
 │   │       ├── InfoBar.jsx
 │   │       ├── ConfirmDialog.jsx
+│   │       ├── ComposeManager.jsx
 │   │       └── Toast.jsx
 │   ├── index.html
 │   ├── vite.config.js
 │   ├── tailwind.config.js
+│   ├── postcss.config.js
 │   └── package.json
 │
-├── requirements.txt
+├── scripts/                        ← Start scripts for all platforms
+│   ├── start.sh                    ← Linux / macOS / WSL
+│   ├── scripts\start.bat                   ← Windows Command Prompt
+│   └── start.ps1                   ← Windows PowerShell
+│
 ├── .env.example
+├── .gitignore
 └── README.md
 ```
 
@@ -97,8 +112,8 @@ Use the start script for your platform. Each script will automatically:
 **Linux / macOS / WSL**
 
 ```bash
-chmod +x start.sh   # first time only
-./start.sh
+chmod +x scripts/start.sh   # first time only
+./scripts/start.sh
 ```
 
 **Windows — PowerShell** *(recommended)*
@@ -107,13 +122,13 @@ chmod +x start.sh   # first time only
 # First time only — allow local scripts to run:
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
-.\start.ps1
+.\scripts\start.ps1
 ```
 
 **Windows — Command Prompt**
 
 ```cmd
-start.bat
+scripts\start.bat
 ```
 
 ```
@@ -169,9 +184,10 @@ If you prefer to manage the virtual environment yourself:
 ```bash
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 cp .env.example .env
-python server.py
+cd backend
+python -m app.main
 ```
 
 **Windows (PowerShell)**
@@ -179,9 +195,10 @@ python server.py
 ```powershell
 python -m venv venv
 venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 Copy-Item .env.example .env
-python server.py
+cd backend
+python -m app.main
 ```
 
 **Windows (Command Prompt)**
@@ -189,9 +206,10 @@ python server.py
 ```cmd
 python -m venv venv
 venv\Scripts\activate.bat
-pip install -r requirements.txt
+pip install -r backend\requirements.txt
 copy .env.example .env
-python server.py
+cd backend
+python -m app.main
 ```
 
 > To deactivate the virtual environment at any time, run `deactivate`.

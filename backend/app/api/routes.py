@@ -21,12 +21,12 @@ from typing import Optional
 from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, File
 from pydantic import BaseModel
 
-from docker_service import DockerService, ContainerInfo
-from registry_service import RegistryService
-from update_service import UpdateService
-from scheduler_service import SchedulerService
-from compose_service import ComposeService
-from config import config
+from app.services.docker import DockerService, ContainerInfo
+from app.services.registry import RegistryService
+from app.services.update import UpdateService
+from app.services.scheduler import SchedulerService
+from app.services.compose import ComposeService
+from app.core.config import config
 
 logger = logging.getLogger(__name__)
 
