@@ -1,7 +1,6 @@
 """
 DockRadar - REST API
-Exposes all core DockRadar functionality as JSON endpoints via FastAPI
-(which NiceGUI already runs under the hood).
+Exposes all core DockRadar functionality as JSON endpoints via FastAPI.
 
 Endpoints
 ---------
@@ -16,12 +15,10 @@ DELETE /api/containers/{name}   Stop + remove a container (no recreate)
 GET  /api/health                Health check — Docker connectivity + scheduler
 """
 
-import asyncio
 import logging
 from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, File
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from docker_service import DockerService, ContainerInfo

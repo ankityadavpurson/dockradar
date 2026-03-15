@@ -2,18 +2,18 @@ import React, { useState } from 'react'
 import { ArrowUpCircle, Trash2, ChevronUp, ChevronDown, ShieldCheck, Tag, FileCode2 } from 'lucide-react'
 
 const STATUS_CFG = {
-  up_to_date:       { label: 'Up to date',       dot: 'bg-accent-green',  text: 'text-accent-green',  bg: 'rgba(81,207,102,0.10)',  border: 'rgba(81,207,102,0.20)'  },
-  update_available: { label: 'Update available', dot: 'bg-accent-yellow', text: 'text-accent-yellow', bg: 'rgba(255,212,59,0.10)',  border: 'rgba(255,212,59,0.20)'  },
-  error:            { label: 'Error',            dot: 'bg-accent-red',    text: 'text-accent-red',    bg: 'rgba(255,107,107,0.10)', border: 'rgba(255,107,107,0.20)' },
-  unknown:          { label: 'Unknown',          dot: 'bg-ink-secondary', text: 'text-ink-secondary', bg: 'rgba(255,255,255,0.05)', border: '#1c2a3a'                 },
+  up_to_date:       { label: 'Up to date',       color: '#50e3c2', bg: 'rgba(80,227,194,0.07)',  border: 'rgba(80,227,194,0.18)'  },
+  update_available: { label: 'Update available', color: '#f5a623', bg: 'rgba(245,166,35,0.07)', border: 'rgba(245,166,35,0.18)'  },
+  error:            { label: 'Error',            color: '#ff4444', bg: 'rgba(255,68,68,0.07)',   border: 'rgba(255,68,68,0.18)'   },
+  unknown:          { label: 'Unknown',          color: '#444',    bg: 'rgba(255,255,255,0.03)', border: '#1a1a1a'                },
 }
 
 const DOCKER_DOT = {
-  running: 'bg-accent-green shadow-[0_0_6px_#51cf66]',
-  exited:  'bg-accent-red',
-  paused:  'bg-accent-yellow',
-  created: 'bg-blue-300',
-  dead:    'bg-accent-red opacity-50',
+  running:  { bg: '#50e3c2', shadow: '0 0 5px rgba(80,227,194,0.5)' },
+  exited:   { bg: '#ff4444', shadow: 'none' },
+  paused:   { bg: '#f5a623', shadow: 'none' },
+  created:  { bg: '#888',    shadow: 'none' },
+  dead:     { bg: '#333',    shadow: 'none' },
 }
 
 const COLS = [
@@ -21,98 +21,68 @@ const COLS = [
   { key: 'repository',    label: 'Image',         sortable: true  },
   { key: 'tag',           label: 'Tag / Digest',  sortable: false },
   { key: '_version',      label: 'Version Check', sortable: false },
-  { key: 'update_status', label: 'Update Status', sortable: true  },
-  { key: 'status',        label: 'Docker Status', sortable: true  },
-  { key: '_actions',      label: 'Actions',       sortable: false },
+  { key: 'update_status', label: 'Status',        sortable: true  },
+  { key: 'status',        label: 'Docker',        sortable: true  },
+  { key: '_actions',      label: '',              sortable: false },
 ]
 
-/** Shorten a sha256 digest to a readable format: sha256:a1b2c3d4 */
 function shortDigest(digest) {
   if (!digest) return null
   const hash = digest.startsWith('sha256:') ? digest.slice(7) : digest
-  return 'sha256:' + hash.slice(0, 8)
+  return hash.slice(0, 8)
 }
 
-/** Version check cell — shows what checks were performed and their results */
 function VersionCheckCell({ container }) {
   const { tag, latest_tag, update_status, local_digest } = container
   const tagsMatch = !latest_tag || latest_tag === tag || latest_tag === 'unknown'
   const hasDigest = !!local_digest
 
   if (update_status === 'unknown' || update_status === 'error') {
-    return <span className="text-ink-muted font-mono text-[12px]">—</span>
+    return <span style={{ color: '#333' }}>—</span>
   }
 
-  // Tag change detected — digest check was skipped
-  if (!tagsMatch) {
-    return (
-      <div className="flex flex-col gap-1">
-        <span
-          className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded"
-          style={{ color: '#ffd43b', background: 'rgba(255,212,59,0.08)', border: '1px solid rgba(255,212,59,0.2)' }}
-          title="A newer tag was found — digest check skipped"
-        >
-          <Tag size={9} />
-          tag changed
-        </span>
-        <span className="font-mono text-[10px]" style={{ color: '#06ffa5' }}>
-          → {latest_tag}
-        </span>
-      </div>
-    )
-  }
-
-  // Tags matched — digest was (or wasn't) checked as the second step
   return (
     <div className="flex flex-col gap-1">
-      <span
-        className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded"
-        style={{ color: '#7a8799', background: 'rgba(255,255,255,0.05)', border: '1px solid #1c2a3a' }}
-        title="Tag names matched"
-      >
-        <Tag size={9} />
-        tag match
+      {/* Tag check */}
+      <span className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded"
+        style={tagsMatch
+          ? { color: '#444', background: 'rgba(255,255,255,0.03)', border: '1px solid #1a1a1a' }
+          : { color: '#f5a623', background: 'rgba(245,166,35,0.07)', border: '1px solid rgba(245,166,35,0.18)' }
+        }>
+        <Tag size={8} />
+        {tagsMatch ? 'tag match' : `→ ${latest_tag}`}
       </span>
-      {hasDigest ? (
-        <span
-          className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded"
-          style={
-            update_status === 'update_available'
-              ? { color: '#ffd43b', background: 'rgba(255,212,59,0.08)', border: '1px solid rgba(255,212,59,0.2)' }
-              : { color: '#00d4ff', background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.2)' }
-          }
-          title={
-            update_status === 'update_available'
-              ? `Digest mismatch — image was silently rebuilt\nLocal: ${local_digest}`
-              : `Digest confirmed — image content is identical\nLocal: ${local_digest}`
-          }
-        >
-          <ShieldCheck size={9} />
-          {update_status === 'update_available' ? 'digest changed' : 'digest match'}
-        </span>
-      ) : (
-        <span
-          className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded"
-          style={{ color: '#3d5166', background: 'rgba(255,255,255,0.02)', border: '1px solid #1c2a3a' }}
-          title="No local digest available — only tag name was compared"
-        >
-          <ShieldCheck size={9} />
-          no digest
-        </span>
+
+      {/* Digest check (only shown when tags match) */}
+      {tagsMatch && (
+        hasDigest ? (
+          <span className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded"
+            style={update_status === 'update_available'
+              ? { color: '#f5a623', background: 'rgba(245,166,35,0.07)', border: '1px solid rgba(245,166,35,0.18)' }
+              : { color: '#50e3c2', background: 'rgba(80,227,194,0.05)', border: '1px solid rgba(80,227,194,0.15)' }
+            }
+            title={update_status === 'update_available'
+              ? `Digest mismatch — image rebuilt\n${local_digest}`
+              : `Digest confirmed\n${local_digest}`}>
+            <ShieldCheck size={8} />
+            {update_status === 'update_available' ? 'digest changed' : 'digest match'}
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded"
+            style={{ color: '#5a5a5a', background: 'rgba(255,255,255,0.02)', border: '1px solid #1a1a1a' }}>
+            <ShieldCheck size={8} />
+            no digest
+          </span>
+        )
       )}
     </div>
   )
 }
 
 export default function ContainerTable({
-  containers,
-  selected,
-  isBusy,
-  onToggleSelect,
-  onConfirmUpdate,
-  onConfirmDelete,
-  associations = {},
-  onComposeUpdate,
+  containers, selected, isBusy,
+  onToggleSelect, onConfirmUpdate, onConfirmDelete,
+  associations = {}, onComposeUpdate,
 }) {
   const [sortKey, setSortKey] = useState('name')
   const [sortDir, setSortDir] = useState('asc')
@@ -131,12 +101,10 @@ export default function ContainerTable({
 
   if (containers.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-ink-secondary">
-        <span className="text-5xl mb-5 opacity-30">🐋</span>
-        <p className="text-[17px] font-display font-semibold text-ink-primary mb-2">
-          No containers found
-        </p>
-        <p className="text-[13px]">Click <strong>Scan for Updates</strong> to discover Docker containers.</p>
+      <div className="flex flex-col items-center justify-center py-20" style={{ color: '#333' }}>
+        <span className="text-4xl mb-4 opacity-20">▲</span>
+        <p className="text-[15px] font-medium mb-1" style={{ color: '#555' }}>No containers found</p>
+        <p className="text-[13px]">Click <span style={{ color: '#888' }}>Scan</span> to discover Docker containers.</p>
       </div>
     )
   }
@@ -144,39 +112,31 @@ export default function ContainerTable({
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse">
-        {/* ── thead ── */}
         <thead>
-          <tr className="bg-bg-surface/80">
-            <th className="w-12 pl-5 py-3 text-left">
-              <input
-                type="checkbox"
+          <tr style={{ borderBottom: '1px solid #1a1a1a' }}>
+            <th className="w-10 pl-4 py-3 text-left">
+              <input type="checkbox"
                 checked={selected.size === containers.length && containers.length > 0}
-                onChange={e =>
-                  containers.forEach(c =>
-                    e.target.checked
-                      ? !selected.has(c.id) && onToggleSelect(c.id)
-                      : selected.has(c.id) && onToggleSelect(c.id)
-                  )
-                }
-                className="accent-accent-blue w-3.5 h-3.5 cursor-pointer"
+                onChange={e => containers.forEach(c =>
+                  e.target.checked
+                    ? !selected.has(c.id) && onToggleSelect(c.id)
+                    : selected.has(c.id)  && onToggleSelect(c.id)
+                )}
+                className="w-3 h-3 cursor-pointer accent-white"
               />
             </th>
             {COLS.map(col => (
-              <th
-                key={col.key}
+              <th key={col.key}
                 onClick={() => col.sortable && handleSort(col.key)}
-                className={`
-                  px-4 py-3 text-left text-[10px] font-mono font-bold uppercase
-                  tracking-[1.8px] text-ink-secondary border-b border-border whitespace-nowrap
-                  ${col.sortable ? 'cursor-pointer hover:text-ink-primary select-none' : ''}
-                `}
-              >
+                className={`px-4 py-3 text-left text-[11px] font-medium uppercase tracking-wider whitespace-nowrap
+                  ${col.sortable ? 'cursor-pointer select-none' : ''}`}
+                style={{ color: col.sortable && sortKey === col.key ? '#aaa' : '#666' }}>
                 <span className="inline-flex items-center gap-1">
                   {col.label}
                   {col.sortable && sortKey === col.key && (
                     sortDir === 'asc'
-                      ? <ChevronUp size={11} className="text-accent-blue" />
-                      : <ChevronDown size={11} className="text-accent-blue" />
+                      ? <ChevronUp size={10} />
+                      : <ChevronDown size={10} />
                   )}
                 </span>
               </th>
@@ -184,138 +144,119 @@ export default function ContainerTable({
           </tr>
         </thead>
 
-        {/* ── tbody ── */}
         <tbody>
           {sorted.map((c, idx) => {
-            const s           = STATUS_CFG[c.update_status] ?? STATUS_CFG.unknown
-            const ddot        = DOCKER_DOT[c.status] ?? 'bg-ink-secondary'
-            const isSel       = selected.has(c.id)
-            const assoc       = associations[c.name]
-            const hasCompose  = !!assoc
+            const s          = STATUS_CFG[c.update_status] ?? STATUS_CFG.unknown
+            const dot        = DOCKER_DOT[c.status] ?? { bg: '#333', shadow: 'none' }
+            const isSel      = selected.has(c.id)
+            const assoc      = associations[c.name]
+            const hasCompose = !!assoc
 
             return (
-              <tr
-                key={c.id}
-                className={`border-b border-border/50 transition-colors duration-100 last:border-0 animate-fade_in
-                  ${isSel ? 'bg-accent-blue/5' : 'hover:bg-bg-hover'}`}
-                style={{ animationDelay: `${idx * 30}ms` }}
-              >
-                {/* checkbox */}
-                <td className="w-12 pl-5 py-4">
-                  <input
-                    type="checkbox"
-                    checked={isSel}
-                    onChange={() => onToggleSelect(c.id)}
-                    className="accent-accent-blue w-3.5 h-3.5 cursor-pointer"
-                  />
+              <tr key={c.id}
+                className="animate-fade_in"
+                style={{
+                  borderBottom: '1px solid #111',
+                  background: isSel ? 'rgba(255,255,255,0.03)' : 'transparent',
+                  animationDelay: `${idx * 20}ms`,
+                }}>
+
+                {/* Checkbox */}
+                <td className="w-10 pl-4 py-3">
+                  <input type="checkbox" checked={isSel} onChange={() => onToggleSelect(c.id)}
+                    className="w-3 h-3 cursor-pointer accent-white" />
                 </td>
 
-                {/* container name */}
-                <td className="px-4 py-4">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-mono font-semibold text-[13px] text-ink-primary">{c.name}</span>
+                {/* Name */}
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-medium" style={{ color: '#ededed' }}>{c.name}</span>
                     {hasCompose && (
-                      <span
-                        title={`Compose: ${assoc.filename} / ${assoc.service_name}`}
-                        className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-mono"
-                        style={{ background: 'rgba(0,212,255,0.08)', color: '#00d4ff', border: '1px solid rgba(0,212,255,0.2)' }}
-                      >
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-mono"
+                        style={{ background: 'rgba(255,255,255,0.05)', color: '#777', border: '1px solid #222' }}
+                        title={`Compose: ${assoc.filename} / ${assoc.service_name}`}>
                         <FileCode2 size={8} />
                         compose
                       </span>
                     )}
                   </div>
-                  <div className="font-mono text-[10px] text-ink-muted mt-0.5">{c.short_id}</div>
+                  <div className="text-[10px] font-mono mt-0.5" style={{ color: '#5a5a5a' }}>{c.short_id}</div>
                 </td>
 
-                {/* image */}
-                <td className="px-4 py-4">
-                  <span className="font-mono text-[12px] text-ink-secondary">{c.repository}</span>
+                {/* Image */}
+                <td className="px-4 py-3">
+                  <span className="text-[12px] font-mono" style={{ color: '#777' }}>{c.repository}</span>
                 </td>
 
-                {/* tag + digest hint */}
-                <td className="px-4 py-4">
+                {/* Tag + Digest */}
+                <td className="px-4 py-3">
                   <div className="flex flex-col gap-1">
-                    <span
-                      className="inline-block font-mono text-[11px] px-2 py-0.5 rounded"
-                      style={
-                        c.update_status === 'update_available'
-                          ? { color: '#ff6b6b', background: 'rgba(255,107,107,0.08)', border: '1px solid rgba(255,107,107,0.2)', textDecoration: 'line-through', opacity: 0.7 }
-                          : { color: '#7a8799', background: 'rgba(255,255,255,0.05)', border: '1px solid #1c2a3a' }
-                      }
-                    >
+                    <span className="inline-block font-mono text-[11px] px-1.5 py-0.5 rounded"
+                      style={c.update_status === 'update_available'
+                        ? { color: '#666', background: 'transparent', textDecoration: 'line-through' }
+                        : { color: '#888', background: 'rgba(255,255,255,0.03)', border: '1px solid #1a1a1a' }
+                      }>
                       {c.tag}
                     </span>
                     {c.local_digest && (
-                      <span
-                        className="font-mono text-[9px] text-ink-muted"
-                        title={c.local_digest}
-                      >
+                      <span className="font-mono text-[9px]" style={{ color: '#5a5a5a' }}
+                        title={c.local_digest}>
                         {shortDigest(c.local_digest)}
                       </span>
                     )}
                   </div>
                 </td>
 
-                {/* version check method */}
-                <td className="px-4 py-4">
+                {/* Version check */}
+                <td className="px-4 py-3">
                   <VersionCheckCell container={c} />
                 </td>
 
-                {/* update status */}
-                <td className="px-4 py-4">
-                  <span
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold border"
-                    style={{ color: s.text.replace('text-', ''), background: s.bg, borderColor: s.border }}
-                  >
-                    <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                {/* Update status */}
+                <td className="px-4 py-3">
+                  <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-medium"
+                    style={{ color: s.color, background: s.bg, border: `1px solid ${s.border}` }}>
+                    <span className="w-1 h-1 rounded-full" style={{ background: s.color }} />
                     {s.label}
                   </span>
                 </td>
 
-                {/* docker status */}
-                <td className="px-4 py-4">
-                  <span className="inline-flex items-center gap-1.5 font-mono text-[12px] text-ink-secondary">
-                    <span className={`w-1.5 h-1.5 rounded-full ${ddot}`} />
+                {/* Docker status */}
+                <td className="px-4 py-3">
+                  <span className="inline-flex items-center gap-1.5 text-[12px] font-mono" style={{ color: '#777' }}>
+                    <span className="w-1.5 h-1.5 rounded-full"
+                      style={{ background: dot.bg, boxShadow: dot.shadow }} />
                     {c.status}
                   </span>
                 </td>
 
-                {/* actions */}
-                <td className="px-4 py-4">
-                  <div className="flex items-center gap-2">
+                {/* Actions */}
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-1.5">
                     {c.update_status === 'update_available' && (
                       hasCompose ? (
-                        <button
-                          className="btn btn-xs"
-                          disabled={isBusy}
+                        <button className="btn btn-ghost btn-xs" disabled={isBusy}
                           onClick={() => onComposeUpdate && onComposeUpdate(c)}
-                          title={`Update via compose: ${assoc.filename} / ${assoc.service_name}`}
-                          style={{ background: 'rgba(0,212,255,0.10)', color: '#00d4ff', border: '1px solid rgba(0,212,255,0.25)' }}
-                        >
-                          <FileCode2 size={11} />
+                          title={`Update via compose: ${assoc.service_name}`}>
+                          <FileCode2 size={10} />
                           Compose
                         </button>
                       ) : (
-                        <button
-                          className="btn btn-yellow btn-xs"
-                          disabled={isBusy}
+                        <button className="btn btn-yellow btn-xs" disabled={isBusy}
                           onClick={() => onConfirmUpdate(c)}
-                          title={`Update ${c.name}`}
-                        >
-                          <ArrowUpCircle size={11} />
+                          title={`Update ${c.name}`}>
+                          <ArrowUpCircle size={10} />
                           Update
                         </button>
                       )
                     )}
-                    <button
-                      className="btn btn-ghost btn-xs"
-                      disabled={isBusy}
+                    <button className="btn btn-ghost btn-xs" disabled={isBusy}
                       onClick={() => onConfirmDelete(c)}
                       title={`Remove ${c.name}`}
-                      style={{ color: 'rgba(255,107,107,0.7)' }}
-                    >
-                      <Trash2 size={11} />
+                      style={{ color: '#5a5a5a' }}
+                      onMouseEnter={e => e.currentTarget.style.color = '#ff4444'}
+                      onMouseLeave={e => e.currentTarget.style.color = '#5a5a5a'}>
+                      <Trash2 size={10} />
                     </button>
                   </div>
                 </td>

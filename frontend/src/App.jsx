@@ -50,7 +50,7 @@ export default function App() {
   ).length
 
   return (
-    <div className="min-h-screen bg-bg-base">
+    <div className="min-h-screen" style={{ background: '#000' }}>
       {/* Header */}
       <Header
         health={health}
@@ -59,12 +59,12 @@ export default function App() {
       />
 
       {/* Main content */}
-      <main className="max-w-[1680px] mx-auto px-8 py-6">
+      <main className="max-w-[1400px] mx-auto px-6 py-6">
 
         {/* Connection error */}
         {error && (
-          <div className="mb-4 px-4 py-3 rounded-xl bg-accent-red/10 border border-accent-red/20
-                          text-accent-red text-[13px] font-mono animate-fade_in">
+          <div className="mb-4 px-4 py-3 rounded text-[13px] font-mono animate-fade_in"
+            style={{ background: 'rgba(255,68,68,0.07)', border: '1px solid rgba(255,68,68,0.18)', color: '#ff4444' }}>
             ✗ {error}
           </div>
         )}
@@ -89,13 +89,15 @@ export default function App() {
         {/* Info bar */}
         <InfoBar health={health} />
 
-        {/* Container table card */}
-        <div className="bg-bg-card border border-border rounded-2xl overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-            <span className="text-[11px] font-mono font-bold uppercase tracking-[2px] text-ink-secondary">
+        {/* Container table */}
+        <div className="rounded-lg overflow-hidden"
+          style={{ border: '1px solid #1a1a1a' }}>
+          <div className="flex items-center justify-between px-4 py-3"
+            style={{ borderBottom: '1px solid #1a1a1a', background: '#0a0a0a' }}>
+            <span className="text-[11px] font-mono uppercase tracking-wider" style={{ color: '#444' }}>
               Containers
             </span>
-            <span className="text-[11px] font-mono text-ink-secondary">
+            <span className="text-[11px] font-mono" style={{ color: '#333' }}>
               {visible.length} / {containers.length}
             </span>
           </div>

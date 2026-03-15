@@ -1,114 +1,92 @@
-import { ArrowUpCircle, FileCode2, RefreshCw, Search, UploadCloud } from 'lucide-react'
+import React from 'react'
+import { Search, RefreshCw, ArrowUpCircle, UploadCloud, FileCode2 } from 'lucide-react'
 
 export default function Toolbar({
-  isBusy,
-  selectedCount,
-  outdatedCount,
-  search,
-  onSearch,
-  filterOutdated,
-  onFilterOutdated,
-  onScan,
-  onUpdateSelected,
-  onUpdateAll,
-  onSelectAll,
-  onClearSelection,
-  onOpenCompose,
+  isBusy, selectedCount, outdatedCount,
+  search, onSearch, filterOutdated, onFilterOutdated,
+  onScan, onUpdateSelected, onUpdateAll, onSelectAll, onClearSelection, onOpenCompose,
 }) {
   return (
-    <div className="flex items-center gap-3 flex-wrap bg-bg-card border border-border
-                    rounded-2xl px-5 py-4 mb-5">
+    <div className="flex items-center gap-2 flex-wrap px-4 py-3 mb-4 rounded-lg"
+      style={{ background: '#0a0a0a', border: '1px solid #1a1a1a' }}>
 
       {/* Scan */}
-      <button className="btn btn-blue" onClick={onScan} disabled={isBusy}>
-        <RefreshCw size={14} className={isBusy ? 'animate-spin' : ''} />
-        {isBusy ? 'Working…' : 'Scan for Updates'}
+      <button className="btn btn-primary btn-sm" onClick={onScan} disabled={isBusy}>
+        <RefreshCw size={13} className={isBusy ? 'animate-spin' : ''} />
+        {isBusy ? 'Working…' : 'Scan'}
       </button>
 
-      <div className="w-px h-7 bg-border shrink-0" />
+      <div className="w-px h-5 shrink-0" style={{ background: '#1a1a1a' }} />
 
       {/* Update selected */}
-      <button
-        className="btn btn-ghost"
-        onClick={onUpdateSelected}
-        disabled={isBusy || selectedCount === 0}
-      >
-        <ArrowUpCircle size={14} />
+      <button className="btn btn-ghost btn-sm" onClick={onUpdateSelected}
+        disabled={isBusy || selectedCount === 0}>
+        <ArrowUpCircle size={13} />
         Update Selected
         {selectedCount > 0 && (
-          <span className="ml-1 px-1.5 py-0.5 rounded-full bg-accent-blue/20
-                           text-accent-blue text-[10px] font-mono font-bold">
+          <span className="ml-0.5 px-1.5 py-0.5 rounded text-[10px] font-mono"
+            style={{ background: '#1a1a1a', color: '#888', border: '1px solid #222' }}>
             {selectedCount}
           </span>
         )}
       </button>
 
-      {/* Update all outdated */}
-      <button
-        className="btn btn-green"
-        onClick={onUpdateAll}
-        disabled={isBusy || outdatedCount === 0}
-      >
-        <UploadCloud size={14} />
-        Update All Outdated
+      {/* Update all */}
+      <button className="btn btn-ghost btn-sm" onClick={onUpdateAll}
+        disabled={isBusy || outdatedCount === 0}>
+        <UploadCloud size={13} />
+        Update All
         {outdatedCount > 0 && (
-          <span className="ml-1 px-1.5 py-0.5 rounded-full bg-black/20
-                           text-black text-[10px] font-mono font-bold">
+          <span className="ml-0.5 px-1.5 py-0.5 rounded text-[10px] font-mono"
+            style={{ background: 'rgba(245,166,35,0.08)', color: '#f5a623', border: '1px solid rgba(245,166,35,0.2)' }}>
             {outdatedCount}
           </span>
         )}
       </button>
 
-      <div className="w-px h-7 bg-border shrink-0" />
+      <div className="w-px h-5 shrink-0" style={{ background: '#1a1a1a' }} />
 
-      {/* Compose files */}
-      <button
-        className="btn btn-ghost"
-        onClick={onOpenCompose}
-        title="Manage docker-compose files and link them to containers"
-      >
-        <FileCode2 size={14} />
+      {/* Compose */}
+      <button className="btn btn-ghost btn-sm" onClick={onOpenCompose}
+        title="Manage docker-compose files">
+        <FileCode2 size={13} />
         Compose
       </button>
 
-      {/* Spacer */}
       <div className="flex-1" />
 
       {/* Search */}
       <div className="relative">
-        <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-secondary pointer-events-none" />
+        <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+          style={{ color: '#606060' }} />
         <input
           type="text"
-          placeholder="Search containers…"
+          placeholder="Search…"
           value={search}
           onChange={e => onSearch(e.target.value)}
-          className="w-48 pl-8 pr-3 py-2 rounded-lg text-[13px] font-display
-                     bg-bg-surface border border-border text-ink-primary placeholder-ink-secondary
-                     focus:outline-none focus:border-accent-blue transition-colors"
+          className="pl-8 pr-3 py-1.5 rounded text-[12px] w-44 outline-none"
+          style={{ background: '#111', border: '1px solid #222', color: '#ededed' }}
+          onFocus={e => e.target.style.borderColor = '#444'}
+          onBlur={e  => e.target.style.borderColor = '#222'}
         />
       </div>
 
-      {/* Filter outdated */}
-      <label className="flex items-center gap-2 cursor-pointer select-none text-[12px]
-                        font-display text-ink-secondary hover:text-ink-primary transition-colors">
+      {/* Outdated filter toggle */}
+      <label className="flex items-center gap-2 cursor-pointer select-none text-[12px]"
+        style={{ color: '#7a7a7a' }}>
         <div className="relative">
-          <input
-            type="checkbox"
-            checked={filterOutdated}
-            onChange={e => onFilterOutdated(e.target.checked)}
-            className="sr-only peer"
-          />
-          <div className="w-8 h-4 rounded-full bg-bg-surface border border-border
-                          peer-checked:bg-accent-blue peer-checked:border-accent-blue transition-all" />
-          <div className="absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-ink-secondary
-                          peer-checked:translate-x-4 peer-checked:bg-white transition-all" />
+          <input type="checkbox" checked={filterOutdated}
+            onChange={e => onFilterOutdated(e.target.checked)} className="sr-only peer" />
+          <div className="w-7 h-3.5 rounded-full transition-colors"
+            style={{ background: filterOutdated ? '#f5a623' : '#222' }} />
+          <div className="absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white transition-all"
+            style={{ left: filterOutdated ? '17px' : '2px' }} />
         </div>
         Outdated only
       </label>
 
-      <div className="w-px h-7 bg-border shrink-0" />
+      <div className="w-px h-5 shrink-0" style={{ background: '#1a1a1a' }} />
 
-      {/* Select helpers */}
       <button className="btn btn-ghost btn-xs" onClick={onSelectAll}>All</button>
       <button className="btn btn-ghost btn-xs" onClick={onClearSelection}>None</button>
     </div>
