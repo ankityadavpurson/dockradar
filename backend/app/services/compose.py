@@ -6,7 +6,6 @@ image updates (pull + up -d) for individual services.
 
 import json
 import logging
-import os
 import shutil
 import subprocess
 import time
@@ -17,11 +16,10 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
-# Stored relative to this file so it works regardless of cwd
-_HERE = Path(__file__).parent.parent.parent  # backend/
-COMPOSE_STORE_DIR = _HERE / "compose_files"
+# Directory where uploaded compose files are stored (relative to project root)
+COMPOSE_STORE_DIR = Path("compose_files")
 ASSOCIATIONS_FILE = COMPOSE_STORE_DIR / "associations.json"
-METADATA_FILE     = COMPOSE_STORE_DIR / "metadata.json"
+METADATA_FILE     = COMPOSE_STORE_DIR / "metadata.json"   # file_id → original filename
 
 
 class ComposeFile:
@@ -196,6 +194,44 @@ class ComposeService:
         except Exception as exc:
             logger.warning("Could not update metadata: %s", exc)
 
+
+    def get_file_content(self, file_id: str) -> Optional[str]:
+        """Return the raw YAML content of a stored compose file."""
+        cf = self._files.get(file_id)
+        return cf.content if cf else None
+
+    def update_file(self, file_id: str, new_content: str) -> ComposeFile:
+        """
+        Overwrite an existing compose file with new YAML content.
+        Validates the YAML before writing. Re-parses the in-memory object.
+        Raises ValueError on invalid YAML or unknown file_id.
+        """
+        cf = self._files.get(file_id)
+        if cf is None:
+            raise ValueError(f"Compose file '{file_id}' not found.")
+
+        # Validate
+        try:
+            parsed = yaml.safe_load(new_content)
+            if not isinstance(parsed, dict) or "services" not in parsed:
+                raise ValueError("File does not contain a 'services' key — is this a valid compose file?")
+        except yaml.YAMLError as exc:
+            raise ValueError(f"Invalid YAML: {exc}") from exc
+
+        # Write to disk
+        cf.path.write_text(new_content, encoding="utf-8")
+
+        # Replace in-memory object so services list is fresh
+        updated = ComposeFile(
+            file_id=cf.file_id,
+            filename=cf.filename,
+            path=cf.path,
+            content=new_content,
+        )
+        self._files[file_id] = updated
+        logger.info("Updated compose file: %s (%d services)", cf.filename, len(updated.services))
+        return updated
+
     def delete_file(self, file_id: str) -> bool:
         """Delete a stored compose file and remove all its associations."""
         cf = self._files.pop(file_id, None)
@@ -302,7 +338,27 @@ class ComposeService:
         if not pull_ok:
             return False, f"compose pull failed:\n{pull_out}"
 
-        # ── Step 2: up -d ─────────────────────────────────────────────────────
+        # ── Step 2: stop + remove existing container via Docker CLI ─────────────
+        # `docker compose rm` only removes containers it originally created.
+        # If the container was started outside of compose, it refuses to touch it
+        # and `docker compose up` then fails with a name conflict.
+        # The fix is to stop and remove the container directly using `docker`
+        # before compose tries to recreate it.
+        report(f"Stopping existing container '{container_name}'...")
+        try:
+            subprocess.run(
+                ["docker", "stop", container_name],
+                capture_output=True, timeout=30,
+            )
+            subprocess.run(
+                ["docker", "rm", container_name],
+                capture_output=True, timeout=15,
+            )
+        except Exception as exc:
+            # Non-fatal — container may not exist (first-time deploy)
+            logger.debug("docker stop/rm for %s: %s", container_name, exc)
+
+        # ── Step 3: up -d ─────────────────────────────────────────────────────
         report(f"Recreating service '{service_name}'...")
         up_ok, up_out = self._run_compose(
             compose_bin, compose_path, ["up", "-d", "--no-deps", service_name]

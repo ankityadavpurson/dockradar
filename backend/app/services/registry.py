@@ -8,6 +8,7 @@ import logging
 import time
 from typing import Optional
 
+import re
 import requests
 
 from app.core.config import config
@@ -303,14 +304,13 @@ class RegistryService:
         Works for registries like lscr.io, ghcr.io, gcr.io that use the
         standard Docker token auth spec (https://distribution.github.io/distribution/spec/auth/token/).
         """
-        import re as _re
         auth_header = challenge_resp.headers.get("WWW-Authenticate", "")
         if not auth_header.startswith("Bearer "):
             return None
         try:
-            realm = _re.search(r'realm="([^"]+)"', auth_header)
-            service = _re.search(r'service="([^"]+)"', auth_header)
-            scope = _re.search(r'scope="([^"]+)"', auth_header)
+            realm = re.search(r'realm="([^"]+)"', auth_header)
+            service = re.search(r'service="([^"]+)"', auth_header)
+            scope = re.search(r'scope="([^"]+)"', auth_header)
 
             if not realm:
                 return None
@@ -377,7 +377,6 @@ class RegistryService:
             return "latest"
 
         # Filter tags that look like semver (digits and dots)
-        import re
         semver_tags = [t for t in tags if re.match(r"^\d+(\.\d+)*$", t)]
         if not semver_tags:
             return current_tag  # Can't determine; treat as up to date

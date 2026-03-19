@@ -1,14 +1,14 @@
 """
 DockRadar - Application Entry Point
 
-Run:
+Run from the backend/ directory:
     python -m app.main
-    # or from the backend/ directory:
+    # or
     uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload
 
 API docs: http://localhost:8080/docs
 Frontend: http://localhost:5173  (Vite dev server)
-          http://localhost:8080  (production build, served from /frontend/dist)
+          http://localhost:8080  (production build served from frontend/dist)
 """
 
 from contextlib import asynccontextmanager
@@ -26,20 +26,18 @@ from app.core.logging import setup_logging
 
 __version__ = "2.0.0"
 
-# Initialise logging before anything else
-setup_logging()
-
 import logging
 logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# Lifespan — start/stop the scheduler
+# Lifespan — start / stop the background scheduler
 # ---------------------------------------------------------------------------
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Start the background scheduler on startup, stop it cleanly on shutdown."""
+    setup_logging()
+    """Start the scheduler on startup, stop it cleanly on shutdown."""
     logger.info("=" * 60)
     logger.info("  DockRadar v%s", __version__)
     logger.info("  API  : http://%s:%d/api", config.HOST, config.PORT)
@@ -65,8 +63,8 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",    # Vite dev server
-        "http://localhost:8080",    # Production
+        "http://localhost:5173",
+        "http://localhost:8080",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:8080",
     ],
@@ -79,10 +77,10 @@ app.include_router(api_router)
 
 
 # ---------------------------------------------------------------------------
-# Serve the built React frontend in production
+# Serve built React frontend in production
 # ---------------------------------------------------------------------------
 
-# The frontend dist folder is relative to the project root (one level up from backend/)
+# frontend/dist is two levels up from backend/app/
 DIST = Path(__file__).parent.parent.parent / "frontend" / "dist"
 
 if DIST.exists():

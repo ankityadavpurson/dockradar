@@ -428,6 +428,52 @@ def delete_compose_file(file_id: str):
     return {"message": f"Compose file '{file_id}' deleted."}
 
 
+
+
+# ── GET /api/compose/{file_id}/content ───────────────────────────────────────
+
+@router.get("/compose/{file_id}/content", summary="Get raw content of a compose file")
+def get_compose_file_content(file_id: str):
+    """Return the raw YAML text of a stored compose file for editing."""
+    content = compose_svc.get_file_content(file_id)
+    if content is None:
+        raise HTTPException(status_code=404, detail=f"Compose file '{file_id}' not found.")
+    cf = compose_svc.get_file(file_id)
+    return {"file_id": file_id, "filename": cf.filename, "content": content}
+
+
+# ── PUT /api/compose/{file_id} ───────────────────────────────────────────────
+
+class UpdateComposeBody(BaseModel):
+    content: str
+
+@router.put("/compose/{file_id}", summary="Update content of a stored compose file")
+def update_compose_file(file_id: str, body: UpdateComposeBody):
+    """Overwrite the YAML content of an existing compose file."""
+    try:
+        cf = compose_svc.update_file(file_id, body.content)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return {"message": "Compose file updated.", "compose_file": cf.to_dict()}
+
+
+# ── GET /api/compose/{file_id}/download ──────────────────────────────────────
+
+from fastapi.responses import PlainTextResponse
+
+@router.get("/compose/{file_id}/download", summary="Download a compose file")
+def download_compose_file(file_id: str):
+    """Return the raw YAML content as a downloadable file attachment."""
+    content = compose_svc.get_file_content(file_id)
+    if content is None:
+        raise HTTPException(status_code=404, detail=f"Compose file '{file_id}' not found.")
+    cf = compose_svc.get_file(file_id)
+    return PlainTextResponse(
+        content=content,
+        media_type="text/yaml",
+        headers={"Content-Disposition": f'attachment; filename="{cf.filename}"'},
+    )
+
 # ── GET /api/compose/associations ────────────────────────────────────────────
 
 @router.get("/compose/associations", summary="List all container–service associations")
@@ -509,6 +555,12 @@ def compose_update_container(name: str, background_tasks: BackgroundTasks):
 
         if success:
             api_state.progress.append(f"[{name}] \u2713 Compose update complete.")
+            # Invalidate the registry cache for this container so the
+            # post-update re-scan fetches fresh digest/tag data instead of
+            # returning the stale "update_available" result from before.
+            container = next((c for c in api_state.containers if c.name == name), None)
+            if container:
+                registry_svc.invalidate_cache(container.repository)
         else:
             api_state.progress.append(f"[{name}] \u2717 Compose update failed: {message}")
 

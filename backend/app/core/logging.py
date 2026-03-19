@@ -17,14 +17,13 @@ def setup_logging() -> None:
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     root = logging.getLogger()
+    root.handlers.clear()
     root.setLevel(logging.INFO)
 
-    # Console
     console = logging.StreamHandler(sys.stdout)
     console.setFormatter(fmt)
     root.addHandler(console)
 
-    # Rotating file
     try:
         fh = RotatingFileHandler(
             config.LOG_FILE, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
@@ -34,6 +33,5 @@ def setup_logging() -> None:
     except (OSError, PermissionError) as exc:
         logging.warning("Could not create log file %s: %s", config.LOG_FILE, exc)
 
-    # Silence noisy third-party loggers
     for name in ("urllib3", "docker", "apscheduler", "watchfiles", "asyncio"):
         logging.getLogger(name).setLevel(logging.WARNING)

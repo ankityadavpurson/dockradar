@@ -26,7 +26,6 @@ class Config:
     # Application
     HOST: str     = os.getenv("HOST", "0.0.0.0")
     PORT: int     = int(os.getenv("PORT", "8080"))
-    # Log file is resolved relative to the backend/ directory at runtime
     LOG_FILE: str = os.getenv("LOG_FILE", "dockradar.log")
 
     # Docker
