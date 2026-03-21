@@ -520,6 +520,63 @@ def disassociate_container(name: str):
     return {"message": f"Association removed for '{name}'."}
 
 
+
+# ── GET /api/containers/{name}/compose-diff ──────────────────────────────────
+
+@router.get("/containers/{name}/compose-diff", summary="Preview compose file changes before update")
+def compose_diff(name: str):
+    """
+    Returns the current compose file content alongside a proposed version with
+    the image tag updated to the latest available. The frontend uses this to
+    show the user exactly what will change before they confirm the update.
+    """
+    # Find container in cache
+    container = next((c for c in api_state.containers if c.name == name), None)
+    if container is None:
+        raise HTTPException(status_code=404, detail=f"Container '{name}' not found. Run a scan first.")
+
+    assoc = compose_svc.get_association(name)
+    if assoc is None:
+        raise HTTPException(status_code=400, detail=f"No compose file associated with '{name}'.")
+
+    file_id, service_name = assoc
+    cf = compose_svc.get_file(file_id)
+    if cf is None:
+        raise HTTPException(status_code=404, detail=f"Compose file '{file_id}' not found.")
+
+    current_content = cf.content
+    current_image   = cf.service_image(service_name) or container.image_name
+
+    # Determine the latest image string
+    latest_tag    = container.latest_tag or container.tag
+    latest_image  = f"{container.repository}:{latest_tag}"
+
+    # Build the proposed compose content — replace the image line for this service
+    # only if there is actually a change to make.
+    proposed_content = current_content
+    if current_image and current_image != latest_image:
+        import re as _re
+        # Replace `image: <anything>` under the specific service block.
+        # We do a targeted replacement: find the service name, then replace its image line.
+        proposed_content = _re.sub(
+            '(image:\\s+)' + _re.escape(current_image),
+            r'\g<1>' + latest_image,
+            current_content,
+        )
+
+    return {
+        "container_name":    name,
+        "service_name":      service_name,
+        "filename":          cf.filename,
+        "file_id":           file_id,
+        "current_image":     current_image,
+        "latest_image":      latest_image,
+        "has_change":        current_image != latest_image,
+        "current_content":   current_content,
+        "proposed_content":  proposed_content,
+        "update_status":     container.update_status,
+    }
+
 # ── POST /api/containers/{name}/compose-update ───────────────────────────────
 
 @router.post(

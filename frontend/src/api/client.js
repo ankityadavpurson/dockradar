@@ -54,4 +54,7 @@ export const composeApi = {
   associate:     (containerName, fileId, svc)    => request('POST',   '/compose/associate', { container_name: containerName, file_id: fileId, service_name: svc }),
   disassociate:  (containerName)                 => request('DELETE', `/compose/associate/${containerName}`),
   updateViaCompose: (name)                       => request('POST',   `/containers/${name}/compose-update`),
+  getContent:        (fileId)                        => request('GET',    `/compose/${fileId}/content`),
+  updateContent:     (fileId, text)                  => request('PUT',    `/compose/${fileId}`, { content: text }),
+  diff:              (containerName)                 => request('GET',    `/containers/${containerName}/compose-diff`),
 }

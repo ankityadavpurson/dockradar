@@ -100,6 +100,9 @@ class RegistryService:
 
         Strategy (in order):
         1. Tag comparison  — if a newer tag exists, report update_available immediately.
+           Special case: if latest is the only "newer" tag and we have a local digest,
+           compare digests first — the running container may already be the latest image
+           just labelled with a concrete version tag (e.g. 2024.5.13-a0bc346 == latest).
         2. Digest comparison — if tags are identical, compare manifest digests to catch
                                silent image rebuilds (important for 'latest').
         3. Fallback         — if digest fetch fails, trust the tag match as up_to_date.
@@ -135,7 +138,15 @@ class RegistryService:
             return "unknown", "error"
 
         if latest_tag != current_tag:
-            # A newer tag exists — no need to check digest
+            if latest_tag == "latest" and local_digest:
+                remote_digest = self._get_remote_digest_dockerhub(image_path, "latest")
+                if remote_digest and remote_digest == local_digest:
+                    logger.info(
+                        "%s: running %s which matches latest digest — up to date",
+                        repo, current_tag,
+                    )
+                    return current_tag, "up_to_date"
+
             logger.info("Tag update available for %s: %s → %s", repo, current_tag, latest_tag)
             return latest_tag, "update_available"
 
