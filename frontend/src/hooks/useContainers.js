@@ -91,6 +91,7 @@ export function useContainers() {
       setLoading(true)
       await api.triggerScan()
       notify('Scan started…', 'info')
+      setScanStatus(({ scanning: true }))
       startPolling()
     } catch (e) {
       notify(e.message, 'error')

@@ -114,15 +114,14 @@ export default function ContainerTable({
         <thead>
           <tr style={{ borderBottom: '1px solid #1a1a1a' }}>
             <th className="w-10 pl-4 py-3 text-left">
-              <input type="checkbox"
+              <CheckBox
+                id="check-all"
                 checked={selected.size === containers.length && containers.length > 0}
                 onChange={e => containers.forEach(c =>
                   e.target.checked
                     ? !selected.has(c.id) && onToggleSelect(c.id)
-                    : selected.has(c.id)  && onToggleSelect(c.id)
-                )}
-                className="w-3 h-3 cursor-pointer accent-white"
-              />
+                    : selected.has(c.id) && onToggleSelect(c.id)
+                )} />
             </th>
             {COLS.map(col => (
               <th key={col.key}
@@ -162,8 +161,7 @@ export default function ContainerTable({
 
                 {/* Checkbox */}
                 <td className="w-10 pl-4 py-3">
-                  <input type="checkbox" checked={isSel} onChange={() => onToggleSelect(c.id)}
-                    className="w-3 h-3 cursor-pointer accent-white" />
+                  <CheckBox id={`check-${c.id}`} checked={isSel} onChange={() => onToggleSelect(c.id)} />
                 </td>
 
                 {/* Name */}
@@ -177,14 +175,6 @@ export default function ContainerTable({
                     <span className="text-[13px] font-medium" style={{ color: '#ededed' }}>
                       {c.name}
                     </span>
-                    {hasCompose && (
-                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-mono"
-                        style={{ background: 'rgba(255,255,255,0.05)', color: '#777', border: '1px solid #222' }}
-                        title={`Compose: ${assoc.filename} / ${assoc.service_name}`}>
-                        <FileCode2 size={8} />
-                        compose
-                      </span>
-                    )}
                   </div>
                   <span className="text-[12px] font-mono" style={{ color: '#777' }}>{c.repository}</span>
                   <div className="text-[10px] font-mono mt-0.5" style={{ color: '#5a5a5a' }}>{c.short_id}</div>
@@ -201,7 +191,7 @@ export default function ContainerTable({
                       {c.tag}
                     </span>
                     {c.local_digest && (
-                      <span className="font-mono text-[9px]" style={{ color: '#5a5a5a' }}
+                      <span className="font-mono text-[11px] px-1.5 py-0.5" style={{ color: '#5a5a5a' }}
                         title={c.local_digest}>
                         {shortDigest(c.local_digest)}
                       </span>
@@ -265,3 +255,17 @@ export default function ContainerTable({
     </div>
   )
 }
+
+const CheckBox = ({ checked, onChange, id }) => (
+  <div class="inline-flex items-center">
+    <label class="flex items-center cursor-pointer relative">
+      <input type="checkbox" checked={checked} onChange={onChange}
+        class="peer h-3 w-3 cursor-pointer transition-all appearance-none rounded shadow hover:shadow-md border border-slate-300 checked:bg-blue-600 checked:border-blue-600" id={id} />
+      <span class="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" stroke-width="1">
+          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+        </svg>
+      </span>
+    </label>
+  </div>
+)
