@@ -3,15 +3,15 @@
 #  start.sh — DockRadar backend launcher (Linux / macOS / WSL)
 #
 #  Usage:
-#    chmod +x start.sh   (first time only)
-#    ./start.sh
+#    chmod +x scripts/start.sh   (first time only)
+#    ./scripts/start.sh
 #
 #  What it does:
 #    1. Creates a virtual environment in ./venv if one doesn't exist
 #    2. Activates it
-#    3. Installs / updates dependencies from requirements.txt
+#    3. Installs dependencies from backend/requirements.txt (only when changed)
 #    4. Copies .env.example → .env if no .env exists yet
-#    5. Starts server.py
+#    5. Starts the backend via: cd backend && python -m app.main
 # ─────────────────────────────────────────────────────────────
 
 set -e  # exit on any error
@@ -22,12 +22,15 @@ REQUIREMENTS="backend/requirements.txt"
 ENV_FILE=".env"
 ENV_EXAMPLE=".env.example"
 
+# Marker lives inside the venv folder at the project root — no path tricks needed
+MARKER="$VENV_DIR/.installed_marker"
+
 # ── Colours ──────────────────────────────────────────────────
 GREEN='\033[0;32m'
 CYAN='\033[0;36m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
-NC='\033[0m' # No Colour
+NC='\033[0m'
 
 info()    { echo -e "${CYAN}[DockRadar]${NC} $1"; }
 success() { echo -e "${GREEN}[DockRadar]${NC} $1"; }
@@ -54,13 +57,9 @@ fi
 # ── Activate ──────────────────────────────────────────────────
 # shellcheck disable=SC1091
 source "$VENV_DIR/bin/activate"
-
 success "Virtual environment activated."
 
 # ── Install / update dependencies (only when requirements.txt changed) ───────
-# Marker lives next to the venv (project root)
-MARKER="../$VENV_DIR/.installed_marker"
-
 needs_install=false
 if [ ! -f "$MARKER" ]; then
     needs_install=true
@@ -95,10 +94,9 @@ echo ""
 success "Starting DockRadar..."
 echo -e "  ${CYAN}API ${NC} → http://localhost:8080"
 echo -e "  ${CYAN}Docs${NC} → http://localhost:8080/docs"
-echo -e "  ${CYAN}UI  ${NC} → http://localhost:5173  (run: cd frontend && npm run dev)"
+echo -e "  ${CYAN}UI  ${NC} → http://localhost:5173  (run: cd frontend && yarn dev)"
 echo ""
 
-# Run as a module so Python resolves the app package correctly
-# Change into backend/ so the `app` package is importable
+# Change into backend/ so the `app` package is on Python's path
 cd backend
 exec python -m app.main
