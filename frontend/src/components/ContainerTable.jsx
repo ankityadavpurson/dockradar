@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { ArrowUpCircle, Trash2, ChevronUp, ChevronDown, ShieldCheck, Tag, FileCode2 } from 'lucide-react'
+import { ArrowUpCircle, ChevronDown, ChevronUp, FileCode2, ShieldCheck, Tag, Trash2 } from 'lucide-react'
+import { useState } from 'react'
 
 const STATUS_CFG = {
   up_to_date:       { label: 'Up to date',       color: '#50e3c2', bg: 'rgba(80,227,194,0.07)',  border: 'rgba(80,227,194,0.18)'  },
@@ -18,10 +18,9 @@ const DOCKER_DOT = {
 
 const COLS = [
   { key: 'name',          label: 'Container',     sortable: true  },
-  { key: 'repository',    label: 'Image',         sortable: true  },
   { key: 'tag',           label: 'Tag / Digest',  sortable: false },
-  { key: '_version',      label: 'Version Check', sortable: false },
-  { key: 'update_status', label: 'Status',        sortable: true  },
+  { key: 'digest',        label: '',              sortable: false },
+  { key: '_version',      label: 'Version',       sortable: false },
   { key: 'status',        label: 'Docker',        sortable: true  },
   { key: '_actions',      label: '',              sortable: false },
 ]
@@ -170,7 +169,14 @@ export default function ContainerTable({
                 {/* Name */}
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-[13px] font-medium" style={{ color: '#ededed' }}>{c.name}</span>
+                    <span
+                      className="w-2 h-2 rounded-full cursor-pointer"
+                      style={{ background: dot.bg, boxShadow: dot.shadow }}
+                      title={c.status}
+                    />
+                    <span className="text-[13px] font-medium" style={{ color: '#ededed' }}>
+                      {c.name}
+                    </span>
                     {hasCompose && (
                       <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-mono"
                         style={{ background: 'rgba(255,255,255,0.05)', color: '#777', border: '1px solid #222' }}
@@ -180,12 +186,8 @@ export default function ContainerTable({
                       </span>
                     )}
                   </div>
-                  <div className="text-[10px] font-mono mt-0.5" style={{ color: '#5a5a5a' }}>{c.short_id}</div>
-                </td>
-
-                {/* Image */}
-                <td className="px-4 py-3">
                   <span className="text-[12px] font-mono" style={{ color: '#777' }}>{c.repository}</span>
+                  <div className="text-[10px] font-mono mt-0.5" style={{ color: '#5a5a5a' }}>{c.short_id}</div>
                 </td>
 
                 {/* Tag + Digest */}
@@ -221,15 +223,6 @@ export default function ContainerTable({
                   </span>
                 </td>
 
-                {/* Docker status */}
-                <td className="px-4 py-3">
-                  <span className="inline-flex items-center gap-1.5 text-[12px] font-mono" style={{ color: '#777' }}>
-                    <span className="w-1.5 h-1.5 rounded-full"
-                      style={{ background: dot.bg, boxShadow: dot.shadow }} />
-                    {c.status}
-                  </span>
-                </td>
-
                 {/* Actions */}
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-1.5">
@@ -250,6 +243,11 @@ export default function ContainerTable({
                         </button>
                       )
                     )}
+                  </div>
+                </td>
+
+                {/* Actions */}
+                <td>
                     <button className="btn btn-ghost btn-xs" disabled={isBusy}
                       onClick={() => onConfirmDelete(c)}
                       title={`Remove ${c.name}`}
@@ -258,7 +256,6 @@ export default function ContainerTable({
                       onMouseLeave={e => e.currentTarget.style.color = '#5a5a5a'}>
                       <Trash2 size={10} />
                     </button>
-                  </div>
                 </td>
               </tr>
             )

@@ -11,10 +11,7 @@ export default function Header({ health, containers, scanStatus }) {
 
       {/* Logo */}
       <div className="flex items-center gap-2.5 shrink-0">
-        <div className="w-7 h-7 rounded-md flex items-center justify-center text-sm shrink-0"
-          style={{ background: '#fff', color: '#000' }}>
-          ▲
-        </div>
+        <img src="/favicon.svg" alt="Logo" className="w-8 h-8" />
         <span className="text-[15px] font-semibold tracking-tight text-white">
           DockRadar
         </span>
