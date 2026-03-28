@@ -12,7 +12,7 @@ export default {
       colors: {
         bg: {
           base:    '#000000',
-          surface: '#0a0a0a',
+          surface: 'rgba(0,0,0,0.5)',
           card:    '#111111',
           hover:   '#1a1a1a',
         },

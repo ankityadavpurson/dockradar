@@ -6,7 +6,7 @@ export default function InfoBar({ health }) {
 
   return (
     <div className="flex items-center gap-4 px-4 py-2 mb-4 text-[11px] font-mono rounded-md"
-      style={{ background: '#0a0a0a', border: '1px solid #1a1a1a', color: '#666' }}>
+      style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #1a1a1a', color: '#666' }}>
 
       <span className="flex items-center gap-1.5">
         <Clock size={11} style={{ color: '#606060' }} />

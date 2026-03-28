@@ -14,7 +14,7 @@ export default function ProgressLog({ messages, scanning, updating }) {
   return (
     <div className="mt-4 rounded-lg overflow-hidden" style={{ border: '1px solid #1a1a1a' }}>
       {/* Bar */}
-      <div className="flex items-center gap-2 px-4 py-2.5" style={{ background: '#0a0a0a', borderBottom: '1px solid #1a1a1a' }}>
+      <div className="flex items-center gap-2 px-4 py-2.5" style={{ background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid #1a1a1a' }}>
         <Terminal size={12} style={{ color: '#666' }} />
         <span className="text-[11px] font-mono uppercase tracking-wider" style={{ color: '#666' }}>
           {scanning ? 'Scanning…' : updating ? 'Updating…' : 'Log'}

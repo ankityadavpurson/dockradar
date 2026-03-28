@@ -74,7 +74,7 @@ function ServicePicker({ composeFiles, selectedFileId, selectedService, onChange
   const labels   = buildFileLabels(composeFiles)
 
   const sel = {
-    background: '#0a0a0a', border: S.border, color: '#888', borderRadius: '4px',
+    background: 'rgba(0,0,0,0.5)', border: S.border, color: '#888', borderRadius: '4px',
     padding: '4px 24px 4px 8px', fontSize: '11px', fontFamily: 'inherit',
     appearance: 'none', width: '100%', cursor: 'pointer',
   }
@@ -129,7 +129,7 @@ function FileEditor({ file, onSave, onCancel }) {
   return (
     <div className="flex flex-col gap-2" style={{ background: '#000', border: S.border, borderRadius: '6px', overflow: 'hidden' }}>
       {/* Editor toolbar */}
-      <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: S.border, background: '#0a0a0a' }}>
+      <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: S.border, background: 'rgba(0,0,0,0.5)' }}>
         <div className="flex items-center gap-2">
           <FileCode2 size={12} style={S.muted} />
           <span className="font-mono text-[11px]" style={S.label}>{file.filename}</span>
@@ -206,7 +206,7 @@ function DownloadPanel({ file, onClose }) {
 
   return (
     <div className="flex flex-col gap-3 p-4 rounded-lg"
-      style={{ background: '#0a0a0a', border: '1px solid #222' }}>
+      style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid #222' }}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CheckCircle2 size={13} style={{ color: '#50e3c2' }} />
@@ -385,11 +385,11 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
+      style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
       onClick={e => e.target === e.currentTarget && onClose()}>
 
       <div className="flex flex-col w-full max-w-2xl mx-4 rounded-xl overflow-hidden"
-        style={{ background: '#0a0a0a', border: S.border, maxHeight: '90vh' }}>
+        style={{ background: 'rgba(0,0,0,0.5)', border: S.border, maxHeight: '90vh' }}>
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: S.border }}>

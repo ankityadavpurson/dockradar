@@ -22,7 +22,7 @@ export default function Toast({ toast }) {
         color: '#ededed',
         fontSize: '13px',
         maxWidth: '360px',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
       }}>
       <Icon size={14} style={{ color: cfg.color, shrink: 0 }} />
       <span>{toast.msg}</span>

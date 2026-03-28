@@ -8,7 +8,7 @@ export default function ConfirmDialog({
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)' }}
+      style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)' }}
       onClick={e => e.target === e.currentTarget && onCancel()}>
 
       <div className="w-full max-w-sm mx-4 rounded-xl p-6 flex flex-col gap-5"

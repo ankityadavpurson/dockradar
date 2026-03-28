@@ -8,7 +8,7 @@ export default function Toolbar({
 }) {
   return (
     <div className="flex items-center gap-2 flex-wrap px-4 py-3 mb-4 rounded-lg"
-      style={{ background: '#0a0a0a', border: '1px solid #1a1a1a' }}>
+      style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #1a1a1a' }}>
 
       {/* Scan */}
       <button className="btn btn-primary btn-sm" onClick={onScan} disabled={isBusy}>

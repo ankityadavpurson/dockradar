@@ -88,7 +88,7 @@ function ComposeUpdateDialog({ container, onConfirm, onCancel }) {
   const overlay = {
     position: 'fixed', inset: 0, zIndex: 200,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(6px)',
+    background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(6px)',
   }
   const panel = {
     width: '100%', maxWidth: '660px', margin: '0 16px',
@@ -130,7 +130,7 @@ function ComposeUpdateDialog({ container, onConfirm, onCancel }) {
           {diff && !loading && (<>
 
             {/* Image change summary */}
-            <div style={{ background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '8px', overflow: 'hidden' }}>
+            <div style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid #1a1a1a', borderRadius: '8px', overflow: 'hidden' }}>
               <div style={{ padding: '8px 12px', borderBottom: '1px solid #1a1a1a', fontSize: '10px', color: '#444', textTransform: 'uppercase', letterSpacing: '0.1em', ...mono }}>
                 Image change
               </div>
@@ -156,7 +156,7 @@ function ComposeUpdateDialog({ container, onConfirm, onCancel }) {
             </div>
 
             {/* Compose file diff / editor */}
-            <div style={{ background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '8px', overflow: 'hidden' }}>
+            <div style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid #1a1a1a', borderRadius: '8px', overflow: 'hidden' }}>
               <div style={{ padding: '8px 12px', borderBottom: '1px solid #1a1a1a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '10px', color: '#444', textTransform: 'uppercase', letterSpacing: '0.1em', ...mono }}>
                   {showFull ? 'compose file (editable)' : 'file changes'}
@@ -246,7 +246,7 @@ export default function App() {
   ).length
 
   return (
-    <div className="min-h-screen" style={{ background: '#000' }}>
+    <div className="min-h-screen">
       {/* Header */}
       <Header
         health={health}
@@ -289,11 +289,11 @@ export default function App() {
         <div className="rounded-lg overflow-hidden"
           style={{ border: '1px solid #1a1a1a' }}>
           <div className="flex items-center justify-between px-4 py-3"
-            style={{ borderBottom: '1px solid #1a1a1a', background: '#0a0a0a' }}>
-            <span className="text-[11px] font-mono uppercase tracking-wider" style={{ color: '#444' }}>
+            style={{ borderBottom: '1px solid #1a1a1a', color: '#aaaaaa', background: 'rgba(0,0,0,0.3)' }}>
+            <span className="text-[11px] font-mono uppercase tracking-wider">
               Containers
             </span>
-            <span className="text-[11px] font-mono" style={{ color: '#333' }}>
+            <span className="text-[11px] font-mono">
               {visible.length} / {containers.length}
             </span>
           </div>
