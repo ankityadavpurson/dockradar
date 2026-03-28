@@ -1,31 +1,19 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────
-#  start.sh — DockRadar backend launcher (Linux / macOS / WSL)
-#
-#  Usage:
-#    chmod +x scripts/start.sh   (first time only)
-#    ./scripts/start.sh
-#
-#  What it does:
-#    1. Creates a virtual environment in ./venv if one doesn't exist
-#    2. Activates it
-#    3. Installs dependencies from backend/requirements.txt (only when changed)
-#    4. Copies .env.example → .env if no .env exists yet
-#    5. Starts the backend via: cd backend && python -m app.main
+#  start.sh — DockRadar launcher (Linux / macOS / WSL)
+#  Starts both the backend (FastAPI) and frontend (Vite dev server)
 # ─────────────────────────────────────────────────────────────
 
-set -e  # exit on any error
+set -e
 
 VENV_DIR="venv"
 PYTHON="python3"
 REQUIREMENTS="backend/requirements.txt"
 ENV_FILE=".env"
 ENV_EXAMPLE=".env.example"
-
-# Marker lives inside the venv folder at the project root — no path tricks needed
 MARKER="$VENV_DIR/.installed_marker"
+YARN_MARKER="frontend/node_modules/.yarn_installed_marker"
 
-# ── Colours ──────────────────────────────────────────────────
 GREEN='\033[0;32m'
 CYAN='\033[0;36m'
 YELLOW='\033[1;33m'
@@ -42,10 +30,16 @@ if ! command -v "$PYTHON" &>/dev/null; then
     error "Python 3 not found. Install it from https://www.python.org/"
 fi
 
-PYTHON_VERSION=$("$PYTHON" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
-info "Using Python $PYTHON_VERSION"
+# ── Check Yarn ────────────────────────────────────────────────
+if ! command -v yarn &>/dev/null; then
+    error "Yarn not found. Install it with: npm install -g yarn"
+fi
 
-# ── Create venv if needed ─────────────────────────────────────
+PYTHON_VERSION=$("$PYTHON" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+YARN_VERSION=$(yarn --version)
+info "Using Python $PYTHON_VERSION  |  Yarn $YARN_VERSION"
+
+# ── Python venv ───────────────────────────────────────────────
 if [ ! -d "$VENV_DIR" ]; then
     info "Creating virtual environment in ./$VENV_DIR ..."
     "$PYTHON" -m venv "$VENV_DIR"
@@ -54,12 +48,11 @@ else
     info "Virtual environment already exists — skipping creation."
 fi
 
-# ── Activate ──────────────────────────────────────────────────
 # shellcheck disable=SC1091
 source "$VENV_DIR/bin/activate"
 success "Virtual environment activated."
 
-# ── Install / update dependencies (only when requirements.txt changed) ───────
+# ── Python dependencies ───────────────────────────────────────
 needs_install=false
 if [ ! -f "$MARKER" ]; then
     needs_install=true
@@ -68,35 +61,68 @@ elif [ "$REQUIREMENTS" -nt "$MARKER" ]; then
 fi
 
 if [ "$needs_install" = true ]; then
-    info "Installing dependencies from $REQUIREMENTS ..."
+    info "Installing Python dependencies..."
     pip install --quiet --upgrade pip
     pip install --quiet -r "$REQUIREMENTS"
     touch "$MARKER"
-    success "Dependencies installed."
+    success "Python dependencies installed."
 else
-    info "Dependencies are up to date — skipping install."
+    info "Python dependencies up to date — skipping."
 fi
 
-# ── Create .env if missing ────────────────────────────────────
+# ── Frontend dependencies (yarn) ──────────────────────────────
+# Re-install if node_modules is missing or yarn.lock is newer than the marker
+needs_yarn=false
+if [ ! -d "frontend/node_modules" ]; then
+    needs_yarn=true
+elif [ ! -f "$YARN_MARKER" ]; then
+    needs_yarn=true
+elif [ "frontend/yarn.lock" -nt "$YARN_MARKER" ] || [ "frontend/package.json" -nt "$YARN_MARKER" ]; then
+    needs_yarn=true
+fi
+
+if [ "$needs_yarn" = true ]; then
+    info "Installing frontend dependencies with Yarn..."
+    (cd frontend && yarn install --silent)
+    touch "$YARN_MARKER"
+    success "Frontend dependencies installed."
+else
+    info "Frontend dependencies up to date — skipping."
+fi
+
+# ── .env ──────────────────────────────────────────────────────
 if [ ! -f "$ENV_FILE" ]; then
     if [ -f "$ENV_EXAMPLE" ]; then
         cp "$ENV_EXAMPLE" "$ENV_FILE"
-        warn ".env not found — created from .env.example. Please review it before continuing."
-        warn "Edit .env now if needed, then re-run this script."
+        warn ".env created from .env.example — review it and re-run."
         exit 0
     else
-        warn ".env not found and no .env.example to copy from. Proceeding without it."
+        warn ".env not found — proceeding without it."
     fi
 fi
 
-# ── Start server ──────────────────────────────────────────────
+# ── Cleanup on exit ───────────────────────────────────────────
+cleanup() {
+    echo ""
+    info "Shutting down..."
+    kill "$BACKEND_PID" "$FRONTEND_PID" 2>/dev/null
+    wait "$BACKEND_PID" "$FRONTEND_PID" 2>/dev/null
+    success "Stopped."
+}
+trap cleanup EXIT INT TERM
+
+# ── Start both servers ────────────────────────────────────────
 echo ""
 success "Starting DockRadar..."
-echo -e "  ${CYAN}API ${NC} → http://localhost:8080"
-echo -e "  ${CYAN}Docs${NC} → http://localhost:8080/docs"
-echo -e "  ${CYAN}UI  ${NC} → http://localhost:5173  (run: cd frontend && yarn dev)"
+echo -e "  ${CYAN}Backend ${NC} → http://localhost:8080"
+echo -e "  ${CYAN}Docs    ${NC} → http://localhost:8080/docs"
+echo -e "  ${CYAN}Frontend${NC} → http://localhost:5173"
 echo ""
 
-# Change into backend/ so the `app` package is on Python's path
-cd backend
-exec python -m app.main
+(cd backend && python -m app.main) &
+BACKEND_PID=$!
+
+(cd frontend && yarn dev --host 0.0.0.0) &
+FRONTEND_PID=$!
+
+wait "$BACKEND_PID" "$FRONTEND_PID"
