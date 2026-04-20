@@ -1,4 +1,5 @@
 import React from 'react'
+import favicon from '../../public/favicon.svg'
 
 export default function Header({ health, containers, scanStatus }) {
   const total = containers.length
@@ -13,7 +14,7 @@ export default function Header({ health, containers, scanStatus }) {
 
       {/* Logo */}
       <div className="flex items-center gap-2.5 shrink-0">
-        <img src="/favicon.svg" alt="Logo" className="w-8 h-8" />
+        <img src={favicon} alt="Logo" className="w-8 h-8" />
         <span className="text-[15px] font-semibold tracking-tight text-white">
           DockRadar
         </span>
