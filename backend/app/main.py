@@ -95,15 +95,16 @@ if DIST.exists():
         index = DIST / "index.html"
         if index.exists():
             return FileResponse(index)
-        return {"error": "Frontend not built. Run: cd frontend && npm run build"}
+        return {"error": "Frontend not built. Run: cd frontend && yarn build"}
 else:
     @app.get("/", include_in_schema=False)
     async def root():
         return {
             "message": "DockRadar API is running.",
             "docs": "/docs",
-            "frontend": "Run `cd frontend && npm install && npm run dev` for the UI.",
+            "frontend": "Run `cd frontend && yarn install && yarn dev` for the UI.",
         }
+
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,15 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend/compose_files:/app/backend/compose_files
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8080
+      DOCKER_HOST: unix:///var/run/docker.sock
+    ports:
+      - "5173:8080"
+    restart: unless-stopped
