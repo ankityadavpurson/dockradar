@@ -8,8 +8,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       HOST: 0.0.0.0
-      PORT: 8080
+      PORT: 8086
       DOCKER_HOST: unix:///var/run/docker.sock
     ports:
-      - "5173:8080"
+      - "8086:8086"
     restart: unless-stopped

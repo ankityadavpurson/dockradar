@@ -19,5 +19,5 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 COPY backend/ /app/backend/
 COPY --from=frontend-build /app/frontend/dist /app/frontend/dist
 
-EXPOSE 8080
+EXPOSE 8086
 CMD ["python", "-m", "app.main"]
