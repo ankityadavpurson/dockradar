@@ -1,6 +1,6 @@
-# 🐳 DockRadar v2
+# 🐳 DockRadar
 
-[![CI](https://img.shields.io/badge/CI-not%20configured-lightgrey)](#)
+[![CI](https://img.shields.io/badge/github-CI-blue?logo=github)](https://github.com/ankityadavpurson/dockradar/actions/workflows/docker-publish.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](https://www.python.org/)
 [![React](https://img.shields.io/badge/React-18-61dafb)](https://react.dev/)
@@ -224,7 +224,7 @@ DockRadar fetches the tag list from Docker Hub and compares it to the tag your c
 
 ### Step 2 — Digest comparison (tags are identical)
 
-If the tags match, DockRadar fetches the remote manifest digest via the Docker Registry v2 API and compares it to the digest of your locally running image. This catches cases where an image is silently rebuilt and re-pushed under the same tag — most common with `latest`.
+If the tags match, DockRadar fetches the remote manifest digest via the Docker Registry API and compares it to the digest of your locally running image. This catches cases where an image is silently rebuilt and re-pushed under the same tag — most common with `latest`.
 
 ```
 Tag changed?  →  update_available  (done, skip digest)
