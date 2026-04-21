@@ -168,7 +168,6 @@ Most important values:
 - `EMAIL_FROM`, `EMAIL_TO`
 - `HOST`, `PORT`
 - `REGISTRY_CACHE_TTL`
-- `HIDDEN_REPOSITORY`
 
 ## Security Notice
 

@@ -27,7 +27,6 @@ class Config:
     HOST: str     = os.getenv("HOST", "0.0.0.0")
     PORT: int     = int(os.getenv("PORT", "8080"))
     LOG_FILE: str = os.getenv("LOG_FILE", "dockradar.log")
-    HIDDEN_REPOSITORY: str = os.getenv("HIDDEN_REPOSITORY", "dockradar-v2-app").strip().lower()
 
     # Docker
     DOCKER_SOCKET: str = os.getenv("DOCKER_SOCKET", "unix://var/run/docker.sock")

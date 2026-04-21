@@ -195,14 +195,7 @@ def list_containers():
     """
     if not api_state.containers:
         api_state.containers = docker_svc.get_all_containers()
-
-    # Hide DockRadar's own image from the dashboard container list.
-    hidden_repository = config.HIDDEN_REPOSITORY
-    filtered = [
-        c for c in api_state.containers
-        if not hidden_repository or c.repository.lower() != hidden_repository
-    ]
-    return [ContainerOut.from_info(c) for c in filtered]
+    return [ContainerOut.from_info(c) for c in api_state.containers]
 
 
 # ── GET /api/containers/{name} ───────────────────────────────────────────────
