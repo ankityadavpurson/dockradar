@@ -1,6 +1,6 @@
 # 🐳 DockRadar v2
 
-[![CI](https://github.com/YOUR_USERNAME/dockradar/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/dockradar/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/badge/CI-not%20configured-lightgrey)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](https://www.python.org/)
 [![React](https://img.shields.io/badge/React-18-61dafb)](https://react.dev/)
