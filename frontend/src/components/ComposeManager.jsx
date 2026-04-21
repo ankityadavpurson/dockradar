@@ -71,7 +71,10 @@ function buildFileLabels(composeFiles) {
 function ServicePicker({ composeFiles, selectedFileId, selectedService, onChange }) {
   const file     = composeFiles.find(f => f.file_id === selectedFileId)
   const services = file?.services || []
-  const labels   = buildFileLabels(composeFiles)
+  const serviceLabel = (f) => {
+    if (!Array.isArray(f.services) || f.services.length === 0) return 'No services'
+    return f.services.join(', ')
+  }
 
   const sel = {
     background: 'rgba(0,0,0,0.5)', border: S.border, color: '#888', borderRadius: '4px',
@@ -83,16 +86,16 @@ function ServicePicker({ composeFiles, selectedFileId, selectedService, onChange
     <div className="flex gap-2">
       <div className="relative flex-1">
         <select value={selectedFileId} onChange={e => onChange(e.target.value, '')} style={sel}>
-          <option value="">— file —</option>
-          {composeFiles.map(f => <option key={f.file_id} value={f.file_id}>{labels[f.file_id]}</option>)}
+          <option value="" className='bg-black'>— file —</option>
+          {composeFiles.map(f => <option key={f.file_id} value={f.file_id} className='bg-black'>{serviceLabel(f)}</option>)}
         </select>
         <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={S.muted} />
       </div>
       <div className="relative flex-1">
         <select value={selectedService} onChange={e => onChange(selectedFileId, e.target.value)}
           disabled={!selectedFileId} style={{ ...sel, opacity: selectedFileId ? 1 : 0.4 }}>
-          <option value="">— service —</option>
-          {services.map(s => <option key={s} value={s}>{s}</option>)}
+          <option value="" className='bg-black'>— service —</option>
+          {services.map(s => <option key={s} value={s} className='bg-black'>{s}</option>)}
         </select>
         <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={S.muted} />
       </div>

@@ -143,9 +143,9 @@ class ComposeService:
         """
         Save a new compose file to disk and register it.
 
-        Each upload gets a unique file_id based on a millisecond timestamp so
-        that two files with the same name (e.g. docker-compose.yml from different
-        projects) can coexist. The original filename is preserved in metadata.json.
+        Each upload gets a file_id based on compose service names + a timestamp,
+        e.g. "web_db_1776793871", so stored files are easier to identify.
+        The original upload filename is still preserved in metadata.json.
 
         Returns the ComposeFile object.
         """
@@ -157,10 +157,23 @@ class ComposeService:
         except yaml.YAMLError as exc:
             raise ValueError(f"Invalid YAML: {exc}") from exc
 
-        # Unique file_id: timestamp + sanitised stem, e.g. "1710000000_docker-compose"
-        safe_stem = Path(filename).stem.replace(" ", "_").replace("/", "_")
-        file_id   = f"{int(time.time())}_{safe_stem}"
+        # file_id format: <service_a>_<service_b>_<timestamp>
+        # (service names sanitized for filesystem safety)
+        services = parsed.get("services", {})
+        service_tokens = [
+            str(name).strip().replace(" ", "_").replace("/", "_")
+            for name in services.keys()
+            if str(name).strip()
+        ]
+        service_prefix = "_".join(service_tokens) if service_tokens else "compose"
+        base_file_id = f"{service_prefix}_{int(time.time())}"
+        file_id = base_file_id
         dest_path = COMPOSE_STORE_DIR / f"{file_id}.yml"
+        suffix = 1
+        while dest_path.exists() or file_id in self._files:
+            file_id = f"{base_file_id}_{suffix}"
+            dest_path = COMPOSE_STORE_DIR / f"{file_id}.yml"
+            suffix += 1
 
         dest_path.write_text(content, encoding="utf-8")
 
