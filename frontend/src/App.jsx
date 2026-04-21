@@ -10,7 +10,7 @@ import Toast from './components/Toast'
 import Toolbar from './components/Toolbar'
 import { useContainers } from './hooks/useContainers'
 
-export default function App() {
+const App = () => {
   const {
     containers, scanStatus, health,
     selected, loading, isBusy, error, toast,
@@ -192,3 +192,5 @@ Original configuration (ports, volumes, env vars, restart policy) will be preser
     </div>
   )
 }
+
+export default App
