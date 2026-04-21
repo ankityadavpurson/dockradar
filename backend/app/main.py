@@ -42,7 +42,7 @@ async def lifespan(app: FastAPI):
     logger.info("  DockRadar v%s", __version__)
     logger.info("  API  : http://%s:%d/api", config.HOST, config.PORT)
     logger.info("  Docs : http://%s:%d/docs", config.HOST, config.PORT)
-    logger.info("  UI   : http://localhost:5173  (npm run dev)")
+    logger.info("  UI   : http://%s:%d", config.HOST, config.PORT)
     logger.info("=" * 60)
     scheduler_svc.start(_do_scan)
     yield
