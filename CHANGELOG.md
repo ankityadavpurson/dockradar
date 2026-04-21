@@ -7,6 +7,19 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [Unreleased]
+
+### Changed
+- Refreshed repository documentation for public release readiness.
+- Updated `README.md` to match current startup scripts, module entrypoint, and runtime modes.
+- Updated `CONTRIBUTING.md` to reflect actual folder structure and workflow.
+- Reworked `SECURITY.md` disclosure guidance and deployment warnings.
+
+### Added
+- `SUPPORT.md` with support channels and expected response model.
+- GitHub issue templates for bug reports and feature requests.
+- Pull request template for standardized review context.
+
 ## [2.0.0] — 2025
 
 ### Added
@@ -24,7 +37,7 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Select All / None / individual row checkboxes for bulk updates
 
 ### Changed
-- Entry point renamed from `app.py` to `server.py`
+- Entry point moved to `backend/app/main.py` (run with `python -m app.main` from `backend/`)
 - `requirements.txt` updated: removed `nicegui`, added `uvicorn`, `paramiko`
 - `.gitignore` expanded to cover `frontend/node_modules`, `frontend/dist`, and all `.env.*` variants
 

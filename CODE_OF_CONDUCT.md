@@ -34,7 +34,7 @@ This Code of Conduct applies within all project spaces, and also applies when an
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by opening a GitHub issue or contacting the maintainers directly via the email listed in `SECURITY.md`. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting maintainers through repository discussions or maintainers' contact methods documented in repository policies. All complaints will be reviewed and investigated promptly and fairly.
 
 ## Attribution
 
