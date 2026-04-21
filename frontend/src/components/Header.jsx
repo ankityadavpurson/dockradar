@@ -1,5 +1,5 @@
 import React from 'react'
-import favicon from '/favicon.svg'
+import favicon from '../../assets/favicon.svg'
 
 export default function Header({ health, containers, scanStatus }) {
   const total = containers.length
