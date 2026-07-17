@@ -6,7 +6,7 @@ Implements a TTL-based in-memory cache to reduce API calls.
 
 import logging
 import time
-from typing import Optional
+from typing import Any, Optional
 
 import re
 import requests
@@ -32,20 +32,24 @@ class RegistryCache:
     """Simple TTL cache for registry results."""
 
     def __init__(self, ttl: int = 300):
-        self._store: dict[str, tuple[float, any]] = {}
+        self._store: dict[str, tuple[float, Any]] = {}
         self._ttl = ttl
 
-    def get(self, key: str) -> Optional[any]:
+    def get(self, key: str) -> Optional[Any]:
         entry = self._store.get(key)
         if entry and (time.time() - entry[0]) < self._ttl:
             return entry[1]
         return None
 
-    def set(self, key: str, value: any):
+    def set(self, key: str, value: Any):
         self._store[key] = (time.time(), value)
 
     def invalidate(self, key: str):
         self._store.pop(key, None)
+
+    def invalidate_prefix(self, prefix: str):
+        for key in [k for k in self._store if k.startswith(prefix)]:
+            self._store.pop(key, None)
 
     def clear(self):
         self._store.clear()
@@ -243,6 +247,17 @@ class RegistryService:
             latest_tag = self._find_latest_semver(tags, current_tag)
 
             if latest_tag != current_tag:
+                # When the "newer" tag is `latest` and we know our local
+                # digest, compare digests first — a pinned version tag often
+                # points at exactly the same image as `latest`.
+                if latest_tag == "latest" and local_digest:
+                    remote_digest = self._get_remote_digest_v2(registry, name, "latest")
+                    if remote_digest and remote_digest == local_digest:
+                        logger.info(
+                            "%s/%s: %s matches latest digest — up to date",
+                            registry, name, current_tag,
+                        )
+                        return current_tag, "up_to_date"
                 return latest_tag, "update_available"
 
             # ── Step 2: Digest comparison (tags are identical) ────────────────
@@ -401,11 +416,10 @@ class RegistryService:
         latest = max(semver_tags, key=version_key)
         return latest
 
-    def invalidate_cache(self, repository: str = None):
-        """Invalidate cache for a specific repository or all entries."""
+    def invalidate_cache(self, repository: Optional[str] = None):
+        """Invalidate all cached tags for a repository, or all entries."""
         if repository:
-            for tag in ("latest", "main", "stable"):
-                self._cache.invalidate(f"{repository}:{tag}")
+            self._cache.invalidate_prefix(f"{repository}:")
         else:
             self._cache.clear()
             logger.info("Registry cache cleared.")

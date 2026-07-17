@@ -16,8 +16,9 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
-# Directory where uploaded compose files are stored (relative to project root)
-COMPOSE_STORE_DIR = Path("compose_files")
+# Directory where uploaded compose files are stored — anchored to backend/
+# so the location doesn't depend on the process working directory.
+COMPOSE_STORE_DIR = Path(__file__).resolve().parents[2] / "compose_files"
 ASSOCIATIONS_FILE = COMPOSE_STORE_DIR / "associations.json"
 METADATA_FILE     = COMPOSE_STORE_DIR / "metadata.json"   # file_id → original filename
 

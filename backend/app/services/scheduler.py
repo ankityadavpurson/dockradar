@@ -59,11 +59,11 @@ class SchedulerService:
         logger.info("Scan interval updated to %d hour(s).", hours)
 
     def get_next_run(self) -> Optional[str]:
-        """Return the next scheduled run time as a formatted string."""
+        """Return the next scheduled run time as an ISO-8601 string."""
         try:
             job = self._scheduler.get_job(JOB_ID)
             if job and job.next_run_time:
-                return job.next_run_time.strftime("%Y-%m-%d %H:%M:%S")
+                return job.next_run_time.isoformat()
         except Exception:
             pass
         return None

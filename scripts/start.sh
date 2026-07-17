@@ -114,8 +114,8 @@ trap cleanup EXIT INT TERM
 # ── Start both servers ────────────────────────────────────────
 echo ""
 success "Starting DockRadar..."
-echo -e "  ${CYAN}Backend ${NC} → http://localhost:8080"
-echo -e "  ${CYAN}Docs    ${NC} → http://localhost:8080/docs"
+echo -e "  ${CYAN}Backend ${NC} → http://localhost:8086"
+echo -e "  ${CYAN}Docs    ${NC} → http://localhost:8086/docs"
 echo -e "  ${CYAN}Frontend${NC} → http://localhost:5173"
 echo ""
 

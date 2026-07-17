@@ -4,23 +4,23 @@ DockRadar - Application Entry Point
 Run from the backend/ directory:
     python -m app.main
     # or
-    uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload
+    uvicorn app.main:app --host 0.0.0.0 --port 8086 --reload
 
-API docs: http://localhost:8080/docs
+API docs: http://localhost:8086/docs
 Frontend: http://localhost:5173  (Vite dev server)
-          http://localhost:8080  (production build served from frontend/dist)
+          http://localhost:8086  (production build served from frontend/dist)
 """
 
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routes import router as api_router, scheduler_svc, _do_scan
+from app.api.routes import router as api_router, scheduler_svc, _scheduled_scan
 from app.core.config import config
 from app.core.logging import setup_logging
 
@@ -44,7 +44,7 @@ async def lifespan(app: FastAPI):
     logger.info("  Docs : http://%s:%d/docs", config.HOST, config.PORT)
     logger.info("  UI   : http://%s:%d", config.HOST, config.PORT)
     logger.info("=" * 60)
-    scheduler_svc.start(_do_scan)
+    scheduler_svc.start(_scheduled_scan)
     yield
     scheduler_svc.stop()
 
@@ -64,14 +64,36 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "http://localhost:8080",
+        "http://localhost:8086",
         "http://127.0.0.1:5173",
-        "http://127.0.0.1:8080",
+        "http://127.0.0.1:8086",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ---------------------------------------------------------------------------
+# Optional API-key protection (set API_KEY in the environment to enable).
+# /api/health stays open so the UI can report status before a key is entered.
+# ---------------------------------------------------------------------------
+
+@app.middleware("http")
+async def api_key_guard(request: Request, call_next):
+    if (
+        config.API_KEY
+        and request.method != "OPTIONS"
+        and request.url.path.startswith("/api/")
+        and request.url.path != "/api/health"
+        and request.headers.get("X-Api-Key") != config.API_KEY
+    ):
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "Invalid or missing API key (X-Api-Key header)."},
+        )
+    return await call_next(request)
+
 
 app.include_router(api_router)
 

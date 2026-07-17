@@ -135,19 +135,24 @@ class DockerService:
 
     @staticmethod
     def _split_image(image_str: str) -> tuple[str, str]:
-        """Split 'repo:tag' into (repo, tag). Defaults tag to 'latest'."""
+        """Split an image reference into (repository, tag).
+
+        Handles 'repo:tag', digest-pinned 'repo@sha256:...', combined
+        'repo:tag@sha256:...', and registry hosts with ports. When only a
+        digest is present the digest is returned as the tag so the caller
+        can recognise (and skip) digest-pinned containers.
+        """
+        default_tag = "latest"
+        if "@" in image_str:
+            image_str, digest = image_str.split("@", 1)
+            default_tag = digest
         if ":" in image_str.split("/")[-1]:
-            parts = image_str.rsplit(":", 1)
-            return parts[0], parts[1]
-        return image_str, "latest"
+            repo, tag = image_str.rsplit(":", 1)
+            return repo, tag
+        return image_str, default_tag
 
     def pull_image(self, repository: str, tag: str) -> bool:
-        """Pull the latest image from the registry.
-
-        After pulling, removes the old image with the same tag from the local
-        cache so that recreate_container is forced to use the freshly pulled
-        layers rather than a stale cached version.
-        """
+        """Pull an image tag from its registry. Returns True on success."""
         if not self.client:
             return False
         try:

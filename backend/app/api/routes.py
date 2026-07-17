@@ -16,12 +16,15 @@ GET  /api/health                Health check — Docker connectivity + scheduler
 """
 
 import logging
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, File
 from pydantic import BaseModel
 
 from app.services.docker import DockerService, ContainerInfo
+from app.services.email import EmailService
 from app.services.registry import RegistryService
 from app.services.update import UpdateService
 from app.services.scheduler import SchedulerService
@@ -40,16 +43,38 @@ registry_svc  = RegistryService()
 update_svc    = UpdateService(docker_svc)
 compose_svc   = ComposeService()
 scheduler_svc = SchedulerService()
+email_svc     = EmailService()
 
 # ---------------------------------------------------------------------------
 # In-memory task state  (shared with dashboard via api_state import)
 # ---------------------------------------------------------------------------
 
 class ApiState:
-    scanning:  bool = False
-    updating:  bool = False
-    progress:  list[str] = []
-    containers: list[ContainerInfo] = []
+    """Shared scan/update state.
+
+    The busy flags must only be claimed via try_begin() and released via
+    end() — workers run in threads, and a bare check-then-set would let a
+    scan and an update start concurrently.
+    """
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self.scanning:   bool = False
+        self.updating:   bool = False
+        self.progress:   list[str] = []
+        self.containers: list[ContainerInfo] = []
+
+    def try_begin(self, kind: str) -> bool:
+        """Atomically claim the 'scanning' or 'updating' flag. False if busy."""
+        with self._lock:
+            if self.scanning or self.updating:
+                return False
+            setattr(self, kind, True)
+            return True
+
+    def end(self, kind: str):
+        with self._lock:
+            setattr(self, kind, False)
 
 api_state = ApiState()
 
@@ -124,43 +149,112 @@ class AssociationOut(BaseModel):
 # ---------------------------------------------------------------------------
 
 def _do_scan():
-    """Blocking scan — run in a thread via BackgroundTasks."""
-    logger.info("[API] Scan triggered via API.")
-    api_state.scanning = True
+    """Blocking scan worker — the caller must have claimed the 'scanning'
+    flag via api_state.try_begin('scanning') before scheduling this."""
+    try:
+        _scan_work()
+    finally:
+        api_state.end("scanning")
+
+
+def _scheduled_scan():
+    """Entry point for the APScheduler job — skips if a scan/update is busy."""
+    if not api_state.try_begin("scanning"):
+        logger.info("Skipping scheduled scan — a scan or update is already running.")
+        return
+    _do_scan()
+
+
+def _scan_work():
+    logger.info("[API] Scan started.")
     api_state.progress.clear()
     api_state.progress.append("🔍 Discovering containers...")
 
     containers = docker_svc.get_all_containers()
     api_state.progress.append(f"📦 Found {len(containers)} containers. Checking registries...")
 
-    for i, c in enumerate(containers):
-        api_state.progress.append(
-            f"  [{i+1}/{len(containers)}] Checking {c.name} ({c.image_name})..."
+    def check(c: ContainerInfo):
+        if c.tag.startswith("sha256:"):
+            # Digest-pinned container — there is no tag to compare against.
+            c.latest_tag, c.update_status = None, "unknown"
+            return
+        c.latest_tag, c.update_status = registry_svc.get_latest_tag(
+            c.repository, c.tag, c.local_digest
         )
-        latest_tag, update_status = registry_svc.get_latest_tag(c.repository, c.tag, c.local_digest)
-        c.latest_tag    = latest_tag
-        c.update_status = update_status
+
+    done = 0
+    if containers:
+        with ThreadPoolExecutor(max_workers=min(8, len(containers))) as pool:
+            futures = {pool.submit(check, c): c for c in containers}
+            for fut in as_completed(futures):
+                c = futures[fut]
+                done += 1
+                try:
+                    fut.result()
+                    api_state.progress.append(
+                        f"  [{done}/{len(containers)}] {c.name}: {c.update_status.replace('_', ' ')}"
+                    )
+                except Exception as exc:
+                    c.update_status = "error"
+                    api_state.progress.append(
+                        f"  [{done}/{len(containers)}] {c.name}: check failed ({exc})"
+                    )
 
     api_state.containers = containers
-    api_state.scanning   = False
-    outdated = sum(1 for c in containers if c.update_status == "update_available")
+    outdated_infos = [c for c in containers if c.update_status == "update_available"]
     api_state.progress.append(
-        f"✅ Scan complete — {len(containers)} containers, {outdated} update(s) available."
+        f"✅ Scan complete — {len(containers)} containers, {len(outdated_infos)} update(s) available."
     )
-    logger.info("[API] Scan complete: %d containers, %d updates.", len(containers), outdated)
+    logger.info("[API] Scan complete: %d containers, %d updates.", len(containers), len(outdated_infos))
+    _maybe_notify(outdated_infos)
+
+
+# Updates already announced by email, as "name:latest_tag" keys.
+_notified_updates: set[str] = set()
+
+
+def _maybe_notify(outdated: list[ContainerInfo]):
+    """Send an email when a scan finds updates not previously announced."""
+    global _notified_updates
+    current = {f"{c.name}:{c.latest_tag}" for c in outdated}
+    new_updates = current - _notified_updates
+    if not new_updates:
+        _notified_updates = current  # prune entries that were updated/removed
+        return
+    if not config.email_configured():
+        return
+    payload = [
+        {
+            "container_name": c.name,
+            "image_name": c.image_name,
+            "current_tag": c.tag,
+            "latest_tag": c.latest_tag or "unknown",
+        }
+        for c in outdated
+    ]
+    if email_svc.send_update_notification(payload):
+        _notified_updates = current
 
 
 def _do_update(containers: list[ContainerInfo]):
-    """Blocking update — run in a thread via BackgroundTasks."""
-    api_state.updating = True
-    api_state.progress.clear()
+    """Blocking update worker — the caller must have claimed the 'updating'
+    flag via api_state.try_begin('updating') before scheduling this."""
+    try:
+        api_state.progress.clear()
 
-    def cb(name: str, msg: str):
-        api_state.progress.append(f"[{name}] {msg}")
+        def cb(name: str, msg: str):
+            api_state.progress.append(f"[{name}] {msg}")
 
-    update_svc.update_multiple(containers, progress_cb=cb)
-    api_state.updating = False
-    _do_scan()
+        update_svc.update_multiple(containers, progress_cb=cb)
+        # Drop stale registry cache entries so the follow-up scan reflects
+        # the freshly pulled images instead of pre-update results.
+        for c in containers:
+            registry_svc.invalidate_cache(c.repository)
+    finally:
+        api_state.end("updating")
+
+    if api_state.try_begin("scanning"):
+        _do_scan()
 
 
 # ---------------------------------------------------------------------------
@@ -168,6 +262,8 @@ def _do_update(containers: list[ContainerInfo]):
 # ---------------------------------------------------------------------------
 
 router = APIRouter(prefix="/api", tags=["DockRadar API"])
+
+MAX_COMPOSE_FILE_SIZE = 1024 * 1024  # 1 MiB
 
 
 # ── GET /api/health ──────────────────────────────────────────────────────────
@@ -225,10 +321,8 @@ def trigger_scan(background_tasks: BackgroundTasks):
     Start a background scan of all containers against their registries.
     Returns immediately — poll GET /api/scan/status for progress.
     """
-    if api_state.scanning:
-        raise HTTPException(status_code=409, detail="A scan is already in progress.")
-    if api_state.updating:
-        raise HTTPException(status_code=409, detail="An update is in progress. Wait for it to finish.")
+    if not api_state.try_begin("scanning"):
+        raise HTTPException(status_code=409, detail="A scan or update is already in progress.")
 
     background_tasks.add_task(_do_scan)
     return {"message": "Scan started.", "poll": "/api/scan/status"}
@@ -262,39 +356,44 @@ def update_container(name: str):
     Synchronously pull + recreate a single container.
     Blocks until the update is complete and returns the result.
     """
-    if api_state.scanning or api_state.updating:
+    if not api_state.try_begin("updating"):
         raise HTTPException(status_code=409, detail="A scan or update is already running.")
 
-    # Find in cache or live
-    container: Optional[ContainerInfo] = None
-    for c in api_state.containers:
-        if c.name == name:
-            container = c
-            break
-
-    if container is None:
-        live = docker_svc.get_all_containers()
-        for c in live:
+    try:
+        # Find in cache or live
+        container: Optional[ContainerInfo] = None
+        for c in api_state.containers:
             if c.name == name:
                 container = c
                 break
 
-    if container is None:
-        raise HTTPException(status_code=404, detail=f"Container '{name}' not found.")
+        if container is None:
+            live = docker_svc.get_all_containers()
+            for c in live:
+                if c.name == name:
+                    container = c
+                    break
 
-    # Check registry for latest tag if not already done
-    if not container.latest_tag or container.latest_tag == "unknown":
-        latest_tag, update_status = registry_svc.get_latest_tag(container.repository, container.tag, container.local_digest)
-        container.latest_tag    = latest_tag
-        container.update_status = update_status
+        if container is None:
+            raise HTTPException(status_code=404, detail=f"Container '{name}' not found.")
 
-    messages: list[str] = []
+        # Check registry for latest tag if not already done
+        if not container.latest_tag or container.latest_tag == "unknown":
+            latest_tag, update_status = registry_svc.get_latest_tag(container.repository, container.tag, container.local_digest)
+            container.latest_tag    = latest_tag
+            container.update_status = update_status
 
-    def progress(msg: str):
-        messages.append(msg)
-        logger.info("[API] [%s] %s", name, msg)
+        messages: list[str] = []
 
-    result = update_svc.update_container(container, progress_cb=progress)
+        def progress(msg: str):
+            messages.append(msg)
+            logger.info("[API] [%s] %s", name, msg)
+
+        result = update_svc.update_container(container, progress_cb=progress)
+        if result.success:
+            registry_svc.invalidate_cache(container.repository)
+    finally:
+        api_state.end("updating")
 
     return UpdateResultOut(
         container=result.container_name,
@@ -312,21 +411,25 @@ def update_selected(body: UpdateRequest, background_tasks: BackgroundTasks):
     Start a background update for the given container names.
     Returns immediately — poll GET /api/scan/status for progress.
     """
-    if api_state.scanning or api_state.updating:
+    if not api_state.try_begin("updating"):
         raise HTTPException(status_code=409, detail="A scan or update is already running.")
 
-    name_set = set(body.names)
-    targets = [c for c in api_state.containers if c.name in name_set]
+    try:
+        name_set = set(body.names)
+        targets = [c for c in api_state.containers if c.name in name_set]
 
-    missing = name_set - {c.name for c in targets}
-    if missing:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Containers not found in last scan: {sorted(missing)}. Run /api/scan first.",
-        )
+        missing = name_set - {c.name for c in targets}
+        if missing:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Containers not found in last scan: {sorted(missing)}. Run /api/scan first.",
+            )
 
-    if not targets:
-        raise HTTPException(status_code=400, detail="No valid containers specified.")
+        if not targets:
+            raise HTTPException(status_code=400, detail="No valid containers specified.")
+    except HTTPException:
+        api_state.end("updating")
+        raise
 
     background_tasks.add_task(_do_update, targets)
     return {
@@ -344,12 +447,13 @@ def update_all_outdated(background_tasks: BackgroundTasks):
     Start a background update for every container with update_status == 'update_available'.
     Run /api/scan first to populate the list.
     """
-    if api_state.scanning or api_state.updating:
+    if not api_state.try_begin("updating"):
         raise HTTPException(status_code=409, detail="A scan or update is already running.")
 
     targets = [c for c in api_state.containers if c.update_status == "update_available"]
 
     if not targets:
+        api_state.end("updating")
         return {"message": "No outdated containers found. Run /api/scan first.", "containers": []}
 
     background_tasks.add_task(_do_update, targets)
@@ -396,10 +500,16 @@ async def upload_compose_file(file: UploadFile = File(...)):
     The file is validated and saved to disk. Existing files with the same
     name are overwritten.
     """
-    if not file.filename.endswith((".yml", ".yaml")):
+    if not file.filename or not file.filename.endswith((".yml", ".yaml")):
         raise HTTPException(status_code=400, detail="Only .yml / .yaml files are accepted.")
 
-    content = (await file.read()).decode("utf-8")
+    raw = await file.read()
+    if len(raw) > MAX_COMPOSE_FILE_SIZE:
+        raise HTTPException(status_code=413, detail="Compose file too large (max 1 MiB).")
+    try:
+        content = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="Compose file must be UTF-8 encoded text.")
 
     try:
         cf = compose_svc.save_file(file.filename, content)
@@ -590,39 +700,42 @@ def compose_update_container(name: str, background_tasks: BackgroundTasks):
     Returns immediately and runs in the background.
     Poll GET /api/scan/status for progress.
     """
-    if api_state.scanning or api_state.updating:
+    if not api_state.try_begin("updating"):
         raise HTTPException(status_code=409, detail="A scan or update is already running.")
 
     if compose_svc.get_association(name) is None:
+        api_state.end("updating")
         raise HTTPException(
             status_code=400,
             detail=f"No compose file associated with '{name}'. Use /api/compose/associate first.",
         )
 
     def _run():
-        api_state.updating = True
-        api_state.progress.clear()
+        try:
+            api_state.progress.clear()
 
-        def cb(msg: str):
-            api_state.progress.append(f"[{name}] {msg}")
-            logger.info("[API] [%s] %s", name, msg)
+            def cb(msg: str):
+                api_state.progress.append(f"[{name}] {msg}")
+                logger.info("[API] [%s] %s", name, msg)
 
-        success, message = compose_svc.update_via_compose(name, progress_cb=cb)
-        api_state.updating = False
+            success, message = compose_svc.update_via_compose(name, progress_cb=cb)
 
-        if success:
-            api_state.progress.append(f"[{name}] \u2713 Compose update complete.")
-            # Invalidate the registry cache for this container so the
-            # post-update re-scan fetches fresh digest/tag data instead of
-            # returning the stale "update_available" result from before.
-            container = next((c for c in api_state.containers if c.name == name), None)
-            if container:
-                registry_svc.invalidate_cache(container.repository)
-        else:
-            api_state.progress.append(f"[{name}] \u2717 Compose update failed: {message}")
+            if success:
+                api_state.progress.append(f"[{name}] \u2713 Compose update complete.")
+                # Invalidate the registry cache for this container so the
+                # post-update re-scan fetches fresh digest/tag data instead of
+                # returning the stale "update_available" result from before.
+                container = next((c for c in api_state.containers if c.name == name), None)
+                if container:
+                    registry_svc.invalidate_cache(container.repository)
+            else:
+                api_state.progress.append(f"[{name}] \u2717 Compose update failed: {message}")
+        finally:
+            api_state.end("updating")
 
         # Re-scan so the UI reflects the new state
-        _do_scan()
+        if api_state.try_begin("scanning"):
+            _do_scan()
 
     background_tasks.add_task(_run)
     return {

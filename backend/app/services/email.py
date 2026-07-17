@@ -3,6 +3,7 @@ DockRadar - Email Service
 Sends HTML email notifications via SMTP when image updates are detected.
 """
 
+import html
 import logging
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -67,12 +68,13 @@ class EmailService:
     def _build_html(self, updates: list[dict]) -> str:
         rows = ""
         for u in updates:
+            esc = {k: html.escape(str(v)) for k, v in u.items()}
             rows += f"""
             <tr>
-                <td style="padding:10px;border-bottom:1px solid #2a2a3e;font-family:monospace">{u['container_name']}</td>
-                <td style="padding:10px;border-bottom:1px solid #2a2a3e;font-family:monospace">{u['image_name']}</td>
-                <td style="padding:10px;border-bottom:1px solid #2a2a3e;color:#ff6b6b;font-family:monospace">{u['current_tag']}</td>
-                <td style="padding:10px;border-bottom:1px solid #2a2a3e;color:#51cf66;font-family:monospace">{u['latest_tag']}</td>
+                <td style="padding:10px;border-bottom:1px solid #2a2a3e;font-family:monospace">{esc['container_name']}</td>
+                <td style="padding:10px;border-bottom:1px solid #2a2a3e;font-family:monospace">{esc['image_name']}</td>
+                <td style="padding:10px;border-bottom:1px solid #2a2a3e;color:#ff6b6b;font-family:monospace">{esc['current_tag']}</td>
+                <td style="padding:10px;border-bottom:1px solid #2a2a3e;color:#51cf66;font-family:monospace">{esc['latest_tag']}</td>
             </tr>"""
 
         return f"""<!DOCTYPE html>
