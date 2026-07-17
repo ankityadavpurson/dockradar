@@ -43,6 +43,14 @@ class Config:
     PORT: int     = _int_env("PORT", 8086)
     LOG_FILE: str = os.getenv("LOG_FILE", "dockradar.log")
 
+    # Comma-separated container or repository names to hide from DockRadar
+    # entirely (not listed, not scanned, not auto-updated).
+    # e.g. HIDDEN_REPOSITORY=dockradar-v2-app,portainer
+    HIDDEN_REPOSITORY: str = os.getenv("HIDDEN_REPOSITORY", "")
+    HIDDEN_NAMES: frozenset = frozenset(
+        t.strip().lower() for t in HIDDEN_REPOSITORY.split(",") if t.strip()
+    )
+
     # Optional API key — when set, all /api routes except /api/health
     # require the X-Api-Key header.
     API_KEY: str = os.getenv("API_KEY", "")

@@ -11,6 +11,8 @@ import docker
 from docker.errors import DockerException, NotFound, APIError
 from docker.models.containers import Container
 
+from app.core.config import config
+
 logger = logging.getLogger(__name__)
 
 
@@ -68,7 +70,7 @@ class DockerService:
             return False
 
     def get_all_containers(self) -> list[ContainerInfo]:
-        """Fetch all containers (running and stopped)."""
+        """Fetch all containers (running and stopped), minus hidden ones."""
         if not self.client:
             logger.error("Docker client not available.")
             return []
@@ -78,8 +80,14 @@ class DockerService:
             raw_containers: list[Container] = self.client.containers.list(all=True)
             for c in raw_containers:
                 info = self._parse_container(c)
-                if info:
-                    containers.append(info)
+                if info is None:
+                    continue
+                # HIDDEN_REPOSITORY: skip by container name or repository
+                if (info.name.lower() in config.HIDDEN_NAMES
+                        or info.repository.lower() in config.HIDDEN_NAMES):
+                    logger.debug("Hiding container %s (HIDDEN_REPOSITORY).", info.name)
+                    continue
+                containers.append(info)
             logger.info("Discovered %d containers.", len(containers))
         except APIError as exc:
             logger.error("Error listing containers: %s", exc)
