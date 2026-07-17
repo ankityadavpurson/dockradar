@@ -4,30 +4,7 @@ import {
   Save, Trash2, Upload, X, XCircle,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-
-const BASE = '/api'
-
-async function apiFetch(method, path, body) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } }
-  if (body !== undefined) opts.body = JSON.stringify(body)
-  const res = await fetch(`${BASE}${path}`, opts)
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }))
-    throw new Error(err.detail || `HTTP ${res.status}`)
-  }
-  return res.json()
-}
-
-async function uploadFile(file) {
-  const fd = new FormData()
-  fd.append('file', file)
-  const res = await fetch(`${BASE}/compose`, { method: 'POST', body: fd })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }))
-    throw new Error(err.detail || `HTTP ${res.status}`)
-  }
-  return res.json()
-}
+import { composeApi } from '../api/client'
 
 // ── Shared styles ─────────────────────────────────────────────────────────────
 
@@ -68,13 +45,9 @@ function buildFileLabels(composeFiles) {
   }, {})
 }
 
-function ServicePicker({ composeFiles, selectedFileId, selectedService, onChange }) {
+function ServicePicker({ composeFiles, labels = {}, selectedFileId, selectedService, onChange }) {
   const file     = composeFiles.find(f => f.file_id === selectedFileId)
   const services = file?.services || []
-  const serviceLabel = (f) => {
-    if (!Array.isArray(f.services) || f.services.length === 0) return 'No services'
-    return f.services.join(', ')
-  }
 
   const sel = {
     background: 'rgba(0,0,0,0.5)', border: S.border, color: '#888', borderRadius: '4px',
@@ -85,15 +58,21 @@ function ServicePicker({ composeFiles, selectedFileId, selectedService, onChange
   return (
     <div className="flex gap-2">
       <div className="relative flex-1">
-        <select value={selectedFileId} onChange={e => onChange(e.target.value, '')} style={sel}>
+        <select value={selectedFileId} onChange={e => onChange(e.target.value, '')} style={sel}
+          aria-label="Compose file">
           <option value="" className='bg-black'>— file —</option>
-          {composeFiles.map(f => <option key={f.file_id} value={f.file_id} className='bg-black'>{serviceLabel(f)}</option>)}
+          {composeFiles.map(f => (
+            <option key={f.file_id} value={f.file_id} className='bg-black'>
+              {labels[f.file_id] ?? f.filename}
+            </option>
+          ))}
         </select>
         <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={S.muted} />
       </div>
       <div className="relative flex-1">
         <select value={selectedService} onChange={e => onChange(selectedFileId, e.target.value)}
-          disabled={!selectedFileId} style={{ ...sel, opacity: selectedFileId ? 1 : 0.4 }}>
+          disabled={!selectedFileId} style={{ ...sel, opacity: selectedFileId ? 1 : 0.4 }}
+          aria-label="Compose service">
           <option value="" className='bg-black'>— service —</option>
           {services.map(s => <option key={s} value={s} className='bg-black'>{s}</option>)}
         </select>
@@ -111,7 +90,7 @@ function FileEditor({ file, onSave, onCancel }) {
   const [error,   setError]   = useState(null)
 
   useEffect(() => {
-    apiFetch('GET', `/compose/${file.file_id}/content`)
+    composeApi.getContent(file.file_id)
       .then(d => setContent(d.content))
       .catch(e => setError(e.message))
   }, [file.file_id])
@@ -120,7 +99,7 @@ function FileEditor({ file, onSave, onCancel }) {
     setSaving(true)
     setError(null)
     try {
-      await apiFetch('PUT', `/compose/${file.file_id}`, { content })
+      await composeApi.updateContent(file.file_id, content)
       onSave()
     } catch (e) {
       setError(e.message)
@@ -179,7 +158,7 @@ function DownloadPanel({ file, onClose }) {
   const [content, setContent] = useState(null)
 
   useEffect(() => {
-    apiFetch('GET', `/compose/${file.file_id}/content`)
+    composeApi.getContent(file.file_id)
       .then(d => setContent(d.content))
       .catch(() => {})
   }, [file.file_id])
@@ -251,7 +230,7 @@ function DownloadPanel({ file, onClose }) {
 
 // ── Container row ─────────────────────────────────────────────────────────────
 
-function ContainerRow({ container, association, composeFiles, onAssociate, onDisassociate }) {
+function ContainerRow({ container, association, composeFiles, labels, onAssociate, onDisassociate }) {
   const [fileId,  setFileId]  = useState(association?.file_id || '')
   const [service, setService] = useState(association?.service_name || '')
   const [saving,  setSaving]  = useState(false)
@@ -285,7 +264,7 @@ function ContainerRow({ container, association, composeFiles, onAssociate, onDis
           title={container.name}>{container.name}</span>
       </div>
 
-      <ServicePicker composeFiles={composeFiles} selectedFileId={fileId} selectedService={service}
+      <ServicePicker composeFiles={composeFiles} labels={labels} selectedFileId={fileId} selectedService={service}
         onChange={(fid, svc) => { setFileId(fid); setService(svc) }} />
 
       <div className="flex items-center gap-1">
@@ -326,8 +305,8 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
   const refresh = useCallback(async () => {
     try {
       const [files, assocList] = await Promise.all([
-        apiFetch('GET', '/compose'),
-        apiFetch('GET', '/compose/associations'),
+        composeApi.list(),
+        composeApi.associations(),
       ])
       setComposeFiles(files)
       const map = {}
@@ -337,6 +316,12 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
   }, [])
 
   useEffect(() => { refresh() }, [refresh])
+
+  useEffect(() => {
+    const onKey = e => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
 
   // If a compose update just finished, auto-open the download panel for the relevant file
   useEffect(() => {
@@ -351,7 +336,7 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
     setUploading(true)
     let uploaded = 0
     for (const f of yamlFiles) {
-      try { await uploadFile(f); uploaded++ }
+      try { await composeApi.upload(f); uploaded++ }
       catch (e) { notify(`Failed to upload ${f.name}: ${e.message}`, true) }
     }
     setUploading(false)
@@ -360,20 +345,20 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
   }
 
   async function handleDeleteFile(fileId) {
-    try { await apiFetch('DELETE', `/compose/${fileId}`); notify('File deleted.'); await refresh() }
+    try { await composeApi.deleteFile(fileId); notify('File deleted.'); await refresh() }
     catch (e) { notify(`Delete failed: ${e.message}`, true) }
   }
 
   async function handleAssociate(containerName, fileId, serviceName) {
     try {
-      await apiFetch('POST', '/compose/associate', { container_name: containerName, file_id: fileId, service_name: serviceName })
+      await composeApi.associate(containerName, fileId, serviceName)
       notify(`Linked ${containerName} → ${serviceName}`)
       await refresh()
     } catch (e) { notify(`Failed: ${e.message}`, true) }
   }
 
   async function handleDisassociate(containerName) {
-    try { await apiFetch('DELETE', `/compose/associate/${containerName}`); notify('Link removed.'); await refresh() }
+    try { await composeApi.disassociate(containerName); notify('Link removed.'); await refresh() }
     catch (e) { notify(`Failed: ${e.message}`, true) }
   }
 
@@ -392,6 +377,7 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
       onClick={e => e.target === e.currentTarget && onClose()}>
 
       <div className="flex flex-col w-full max-w-2xl mx-4 rounded-xl overflow-hidden"
+        role="dialog" aria-modal="true" aria-label="Compose files"
         style={{ background: 'rgba(0,0,0,0.5)', border: S.border, maxHeight: '90vh' }}>
 
         {/* Header */}
@@ -406,7 +392,7 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
               </span>
             )}
           </div>
-          <button onClick={onClose} style={{ color: '#666' }}
+          <button onClick={onClose} style={{ color: '#666' }} aria-label="Close compose manager"
             onMouseEnter={e => e.currentTarget.style.color = '#aaa'}
             onMouseLeave={e => e.currentTarget.style.color = '#666'}>
             <X size={15} />
@@ -527,7 +513,7 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
                   <div className="flex flex-col gap-1">
                     {containers.map(c => (
                       <ContainerRow key={c.name} container={c} association={associations[c.name]}
-                        composeFiles={composeFiles} onAssociate={handleAssociate}
+                        composeFiles={composeFiles} labels={labels} onAssociate={handleAssociate}
                         onDisassociate={handleDisassociate} />
                     ))}
                   </div>

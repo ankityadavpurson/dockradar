@@ -6,7 +6,10 @@ export default function Header({ health, containers, scanStatus }) {
   const running = containers.filter(c => c.status === 'running').length
   const outdated = containers.filter(c => c.update_status === 'update_available').length
 
-  const nextScanTime = scanStatus?.next_scan ? new Date(scanStatus?.next_scan) : '--/--/--, --:--:--'
+  const nextScanDate = scanStatus?.next_scan ? new Date(scanStatus.next_scan) : null
+  const nextScanLabel = nextScanDate && !Number.isNaN(nextScanDate.getTime())
+    ? nextScanDate.toLocaleString()
+    : '—'
 
   return (
     <header className="sticky top-0 z-50 bg-[rgba(0,0,0,0.5)] backdrop-blur-sm border-b border-[#1a1a1a]">
@@ -35,7 +38,7 @@ export default function Header({ health, containers, scanStatus }) {
         {/* Next scan */}
         <span className="text-[12px] hidden md:block" style={{ color: '#777' }}>
           Next scan:{' '}
-          <span style={{ color: '#aaa' }}>{nextScanTime.toLocaleString() ?? '—'}</span>
+          <span style={{ color: '#aaa' }}>{nextScanLabel}</span>
         </span>
 
         <div className="w-px h-5" style={{ background: '#222' }} />

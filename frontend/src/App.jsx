@@ -46,9 +46,9 @@ const App = () => {
   }, [containers, search, filterOutdated])
 
   const outdatedCount = containers.filter(c => c.update_status === 'update_available').length
-  const selectedOutdated = containers.filter(
-    c => selected.has(c.id) && c.update_status === 'update_available'
-  ).length
+  // "Update Selected" recreates every selected container (even up-to-date
+  // ones), so the badge and dialog must count the full selection.
+  const selectedCount = selected.size
 
   return (
     <div className="min-h-screen">
@@ -73,7 +73,7 @@ const App = () => {
         {/* Toolbar */}
         <Toolbar
           isBusy={isBusy}
-          selectedCount={selectedOutdated}
+          selectedCount={selectedCount}
           outdatedCount={outdatedCount}
           search={search}
           onSearch={setSearch}
@@ -130,7 +130,8 @@ const App = () => {
         open={!!confirmUpdate}
         title={`Update ${confirmUpdate?.name}?`}
         message={`This will stop, remove, and recreate the container using the latest image.
-Original configuration (ports, volumes, env vars, restart policy) will be preserved.`}
+Preserved: ports, bind mounts, env vars, restart policy, network mode, labels.
+Not preserved: named volumes attached via --mount, extra networks, and advanced options — use a compose association for those containers.`}
         confirmLabel="Update"
         confirmClass="btn-yellow"
         onConfirm={() => { updateOne(confirmUpdate.name); setConfirmUpdate(null) }}
@@ -162,8 +163,8 @@ Original configuration (ports, volumes, env vars, restart policy) will be preser
       {/* Update selected */}
       <ConfirmDialog
         open={confirmSel}
-        title={`Update ${selectedOutdated} selected container(s)?`}
-        message="This will stop, remove, and recreate the selected outdated containers with their latest images."
+        title={`Update ${selectedCount} selected container(s)?`}
+        message="This will stop, remove, and recreate every selected container with its latest image — including containers that are already up to date."
         confirmLabel="Update Selected"
         confirmClass="btn-blue"
         onConfirm={() => { updateSelected(); setConfirmSel(false) }}

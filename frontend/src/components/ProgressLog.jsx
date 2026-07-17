@@ -72,7 +72,8 @@ const ProgressLog = ({ messages, scanning, updating }) => {
                 {messages.length} line{messages.length === 1 ? '' : 's'}
               </div>
 
-              <div className="flex-1 overflow-y-auto p-5 font-mono text-[11px] leading-relaxed" style={{ background: '#000' }}>
+              <div className="flex-1 overflow-y-auto p-5 font-mono text-[11px] leading-relaxed" style={{ background: '#000' }}
+                role="log" aria-live="polite">
                 {messages.map((msg, i) => (
                   <div key={i} className="mb-1 break-words" style={{ color: getLineColor(msg) }}>{msg}</div>
                 ))}

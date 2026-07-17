@@ -14,6 +14,12 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
   const [showFull, setShowFull] = useState(false) // toggle between diff and full editor
 
   useEffect(() => {
+    const onKey = e => { if (e.key === 'Escape') onCancel() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onCancel])
+
+  useEffect(() => {
     setLoading(true)
     composeApi.diff(container.name)
       .then(d => {
@@ -53,7 +59,7 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
 
   return (
     <div style={overlay} onClick={e => e.target === e.currentTarget && onCancel()}>
-      <div style={panel}>
+      <div style={panel} role="dialog" aria-modal="true" aria-label={`Compose update ${container.name}`}>
 
         {/* Header */}
         <div style={{ padding: '16px 20px', borderBottom: '1px solid #1a1a1a' }}>

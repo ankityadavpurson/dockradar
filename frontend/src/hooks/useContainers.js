@@ -16,11 +16,13 @@ export function useContainers() {
   // compose associations: { container_name -> { file_id, service_name, filename } }
   const [associations, setAssociations]   = useState({})
   const pollRef                        = useRef(null)
+  const toastTimerRef                  = useRef(null)
 
   // ── Toast helper ──────────────────────────────────────────────────────────
   const notify = useCallback((msg, type = 'info') => {
+    clearTimeout(toastTimerRef.current)
     setToast({ msg, type, id: Date.now() })
-    setTimeout(() => setToast(null), 4000)
+    toastTimerRef.current = setTimeout(() => setToast(null), 4000)
   }, [])
 
   // ── Fetch health ──────────────────────────────────────────────────────────
@@ -82,6 +84,7 @@ export function useContainers() {
     return () => {
       clearInterval(hInterval)
       if (pollRef.current) clearInterval(pollRef.current)
+      clearTimeout(toastTimerRef.current)
     }
   }, [fetchHealth, fetchContainers, fetchAssociations])
 
@@ -101,6 +104,7 @@ export function useContainers() {
   }, [notify, startPolling])
 
   const updateOne = useCallback(async (name) => {
+    setLoading(true)
     try {
       notify(`Updating ${name}…`, 'info')
       const result = await api.updateOne(name)
@@ -112,20 +116,24 @@ export function useContainers() {
       await fetchContainers()
     } catch (e) {
       notify(e.message, 'error')
+    } finally {
+      setLoading(false)
     }
   }, [notify, fetchContainers])
 
   const updateSelected = useCallback(async () => {
-    if (selected.size === 0) { notify('No containers selected', 'warning'); return }
+    // `selected` holds container ids (used for row selection); the API expects names.
+    const names = containers.filter(c => selected.has(c.id)).map(c => c.name)
+    if (names.length === 0) { notify('No containers selected', 'warning'); return }
     try {
-      await api.updateSelected([...selected])
-      notify(`Updating ${selected.size} container(s)…`, 'info')
+      await api.updateSelected(names)
+      notify(`Updating ${names.length} container(s)…`, 'info')
       setSelected(new Set())
       startPolling()
     } catch (e) {
       notify(e.message, 'error')
     }
-  }, [selected, notify, startPolling])
+  }, [containers, selected, notify, startPolling])
 
   const updateAll = useCallback(async () => {
     try {

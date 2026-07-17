@@ -5,18 +5,28 @@
 
 const BASE = '/api'
 
+// Optional API key (when the backend is started with API_KEY set).
+// Store it once via: localStorage.setItem('dockradar_api_key', '<key>')
+function authHeaders() {
+  const key = localStorage.getItem('dockradar_api_key')
+  return key ? { 'X-Api-Key': key } : {}
+}
+
+async function parseError(res) {
+  const err = await res.json().catch(() => ({ detail: res.statusText }))
+  const detail = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail)
+  return new Error(detail || `HTTP ${res.status}`)
+}
+
 async function request(method, path, body) {
   const opts = {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
   }
   if (body !== undefined) opts.body = JSON.stringify(body)
 
   const res = await fetch(`${BASE}${path}`, opts)
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }))
-    throw new Error(err.detail || `HTTP ${res.status}`)
-  }
+  if (!res.ok) throw await parseError(res)
   return res.json()
 }
 
@@ -45,8 +55,8 @@ export const composeApi = {
   upload:        async (file) => {
     const fd = new FormData()
     fd.append('file', file)
-    const res = await fetch('/api/compose', { method: 'POST', body: fd })
-    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.detail || `HTTP ${res.status}`) }
+    const res = await fetch(`${BASE}/compose`, { method: 'POST', body: fd, headers: authHeaders() })
+    if (!res.ok) throw await parseError(res)
     return res.json()
   },
   deleteFile:    (fileId)                        => request('DELETE', `/compose/${fileId}`),

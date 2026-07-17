@@ -116,6 +116,7 @@ export default function ContainerTable({
             <th className="w-10 pl-4 py-3 text-left">
               <CheckBox
                 id="check-all"
+                ariaLabel="Select all containers"
                 checked={selected.size === containers.length && containers.length > 0}
                 onChange={e => containers.forEach(c =>
                   e.target.checked
@@ -125,18 +126,26 @@ export default function ContainerTable({
             </th>
             {COLS.map(col => (
               <th key={col.key}
-                onClick={() => col.sortable && handleSort(col.key)}
-                className={`px-4 py-3 text-left text-[11px] font-medium uppercase tracking-wider whitespace-nowrap
-                  ${col.sortable ? 'cursor-pointer select-none' : ''}`}
+                aria-sort={col.sortable && sortKey === col.key
+                  ? (sortDir === 'asc' ? 'ascending' : 'descending')
+                  : undefined}
+                className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-wider whitespace-nowrap"
                 style={{ color: col.sortable && sortKey === col.key ? '#aaa' : '#666' }}>
-                <span className="inline-flex items-center gap-1">
-                  {col.label}
-                  {col.sortable && sortKey === col.key && (
-                    sortDir === 'asc'
-                      ? <ChevronUp size={10} />
-                      : <ChevronDown size={10} />
-                  )}
-                </span>
+                {col.sortable ? (
+                  <button type="button"
+                    onClick={() => handleSort(col.key)}
+                    className="inline-flex items-center gap-1 uppercase tracking-wider cursor-pointer select-none"
+                    style={{ background: 'none', border: 'none', color: 'inherit', font: 'inherit', padding: 0 }}>
+                    {col.label}
+                    {sortKey === col.key && (
+                      sortDir === 'asc'
+                        ? <ChevronUp size={10} />
+                        : <ChevronDown size={10} />
+                    )}
+                  </button>
+                ) : (
+                  <span className="inline-flex items-center gap-1">{col.label}</span>
+                )}
               </th>
             ))}
           </tr>
@@ -161,16 +170,18 @@ export default function ContainerTable({
 
                 {/* Checkbox */}
                 <td className="w-10 pl-4 py-3">
-                  <CheckBox id={`check-${c.id}`} checked={isSel} onChange={() => onToggleSelect(c.id)} />
+                  <CheckBox id={`check-${c.id}`} ariaLabel={`Select ${c.name}`} checked={isSel} onChange={() => onToggleSelect(c.id)} />
                 </td>
 
                 {/* Name */}
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     <span
-                      className="w-2 h-2 rounded-full cursor-pointer"
+                      className="w-2 h-2 rounded-full"
                       style={{ background: dot.bg, boxShadow: dot.shadow }}
                       title={c.status}
+                      role="img"
+                      aria-label={`Container ${c.status}`}
                     />
                     <span className="text-[13px] font-medium" style={{ color: '#ededed' }}>
                       {c.name}
@@ -256,10 +267,10 @@ export default function ContainerTable({
   )
 }
 
-const CheckBox = ({ checked, onChange, id }) => (
+const CheckBox = ({ checked, onChange, id, ariaLabel }) => (
   <div className="inline-flex items-center">
     <label className="flex items-center cursor-pointer relative">
-      <input type="checkbox" checked={checked} onChange={onChange}
+      <input type="checkbox" checked={checked} onChange={onChange} aria-label={ariaLabel}
         className="peer h-3 w-3 cursor-pointer transition-all appearance-none rounded shadow hover:shadow-md border border-slate-300 checked:bg-blue-600 checked:border-blue-600" id={id} />
       <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
