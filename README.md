@@ -11,11 +11,13 @@ DockRadar is a FastAPI + React application that scans Docker containers, compare
 ## Features
 
 - Container discovery (running and stopped)
-- Tag + digest-based update detection
+- Tag + digest-based update detection (parallel registry checks)
 - Single, selected, or bulk updates
 - Optional docker-compose based update flow
 - Background scan scheduler
-- Optional email notifications
+- Optional email notifications (sent when a scan finds new updates; deduplicated so the same update is only announced once)
+- Optional API-key protection (`API_KEY`)
+- Hide containers from the dashboard (`HIDDEN_REPOSITORY`)
 
 ## Project Layout
 
@@ -27,7 +29,9 @@ dockradar/
 │   │   ├── api/routes.py
 │   │   ├── core/{config.py,logging.py}
 │   │   └── services/{docker.py,registry.py,update.py,compose.py,scheduler.py,email.py}
-│   └── requirements.txt
+│   ├── tests/
+│   ├── requirements.txt
+│   └── requirements-dev.txt
 ├── frontend/
 │   ├── src/
 │   ├── package.json
@@ -84,8 +88,8 @@ Notes:
 
 Default development URLs:
 
-- API: `http://localhost:8080`
-- Docs: `http://localhost:8080/docs`
+- API: `http://localhost:8086`
+- Docs: `http://localhost:8086/docs`
 - Frontend: `http://localhost:5173`
 
 ## Manual Setup
@@ -167,15 +171,37 @@ Most important values:
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`
 - `EMAIL_FROM`, `EMAIL_TO`
 - `HOST`, `PORT`
+- `API_KEY` — optional; when set, every `/api` route except `/api/health` requires the `X-Api-Key` header. Give the key to the UI once via the browser console: `localStorage.setItem('dockradar_api_key', '<key>')`
+- `HIDDEN_REPOSITORY` — comma-separated container or repository names (case-insensitive, exact match) to hide from DockRadar entirely: not listed, not scanned, not auto-updated
 - `REGISTRY_CACHE_TTL`
+
+## Update Limitations
+
+The direct (non-compose) update flow recreates containers from a captured subset of their configuration. Preserved: ports, bind mounts, environment variables, restart policy, network mode, labels, command/entrypoint, hostname, user, working dir.
+
+**Not preserved:** named volumes attached via the `Mounts` API (`--mount`), membership in multiple networks, network aliases, and advanced options (cap_add, devices, resource limits, healthchecks, …).
+
+For containers that rely on those, associate them with a compose file and use the compose update flow instead — `docker compose` recreates the container from its full definition.
 
 ## Security Notice
 
-DockRadar currently has no built-in authentication/authorization for API endpoints. Do not expose the API directly to the public internet.
+DockRadar controls Docker on its host — treat it as a privileged service. It has no user accounts or RBAC. Do not expose the API directly to the public internet.
 
-For internet-facing deployments, put it behind a reverse proxy with authentication and TLS.
+- Set `API_KEY` to require an `X-Api-Key` header on all API routes (except `/api/health`).
+- For anything internet-facing, additionally put it behind a reverse proxy with authentication and TLS.
+- Anyone who can reach the unauthenticated API (or upload compose files) can effectively control the Docker host.
 
 Additional guidance is in `SECURITY.md`.
+
+## Testing
+
+Backend unit tests (registry/image parsing, compose storage, hidden-container filtering):
+
+```bash
+pip install -r backend/requirements-dev.txt
+cd backend
+pytest
+```
 
 ## Development Notes
 

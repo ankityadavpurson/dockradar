@@ -15,6 +15,7 @@ Describe what changed and why.
 Describe how you tested this change.
 
 - [ ] Backend runs locally (`python -m app.main` from `backend/`)
+- [ ] Backend tests pass (`pytest` from `backend/`)
 - [ ] Frontend builds (`yarn build` in `frontend/`)
 - [ ] Manual behavior tested
 

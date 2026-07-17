@@ -52,9 +52,11 @@ DockRadar can control Docker containers on the host. Treat it as a privileged se
 
 4. API exposure
 
-- DockRadar currently has no built-in API auth/RBAC.
+- DockRadar has no user accounts or RBAC. An optional shared API key is available: set `API_KEY` in the environment and every `/api` route except `/api/health` will require the `X-Api-Key` header.
+- The API key is a single shared secret sent per request — it is not a substitute for TLS or real authentication on untrusted networks.
 - Do not expose the API directly to the public internet.
-- Use a reverse proxy with authentication and TLS.
+- For internet-facing deployments, use a reverse proxy with authentication and TLS in addition to `API_KEY`.
+- Note: uploading a compose file and triggering a compose update effectively runs attacker-chosen container definitions — anyone with API access can control the Docker host.
 
 5. Secrets handling
 

@@ -57,7 +57,18 @@ yarn dev
 - `backend/app/api/routes.py`: REST endpoints.
 - `backend/app/services/`: Docker, registry, update, compose, scheduler, and email services.
 - `backend/app/core/`: Environment config and logging setup.
+- `backend/tests/`: Backend unit tests (pytest).
 - `frontend/src/`: React UI components, hooks, and API client.
+
+## Running Tests
+
+```bash
+pip install -r backend/requirements-dev.txt
+cd backend
+pytest
+```
+
+Run the tests before opening a PR; add tests when you change parsing, registry, or compose-storage logic.
 
 ## Branch and Commit Rules
 
