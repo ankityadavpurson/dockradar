@@ -23,7 +23,7 @@ const COLS = [
   { key: 'tag',           label: 'Tag / Digest',  sortable: false },
   { key: '_version',      label: 'Version',       sortable: false },
   { key: 'update_status', label: 'Status',        sortable: true  },
-  { key: '_actions',      label: '',              sortable: false },
+  { key: '_actions',      label: 'Actions',       sortable: false },
 ]
 
 function shortDigest(digest) {
@@ -73,8 +73,9 @@ const CHECK_STYLES = {
 
 function CheckChip({ style, icon, label, title }) {
   return (
-    <span className="inline-flex items-center gap-1 text-[13px] font-mono px-1.5 py-0.5 rounded"
-      style={style} title={title}>
+    <span className="inline-flex items-center gap-2 text-[13px] font-mono px-1.5 py-0.5 rounded capitalize"
+      style={style} title={title}
+    >
       {icon}
       {label}
     </span>
@@ -91,25 +92,25 @@ function VersionCheckCell({ container }) {
 
   // A newer tag exists — the genuinely interesting tag-level state.
   if (!tagsMatch) {
-    return <CheckChip style={CHECK_STYLES.warn} icon={<Tag size={8} />}
+    return <CheckChip style={CHECK_STYLES.warn} icon={<Tag size={12} />}
       label={`→ ${latest_tag}`} title={`Newer tag available: ${latest_tag}`} />
   }
 
   // Same tag, but the image was rebuilt upstream.
   if (update_status === 'update_available') {
-    return <CheckChip style={CHECK_STYLES.warn} icon={<ShieldCheck size={8} />}
+    return <CheckChip style={CHECK_STYLES.warn} icon={<ShieldCheck size={12} />}
       label="digest changed"
       title={`Same tag, but the image was rebuilt upstream\nLocal digest: ${local_digest ?? 'unknown'}`} />
   }
 
   // Fully verified: tag and digest both match upstream.
   if (local_digest) {
-    return <CheckChip style={CHECK_STYLES.ok} icon={<ShieldCheck size={8} />}
+    return <CheckChip style={CHECK_STYLES.ok} icon={<ShieldCheck size={12} />}
       label="verified" title={`Tag and digest match upstream\n${local_digest}`} />
   }
 
   // Tag matches but there was no digest to verify image content with.
-  return <CheckChip style={CHECK_STYLES.dim} icon={<Tag size={8} />}
+  return <CheckChip style={CHECK_STYLES.dim} icon={<Tag size={12} />}
     label="tag match" title="Tag matches upstream; no digest available to verify image content" />
 }
 
@@ -206,7 +207,7 @@ function StoppedBadge({ status }) {
 function StatusPill({ status }) {
   const s = STATUS_CFG[status] ?? STATUS_CFG.unknown
   return (
-    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[14px] font-medium"
+    <span className="inline-flex items-center gap-2 text-[13px] font-mono px-1.5 py-0.5 rounded"
       style={{ color: s.color, background: s.bg, border: `1px solid ${s.border}` }}>
       <span className="w-1 h-1 rounded-full" style={{ background: s.color }} />
       {s.label}

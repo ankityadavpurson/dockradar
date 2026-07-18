@@ -81,7 +81,7 @@ function StatChip({ label, value, active, warn }) {
       <span className="text-[15px] font-medium tabular-nums" style={{ color }}>
         {value}
       </span>
-      <span className="text-[14px]" style={{ color: '#8a8a8a' }}>{label}</span>
+      <span className="text-[14px] uppercase" style={{ color: '#8a8a8a' }}>{label}</span>
     </div>
   )
 }
