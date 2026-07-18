@@ -18,6 +18,7 @@ GET  /api/health                Health check — Docker connectivity + scheduler
 import logging
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, File
@@ -63,6 +64,8 @@ class ApiState:
         self.updating:   bool = False
         self.progress:   list[str] = []
         self.containers: list[ContainerInfo] = []
+        # ISO timestamp of the last completed scan (None until one has run)
+        self.last_scan:  Optional[str] = None
 
     def try_begin(self, kind: str) -> bool:
         """Atomically claim the 'scanning' or 'updating' flag. False if busy."""
@@ -118,6 +121,7 @@ class ScanStatusOut(BaseModel):
     outdated_count: int
     progress: list[str]
     next_scan: Optional[str]
+    last_scan: Optional[str] = None
 
 
 class UpdateRequest(BaseModel):
@@ -201,6 +205,7 @@ def _scan_work():
                     )
 
     api_state.containers = containers
+    api_state.last_scan = datetime.now(timezone.utc).isoformat()
     outdated_infos = [c for c in containers if c.update_status == "update_available"]
     api_state.progress.append(
         f"✅ Scan complete — {len(containers)} containers, {len(outdated_infos)} update(s) available."
@@ -276,6 +281,7 @@ def health():
         "docker_connected": docker_svc.is_connected(),
         "scheduler_running": scheduler_svc.is_running(),
         "next_scan": scheduler_svc.get_next_run(),
+        "last_scan": api_state.last_scan,
         "scan_interval_hours": config.SCAN_INTERVAL_HOURS,
         "email_configured": config.email_configured(),
     }
@@ -341,6 +347,7 @@ def scan_status():
         outdated_count=outdated,
         progress=api_state.progress[-50:],
         next_scan=scheduler_svc.get_next_run(),
+        last_scan=api_state.last_scan,
     )
 
 
