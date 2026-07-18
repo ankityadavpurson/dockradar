@@ -35,16 +35,12 @@ const ProgressLog = ({ messages, scanning, updating }) => {
         </button>
       )}
 
+      {/* Non-modal: no backdrop — the page stays fully interactive. */}
       {open && (
         <div
-          className="fixed inset-0 z-[200]"
-          style={{ background: 'rgba(0,0,0,0.28)', backdropFilter: 'blur(3px)' }}
-          onClick={e => e.target === e.currentTarget && setOpen(active)}
+          className="fixed top-0 right-0 z-[190] h-full w-full max-w-[480px]"
+          style={{ background: '#0a0a0a', borderLeft: '1px solid #1a1a1a', boxShadow: '-24px 0 60px rgba(0,0,0,0.45)' }}
         >
-          <div
-            className="absolute top-0 right-0 h-full w-full max-w-[560px]"
-            style={{ background: '#0a0a0a', borderLeft: '1px solid #1a1a1a', boxShadow: '-24px 0 60px rgba(0,0,0,0.45)' }}
-          >
             <div className="flex h-full flex-col overflow-hidden">
               <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid #1a1a1a', background: 'rgba(255,255,255,0.02)' }}>
                 <div className="flex items-center gap-2" style={{ color: active ? (scanning ? '#f5a623' : '#50e3c2') : '#fff' }}>
@@ -80,7 +76,6 @@ const ProgressLog = ({ messages, scanning, updating }) => {
                 <div ref={endRef} />
               </div>
             </div>
-          </div>
         </div>
       )}
     </>

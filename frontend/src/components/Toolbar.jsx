@@ -1,11 +1,12 @@
 import React from 'react'
-import { Search, RefreshCw, ArrowUpCircle, UploadCloud, FileCode2 } from 'lucide-react'
+import { Search, RefreshCw, ArrowUpCircle, UploadCloud, FileCode2, X } from 'lucide-react'
 
 export default function Toolbar({
-  isBusy, selectedCount, outdatedCount,
+  isBusy, selectedCount, outdatedCount, visibleCount, totalCount,
   search, onSearch, filterOutdated, onFilterOutdated,
   onScan, onUpdateSelected, onUpdateAll, onSelectAll, onClearSelection, onOpenCompose,
 }) {
+  const filtering = !!search.trim() || filterOutdated
   return (
     <div className="flex items-center gap-2 flex-wrap px-4 py-3 mb-4 rounded-lg"
       style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #1a1a1a' }}>
@@ -64,16 +65,33 @@ export default function Toolbar({
           placeholder="Search…"
           value={search}
           onChange={e => onSearch(e.target.value)}
-          className="pl-8 pr-3 py-1.5 rounded text-[12px] w-44 outline-none"
+          className="pl-8 pr-7 py-1.5 rounded text-[12px] w-44 focus:w-64 transition-all outline-none"
           style={{ background: '#111', border: '1px solid #222', color: '#ededed' }}
           onFocus={e => e.target.style.borderColor = '#444'}
           onBlur={e  => e.target.style.borderColor = '#222'}
         />
+        {search && (
+          <button type="button" onClick={() => onSearch('')} aria-label="Clear search"
+            className="absolute right-2 top-1/2 -translate-y-1/2"
+            style={{ color: '#606060' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#aaa'}
+            onMouseLeave={e => e.currentTarget.style.color = '#606060'}>
+            <X size={11} />
+          </button>
+        )}
       </div>
+
+      {/* Match count while filtering */}
+      {filtering && (
+        <span className="text-[11px] font-mono whitespace-nowrap" style={{ color: '#8a8a8a' }}
+          title="Matching / total containers">
+          {visibleCount} / {totalCount}
+        </span>
+      )}
 
       {/* Outdated filter toggle */}
       <label className="flex items-center gap-2 cursor-pointer select-none text-[12px]"
-        style={{ color: '#7a7a7a' }}>
+        style={{ color: '#9a9a9a' }}>
         <div className="relative">
           <input type="checkbox" checked={filterOutdated}
             onChange={e => onFilterOutdated(e.target.checked)} className="sr-only peer" />
@@ -87,8 +105,16 @@ export default function Toolbar({
 
       <div className="w-px h-5 shrink-0" style={{ background: '#1a1a1a' }} />
 
-      <button className="btn btn-ghost btn-xs" onClick={onSelectAll}>All</button>
-      <button className="btn btn-ghost btn-xs" onClick={onClearSelection}>None</button>
+      <button className="btn btn-ghost btn-xs" onClick={onSelectAll}
+        title="Select all visible containers">
+        Select all
+      </button>
+      {selectedCount > 0 && (
+        <button className="btn btn-ghost btn-xs" onClick={onClearSelection}
+          title={`Clear selection (${selectedCount})`}>
+          Clear
+        </button>
+      )}
     </div>
   )
 }

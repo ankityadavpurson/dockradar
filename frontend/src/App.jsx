@@ -1,3 +1,4 @@
+import { Info } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import ComposeManager from './components/ComposeManager'
 import ComposeUpdateDialog from './components/ComposeUpdateDialog'
@@ -13,7 +14,7 @@ import { useContainers } from './hooks/useContainers'
 const App = () => {
   const {
     containers, scanStatus, health,
-    selected, loading, isBusy, error, toast,
+    selected, loading, isBusy, error, toasts, dismissToast,
     triggerScan, updateOne, updateSelected, updateAll, deleteContainer,
     toggleSelect, selectAll, clearSelection,
     associations, fetchAssociations, composeUpdateOne,
@@ -50,6 +51,10 @@ const App = () => {
   // ones), so the badge and dialog must count the full selection.
   const selectedCount = selected.size
 
+  // First-run hint: containers discovered but the server has never scanned.
+  const lastScan = scanStatus?.last_scan ?? health?.last_scan
+  const showFirstRunHint = !!health && !lastScan && containers.length > 0 && !isBusy
+
   return (
     <div className="min-h-screen">
       {/* Header */}
@@ -75,6 +80,8 @@ const App = () => {
           isBusy={isBusy}
           selectedCount={selectedCount}
           outdatedCount={outdatedCount}
+          visibleCount={visible.length}
+          totalCount={containers.length}
           search={search}
           onSearch={setSearch}
           filterOutdated={filterOutdated}
@@ -89,6 +96,20 @@ const App = () => {
 
         {/* Info bar */}
         <InfoBar health={health} />
+
+        {/* First-run hint */}
+        {showFirstRunHint && (
+          <div className="flex items-center gap-3 px-4 py-3 mb-4 rounded-lg flex-wrap"
+            style={{ background: 'rgba(0,112,243,0.06)', border: '1px solid rgba(0,112,243,0.25)' }}>
+            <Info size={14} style={{ color: '#4a9eff', flexShrink: 0 }} />
+            <span className="text-[13px]" style={{ color: '#bbb' }}>
+              No scan data yet — container versions are unknown until the first registry scan.
+            </span>
+            <button className="btn btn-primary btn-sm ml-auto" onClick={triggerScan}>
+              Run first scan
+            </button>
+          </div>
+        )}
 
         {/* Container table */}
         <div className="rounded-lg overflow-hidden"
@@ -105,8 +126,11 @@ const App = () => {
 
           <ContainerTable
             containers={visible}
+            isFiltered={!!search.trim() || filterOutdated}
             selected={selected}
             isBusy={isBusy}
+            scanning={!!scanStatus?.scanning}
+            updating={!!scanStatus?.updating}
             onToggleSelect={toggleSelect}
             onConfirmUpdate={c => setConfirmUpdate(c)}
             onConfirmDelete={c => setConfirmDelete(c)}
@@ -188,8 +212,8 @@ Not preserved: named volumes attached via --mount, extra networks, and advanced 
         />
       )}
 
-      {/* Toast */}
-      <Toast toast={toast} />
+      {/* Toasts */}
+      <Toast toasts={toasts} onDismiss={dismissToast} />
     </div>
   )
 }

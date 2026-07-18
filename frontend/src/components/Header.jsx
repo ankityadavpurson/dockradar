@@ -1,19 +1,34 @@
 import React from 'react'
 import favicon from '../../assets/favicon.svg'
 
+/** "in 5h 12m" style countdown to a future date. */
+function relativeTime(date) {
+  const diffMs = date.getTime() - Date.now()
+  if (diffMs <= 0) return 'soon'
+  const mins = Math.round(diffMs / 60000)
+  if (mins < 60) return `in ${mins}m`
+  const hours = Math.floor(mins / 60)
+  const remMins = mins % 60
+  if (hours < 24) return remMins ? `in ${hours}h ${remMins}m` : `in ${hours}h`
+  return `in ${Math.floor(hours / 24)}d ${hours % 24}h`
+}
+
 export default function Header({ health, containers, scanStatus }) {
   const total = containers.length
   const running = containers.filter(c => c.status === 'running').length
   const outdated = containers.filter(c => c.update_status === 'update_available').length
 
-  const nextScanDate = scanStatus?.next_scan ? new Date(scanStatus.next_scan) : null
-  const nextScanLabel = nextScanDate && !Number.isNaN(nextScanDate.getTime())
-    ? nextScanDate.toLocaleString()
-    : '—'
+  // scanStatus only exists once a scan has been polled — fall back to the
+  // health endpoint, which also reports the next scheduled run.
+  const nextScanRaw = scanStatus?.next_scan ?? health?.next_scan
+  const nextScanDate = nextScanRaw ? new Date(nextScanRaw) : null
+  const nextScanValid = nextScanDate && !Number.isNaN(nextScanDate.getTime())
+  const nextScanLabel = nextScanValid ? relativeTime(nextScanDate) : '—'
+  const nextScanTitle = nextScanValid ? nextScanDate.toLocaleString() : undefined
 
   return (
     <header className="sticky top-0 z-50 bg-[rgba(0,0,0,0.5)] backdrop-blur-sm border-b border-[#1a1a1a]">
-      <div className="max-w-[1400px] mx-auto w-full flex items-center gap-6 px-6 h-14">
+      <div className="max-w-[1400px] mx-auto w-full flex items-center gap-3 md:gap-6 px-4 md:px-6 h-14">
 
         {/* Logo */}
         <div className="flex items-center gap-2.5 shrink-0">
@@ -24,7 +39,7 @@ export default function Header({ health, containers, scanStatus }) {
         </div>
 
         {/* Divider */}
-        <div className="w-px h-5" style={{ background: '#222' }} />
+        <div className="w-px h-5 hidden sm:block" style={{ background: '#222' }} />
 
         {/* Nav-style stat chips */}
         <div className="flex items-center gap-5">
@@ -36,20 +51,21 @@ export default function Header({ health, containers, scanStatus }) {
         <div className="flex-1" />
 
         {/* Next scan */}
-        <span className="text-[12px] hidden md:block" style={{ color: '#777' }}>
+        <span className="text-[12px] hidden md:block" style={{ color: '#9a9a9a' }} title={nextScanTitle}>
           Next scan:{' '}
-          <span style={{ color: '#aaa' }}>{nextScanLabel}</span>
+          <span style={{ color: '#ccc' }}>{nextScanLabel}</span>
         </span>
 
-        <div className="w-px h-5" style={{ background: '#222' }} />
+        <div className="w-px h-5 hidden md:block" style={{ background: '#222' }} />
 
-        {/* Docker status */}
-        <div className="flex items-center gap-2 text-[12px]">
+        {/* Docker status — dot only on small screens */}
+        <div className="flex items-center gap-2 text-[12px] shrink-0"
+          title={health?.docker_connected ? 'Docker connected' : 'Docker offline'}>
           <span className="w-1.5 h-1.5 rounded-full" style={{
             background: health?.docker_connected ? '#50e3c2' : '#ff4444',
             boxShadow: health?.docker_connected ? '0 0 5px rgba(80,227,194,0.5)' : 'none',
           }} />
-          <span style={{ color: health?.docker_connected ? '#aaa' : '#ff4444' }}>
+          <span className="hidden sm:inline" style={{ color: health?.docker_connected ? '#aaa' : '#ff4444' }}>
             {health?.docker_connected ? 'Docker connected' : 'Docker offline'}
           </span>
         </div>
@@ -59,13 +75,13 @@ export default function Header({ health, containers, scanStatus }) {
 }
 
 function StatChip({ label, value, active, warn }) {
-  const color = warn ? '#f5a623' : active ? '#ededed' : '#555'
+  const color = warn ? '#f5a623' : active ? '#ededed' : '#9a9a9a'
   return (
     <div className="flex items-center gap-1.5">
       <span className="text-[13px] font-medium tabular-nums" style={{ color }}>
         {value}
       </span>
-      <span className="text-[12px]" style={{ color: '#666' }}>{label}</span>
+      <span className="text-[12px]" style={{ color: '#8a8a8a' }}>{label}</span>
     </div>
   )
 }

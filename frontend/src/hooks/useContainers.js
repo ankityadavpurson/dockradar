@@ -12,18 +12,24 @@ export function useContainers() {
   const [selected, setSelected]       = useState(new Set())
   const [loading, setLoading]         = useState(false)
   const [error, setError]             = useState(null)
-  const [toast, setToast]             = useState(null)   // { msg, type }
+  const [toasts, setToasts]           = useState([])     // [{ id, msg, type }]
   // compose associations: { container_name -> { file_id, service_name, filename } }
   const [associations, setAssociations]   = useState({})
   const pollRef                        = useRef(null)
-  const toastTimerRef                  = useRef(null)
+  const toastTimersRef                 = useRef(new Map())  // id → timeout
 
-  // ── Toast helper ──────────────────────────────────────────────────────────
-  const notify = useCallback((msg, type = 'info') => {
-    clearTimeout(toastTimerRef.current)
-    setToast({ msg, type, id: Date.now() })
-    toastTimerRef.current = setTimeout(() => setToast(null), 4000)
+  // ── Toast helpers — stacked, max 4, independent timers ────────────────────
+  const dismissToast = useCallback((id) => {
+    clearTimeout(toastTimersRef.current.get(id))
+    toastTimersRef.current.delete(id)
+    setToasts(prev => prev.filter(t => t.id !== id))
   }, [])
+
+  const notify = useCallback((msg, type = 'info') => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    setToasts(prev => [...prev.slice(-3), { id, msg, type }])
+    toastTimersRef.current.set(id, setTimeout(() => dismissToast(id), 4000))
+  }, [dismissToast])
 
   // ── Fetch health ──────────────────────────────────────────────────────────
   const fetchHealth = useCallback(async () => {
@@ -81,10 +87,12 @@ export function useContainers() {
     fetchAssociations()
     // Refresh health every 30s
     const hInterval = setInterval(fetchHealth, 30_000)
+    const timers = toastTimersRef.current
     return () => {
       clearInterval(hInterval)
       if (pollRef.current) clearInterval(pollRef.current)
-      clearTimeout(toastTimerRef.current)
+      timers.forEach(clearTimeout)
+      timers.clear()
     }
   }, [fetchHealth, fetchContainers, fetchAssociations])
 
@@ -195,7 +203,8 @@ export function useContainers() {
     loading,
     isBusy,
     error,
-    toast,
+    toasts,
+    dismissToast,
     // actions
     triggerScan,
     updateOne,
