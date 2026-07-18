@@ -4,15 +4,18 @@ Exposes all core DockRadar functionality as JSON endpoints via FastAPI.
 
 Endpoints
 ---------
-GET  /api/containers            List all containers with their scan status
-GET  /api/containers/{name}     Get a single container by name
-POST /api/scan                  Trigger a full scan (async background task)
-GET  /api/scan/status           Get current scan/update status + progress log
-POST /api/containers/{name}/update   Update a single container
-POST /api/update/selected       Update a list of containers by name
-POST /api/update/all            Update all outdated containers
-DELETE /api/containers/{name}   Stop + remove a container (no recreate)
-GET  /api/health                Health check — Docker connectivity + scheduler
+GET     /api/containers                        List all containers with their scan status
+GET     /api/containers/{name}                 Get a single container by name
+GET     /api/containers/{name}/details         Get full container configuration details
+GET     /api/containers/{name}/compose-diff    Preview compose file changes before update
+POST    /api/containers/{name}/compose-update  Update a container via docker compose
+POST    /api/scan                              Trigger a full scan (async background task)
+GET     /api/scan/status                       Get current scan/update status + progress log
+POST    /api/containers/{name}/update          Update a single container
+POST    /api/update/selected                   Update a list of containers by name
+POST    /api/update/all                        Update all outdated containers
+DELETE  /api/containers/{name}               Stop + remove a container (no recreate)
+GET     /api/health                            Health check — Docker connectivity + scheduler
 """
 
 import logging
@@ -317,6 +320,63 @@ def get_container(name: str):
             return ContainerOut.from_info(c)
 
     raise HTTPException(status_code=404, detail=f"Container '{name}' not found.")
+
+
+# ── GET /api/containers/{name}/details ───────────────────────────────────────
+
+@router.get("/containers/{name}/details", summary="Container configuration details")
+def container_details(name: str):
+    """
+    Return the captured configuration for a container (ports, mounts, network,
+    labels, …) as used by the recreate-on-update flow.
+
+    Environment variables are returned as key names only — their values may
+    contain secrets and are deliberately never exposed over the API.
+    """
+    container = next((c for c in api_state.containers if c.name == name), None)
+    if container is None:
+        live = docker_svc.get_all_containers()
+        container = next((c for c in live if c.name == name), None)
+    if container is None:
+        raise HTTPException(status_code=404, detail=f"Container '{name}' not found.")
+
+    cfg = container.raw_config or {}
+    env = cfg.get("environment") or []
+    env_keys = sorted(e.split("=", 1)[0] for e in env if isinstance(e, str))
+
+    assoc = compose_svc.get_association(name)
+    compose_info = None
+    if assoc:
+        cf = compose_svc.get_file(assoc[0])
+        compose_info = {
+            "filename": cf.filename if cf else "unknown",
+            "service_name": assoc[1],
+        }
+
+    return {
+        "name": container.name,
+        "short_id": container.short_id,
+        "image": container.image_name,
+        "status": container.status,
+        "repository": container.repository,
+        "tag": container.tag,
+        "latest_tag": container.latest_tag,
+        "update_status": container.update_status,
+        "local_digest": container.local_digest,
+        "ports": cfg.get("ports") or {},
+        "volumes": cfg.get("volumes") or [],
+        "environment_keys": env_keys,
+        "restart_policy": cfg.get("restart_policy") or {},
+        "network_mode": cfg.get("network_mode"),
+        "networks": cfg.get("networks") or [],
+        "labels": cfg.get("labels") or {},
+        "command": cfg.get("command"),
+        "entrypoint": cfg.get("entrypoint"),
+        "hostname": cfg.get("hostname"),
+        "user": cfg.get("user"),
+        "working_dir": cfg.get("working_dir"),
+        "compose": compose_info,
+    }
 
 
 # ── POST /api/scan ───────────────────────────────────────────────────────────
