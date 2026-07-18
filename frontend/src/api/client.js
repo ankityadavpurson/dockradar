@@ -37,6 +37,7 @@ export const api = {
   // Containers
   listContainers:   ()           => request('GET',    '/containers'),
   getContainer:     (name)       => request('GET',    `/containers/${name}`),
+  containerDetails: (name)       => request('GET',    `/containers/${name}/details`),
   deleteContainer:  (name)       => request('DELETE', `/containers/${name}`),
 
   // Scan

@@ -1,6 +1,7 @@
 import { Info } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import ComposeManager from './components/ComposeManager'
+import ContainerDetailDrawer from './components/ContainerDetailDrawer'
 import ComposeUpdateDialog from './components/ComposeUpdateDialog'
 import ConfirmDialog from './components/ConfirmDialog'
 import ContainerTable from './components/ContainerTable'
@@ -28,6 +29,7 @@ const App = () => {
   const [confirmSel, setConfirmSel] = useState(false)
   const [showCompose, setShowCompose] = useState(false)
   const [confirmCompose, setConfirmCompose] = useState(null) // ContainerInfo | null
+  const [detailName, setDetailName] = useState(null)         // container name | null
 
   // ── Filtered containers ───────────────────────────────────────────────────
   const visible = useMemo(() => {
@@ -136,6 +138,7 @@ const App = () => {
             onConfirmDelete={c => setConfirmDelete(c)}
             associations={associations}
             onComposeUpdate={c => setConfirmCompose(c)}
+            onShowDetails={c => setDetailName(c.name)}
           />
         </div>
 
@@ -201,6 +204,14 @@ Not preserved: named volumes attached via --mount, extra networks, and advanced 
           container={confirmCompose}
           onConfirm={(name) => { composeUpdateOne(name); setConfirmCompose(null) }}
           onCancel={() => setConfirmCompose(null)}
+        />
+      )}
+
+      {/* Container detail drawer */}
+      {detailName && (
+        <ContainerDetailDrawer
+          name={detailName}
+          onClose={() => setDetailName(null)}
         />
       )}
 

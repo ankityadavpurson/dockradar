@@ -1,4 +1,4 @@
-import { ArrowUpCircle, ChevronDown, ChevronUp, FileCode2, MoreVertical, RefreshCw, ShieldCheck, Tag, Trash2 } from 'lucide-react'
+import { ArrowUpCircle, ChevronDown, ChevronUp, FileCode2, Info, MoreVertical, RefreshCw, ShieldCheck, Tag, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -119,7 +119,7 @@ const STATUS_ORDER = { update_available: 0, error: 1, unknown: 2, up_to_date: 3 
 /** Compact card used below the md breakpoint instead of the table row. */
 function ContainerCard({
   c, isSel, refreshing, hasCompose, assoc, isBusy,
-  onToggleSelect, onConfirmUpdate, onComposeUpdate, onConfirmDelete,
+  onToggleSelect, onConfirmUpdate, onComposeUpdate, onConfirmDelete, onShowDetails,
 }) {
   const dot = DOCKER_DOT[c.status] ?? { bg: '#333', shadow: 'none' }
   const isRunning = c.status === 'running'
@@ -137,7 +137,12 @@ function ContainerCard({
         <span className="w-2 h-2 rounded-full shrink-0"
           style={{ background: dot.bg, boxShadow: dot.shadow }}
           role="img" aria-label={`Container ${c.status}`} />
-        <span className="text-[13px] font-medium truncate" style={{ color: '#ededed' }}>{c.name}</span>
+        <button type="button" className="text-[13px] font-medium truncate text-left"
+          style={{ color: '#ededed', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+          title={`View details for ${c.name}`}
+          onClick={() => onShowDetails && onShowDetails(c)}>
+          {c.name}
+        </button>
         <StoppedBadge status={c.status} />
         <div className="ml-auto flex items-center gap-1.5 shrink-0">
           {c.update_status === 'update_available' && (
@@ -159,7 +164,7 @@ function ContainerCard({
           )}
           <RowMenu container={c} hasCompose={hasCompose} isBusy={isBusy}
             onConfirmUpdate={onConfirmUpdate} onComposeUpdate={onComposeUpdate}
-            onConfirmDelete={onConfirmDelete} />
+            onConfirmDelete={onConfirmDelete} onShowDetails={onShowDetails} />
         </div>
       </div>
 
@@ -211,7 +216,7 @@ function StatusPill({ status }) {
 
 /** Per-row ⋮ menu. Rendered position:fixed so the table's overflow-x-auto
  *  wrapper cannot clip it; closes on outside click, Escape, or scroll. */
-function RowMenu({ container: c, hasCompose, isBusy, onConfirmUpdate, onComposeUpdate, onConfirmDelete }) {
+function RowMenu({ container: c, hasCompose, isBusy, onConfirmUpdate, onComposeUpdate, onConfirmDelete, onShowDetails }) {
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState({ top: 0, left: 0 })
   const btnRef = useRef(null)
@@ -234,7 +239,7 @@ function RowMenu({ container: c, hasCompose, isBusy, onConfirmUpdate, onComposeU
     e.stopPropagation()
     if (!open && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect()
-      const menuH = 130
+      const menuH = 165
       const top = r.bottom + menuH > window.innerHeight ? r.top - menuH - 4 : r.bottom + 4
       setPos({ top, left: Math.max(8, r.right - MENU_WIDTH) })
     }
@@ -278,6 +283,8 @@ function RowMenu({ container: c, hasCompose, isBusy, onConfirmUpdate, onComposeU
             boxShadow: '0 12px 40px rgba(0,0,0,0.55)',
           }}
           onClick={e => e.stopPropagation()}>
+          <MenuItem label="View details" icon={<Info size={12} />}
+            onSelect={() => onShowDetails && onShowDetails(c)} />
           {hasCompose && (
             <MenuItem label="Update via compose" icon={<FileCode2 size={12} />}
               onSelect={() => onComposeUpdate && onComposeUpdate(c)} />
@@ -300,7 +307,7 @@ export default function ContainerTable({
   containers, isFiltered = false, selected, isBusy,
   scanning = false, updating = false,
   onToggleSelect, onConfirmUpdate, onConfirmDelete,
-  associations = {}, onComposeUpdate,
+  associations = {}, onComposeUpdate, onShowDetails,
 }) {
   const [sortKey, setSortKey] = useState('update_status')
   const [sortDir, setSortDir] = useState('asc')
@@ -359,6 +366,7 @@ export default function ContainerTable({
           onConfirmUpdate={onConfirmUpdate}
           onComposeUpdate={onComposeUpdate}
           onConfirmDelete={onConfirmDelete}
+          onShowDetails={onShowDetails}
         />
       ))}
     </div>
@@ -442,9 +450,12 @@ export default function ContainerTable({
                       role="img"
                       aria-label={`Container ${c.status}`}
                     />
-                    <span className="text-[13px] font-medium" style={{ color: '#ededed' }}>
+                    <button type="button" className="text-[13px] font-medium text-left"
+                      style={{ color: '#ededed', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                      title={`View details for ${c.name}`}
+                      onClick={() => onShowDetails && onShowDetails(c)}>
                       {c.name}
-                    </span>
+                    </button>
                     <StoppedBadge status={c.status} />
                   </div>
                   <span className="text-[12px] font-mono" style={{ color: '#8a8a8a' }}>{c.repository}</span>
@@ -507,6 +518,7 @@ export default function ContainerTable({
                       onConfirmUpdate={onConfirmUpdate}
                       onComposeUpdate={onComposeUpdate}
                       onConfirmDelete={onConfirmDelete}
+                      onShowDetails={onShowDetails}
                     />
                   </div>
                 </td>
