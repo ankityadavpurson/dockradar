@@ -20,7 +20,7 @@ export default function InfoBar({ health }) {
   const lastScan = timeAgo(health.last_scan)
 
   return (
-    <div className="flex items-center flex-wrap gap-x-4 gap-y-1 px-4 py-2 mb-4 text-[12px] font-mono rounded-md"
+    <div className="flex items-center flex-wrap gap-x-4 gap-y-1 px-4 py-2 mb-4 text-[14px] font-mono rounded-md"
       style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #1a1a1a', color: '#8a8a8a' }}>
 
       <span className="flex items-center gap-1.5">

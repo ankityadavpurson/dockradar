@@ -26,8 +26,8 @@ export default function ConfirmDialog({
         style={{ background: '#111', border: '1px solid #222' }}>
 
         <div>
-          <h2 id="confirm-dialog-title" className="text-[15px] font-semibold mb-2" style={{ color: '#ededed' }}>{title}</h2>
-          <p className="text-[13px] whitespace-pre-line" style={{ color: '#666' }}>{message}</p>
+          <h2 id="confirm-dialog-title" className="text-[16px] font-semibold mb-2" style={{ color: '#ededed' }}>{title}</h2>
+          <p className="text-[15px] whitespace-pre-line" style={{ color: '#666' }}>{message}</p>
         </div>
 
         <div className="flex gap-2 justify-end">

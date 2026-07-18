@@ -25,7 +25,7 @@ export default function Toolbar({
         <ArrowUpCircle size={13} />
         Update Selected
         {selectedCount > 0 && (
-          <span className="ml-0.5 px-1.5 py-0.5 rounded text-[10px] font-mono"
+          <span className="ml-0.5 px-1.5 py-0.5 rounded text-[12px] font-mono"
             style={{ background: '#1a1a1a', color: '#888', border: '1px solid #222' }}>
             {selectedCount}
           </span>
@@ -38,7 +38,7 @@ export default function Toolbar({
         <UploadCloud size={13} />
         Update All
         {outdatedCount > 0 && (
-          <span className="ml-0.5 px-1.5 py-0.5 rounded text-[10px] font-mono"
+          <span className="ml-0.5 px-1.5 py-0.5 rounded text-[12px] font-mono"
             style={{ background: 'rgba(245,166,35,0.08)', color: '#f5a623', border: '1px solid rgba(245,166,35,0.2)' }}>
             {outdatedCount}
           </span>
@@ -65,7 +65,7 @@ export default function Toolbar({
           placeholder="Search…"
           value={search}
           onChange={e => onSearch(e.target.value)}
-          className="pl-8 pr-7 py-1.5 rounded text-[12px] w-44 focus:w-64 transition-all outline-none"
+          className="pl-8 pr-7 py-1.5 rounded text-[14px] w-44 focus:w-64 transition-all outline-none"
           style={{ background: '#111', border: '1px solid #222', color: '#ededed' }}
           onFocus={e => e.target.style.borderColor = '#444'}
           onBlur={e  => e.target.style.borderColor = '#222'}
@@ -83,14 +83,14 @@ export default function Toolbar({
 
       {/* Match count while filtering */}
       {filtering && (
-        <span className="text-[11px] font-mono whitespace-nowrap" style={{ color: '#8a8a8a' }}
+        <span className="text-[13px] font-mono whitespace-nowrap" style={{ color: '#8a8a8a' }}
           title="Matching / total containers">
           {visibleCount} / {totalCount}
         </span>
       )}
 
       {/* Outdated filter toggle */}
-      <label className="flex items-center gap-2 cursor-pointer select-none text-[12px]"
+      <label className="flex items-center gap-2 cursor-pointer select-none text-[14px]"
         style={{ color: '#9a9a9a' }}>
         <div className="relative">
           <input type="checkbox" checked={filterOutdated}

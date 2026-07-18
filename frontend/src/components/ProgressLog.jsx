@@ -23,7 +23,7 @@ const ProgressLog = ({ messages, scanning, updating }) => {
       {!open && (
         <button
           type="button"
-          className="fixed right-4 bottom-4 z-[190] flex items-center gap-2 rounded-lg px-3 py-2 font-mono text-[11px] uppercase tracking-wider"
+          className="fixed right-4 bottom-4 z-[190] flex items-center gap-2 rounded-lg px-3 py-2 font-mono text-[13px] uppercase tracking-wider"
           style={{ background: '#111', border: '1px solid #222', boxShadow: '0 12px 40px rgba(0,0,0,0.35)' }}
           onClick={() => setOpen(true)}
         >
@@ -45,7 +45,7 @@ const ProgressLog = ({ messages, scanning, updating }) => {
               <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid #1a1a1a', background: 'rgba(255,255,255,0.02)' }}>
                 <div className="flex items-center gap-2" style={{ color: active ? (scanning ? '#f5a623' : '#50e3c2') : '#fff' }}>
                   <Terminal size={13} />
-                  <span className="text-[11px] font-mono uppercase tracking-wider">
+                  <span className="text-[13px] font-mono uppercase tracking-wider">
                     {scanning ? 'Scanning…' : updating ? 'Updating…' : 'Progress Log'}
                   </span>
                   {active && (
@@ -64,11 +64,11 @@ const ProgressLog = ({ messages, scanning, updating }) => {
                 </button>
               </div>
 
-              <div className="px-5 py-3 font-mono text-[11px]" style={{ borderBottom: '1px solid #141414', background: 'rgba(255,255,255,0.015)' }}>
+              <div className="px-5 py-3 font-mono text-[13px]" style={{ borderBottom: '1px solid #141414', background: 'rgba(255,255,255,0.015)' }}>
                 {messages.length} line{messages.length === 1 ? '' : 's'}
               </div>
 
-              <div className="flex-1 overflow-y-auto p-5 font-mono text-[11px] leading-relaxed" style={{ background: '#000' }}
+              <div className="flex-1 overflow-y-auto p-5 font-mono text-[13px] leading-relaxed" style={{ background: '#000' }}
                 role="log" aria-live="polite">
                 {messages.map((msg, i) => (
                   <div key={i} className="mb-1 break-words" style={{ color: getLineColor(msg) }}>{msg}</div>

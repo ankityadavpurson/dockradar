@@ -33,7 +33,7 @@ export default function Header({ health, containers, scanStatus }) {
         {/* Logo */}
         <div className="flex items-center gap-2.5 shrink-0">
           <img src={favicon} alt="Logo" className="w-8 h-8" />
-          <span className="text-[15px] font-semibold tracking-tight text-white">
+          <span className="text-[18px] font-semibold tracking-tight text-white">
             DockRadar
           </span>
         </div>
@@ -51,7 +51,7 @@ export default function Header({ health, containers, scanStatus }) {
         <div className="flex-1" />
 
         {/* Next scan */}
-        <span className="text-[12px] hidden md:block" style={{ color: '#9a9a9a' }} title={nextScanTitle}>
+        <span className="text-[14px] hidden md:block" style={{ color: '#9a9a9a' }} title={nextScanTitle}>
           Next scan:{' '}
           <span style={{ color: '#ccc' }}>{nextScanLabel}</span>
         </span>
@@ -59,7 +59,7 @@ export default function Header({ health, containers, scanStatus }) {
         <div className="w-px h-5 hidden md:block" style={{ background: '#222' }} />
 
         {/* Docker status — dot only on small screens */}
-        <div className="flex items-center gap-2 text-[12px] shrink-0"
+        <div className="flex items-center gap-2 text-[14px] shrink-0"
           title={health?.docker_connected ? 'Docker connected' : 'Docker offline'}>
           <span className="w-1.5 h-1.5 rounded-full" style={{
             background: health?.docker_connected ? '#50e3c2' : '#ff4444',
@@ -78,10 +78,10 @@ function StatChip({ label, value, active, warn }) {
   const color = warn ? '#f5a623' : active ? '#ededed' : '#9a9a9a'
   return (
     <div className="flex items-center gap-1.5">
-      <span className="text-[13px] font-medium tabular-nums" style={{ color }}>
+      <span className="text-[15px] font-medium tabular-nums" style={{ color }}>
         {value}
       </span>
-      <span className="text-[12px]" style={{ color: '#8a8a8a' }}>{label}</span>
+      <span className="text-[14px]" style={{ color: '#8a8a8a' }}>{label}</span>
     </div>
   )
 }

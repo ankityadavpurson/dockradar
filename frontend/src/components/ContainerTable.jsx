@@ -43,7 +43,7 @@ function TagLabel({ container: c }) {
 
   if (c.update_status === 'update_available') {
     return (
-      <span className="inline-block font-mono text-[12px]"
+      <span className="inline-block font-mono text-[14px]"
         style={{ color: '#7a7a7a', textDecoration: 'line-through' }}>
         {label}
       </span>
@@ -51,13 +51,13 @@ function TagLabel({ container: c }) {
   }
   if (c.tag === 'latest') {
     return (
-      <span className="inline-block font-mono text-[12px]" style={{ color: '#8a8a8a' }}>
+      <span className="inline-block font-mono text-[14px]" style={{ color: '#8a8a8a' }}>
         latest
       </span>
     )
   }
   return (
-    <span className="inline-block font-mono text-[12px] px-1.5 py-0.5 rounded w-fit"
+    <span className="inline-block font-mono text-[14px] px-1.5 py-0.5 rounded w-fit"
       style={{ color: '#aaa', background: 'rgba(255,255,255,0.03)', border: '1px solid #1a1a1a' }}
       title={isDigestTag ? c.tag : undefined}>
       {label}
@@ -73,7 +73,7 @@ const CHECK_STYLES = {
 
 function CheckChip({ style, icon, label, title }) {
   return (
-    <span className="inline-flex items-center gap-1 text-[11px] font-mono px-1.5 py-0.5 rounded"
+    <span className="inline-flex items-center gap-1 text-[13px] font-mono px-1.5 py-0.5 rounded"
       style={style} title={title}>
       {icon}
       {label}
@@ -137,7 +137,7 @@ function ContainerCard({
         <span className="w-2 h-2 rounded-full shrink-0"
           style={{ background: dot.bg, boxShadow: dot.shadow }}
           role="img" aria-label={`Container ${c.status}`} />
-        <button type="button" className="text-[13px] font-medium truncate text-left"
+        <button type="button" className="text-[15px] font-medium truncate text-left"
           style={{ color: '#ededed', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
           title={`View details for ${c.name}`}
           onClick={() => onShowDetails && onShowDetails(c)}>
@@ -168,7 +168,7 @@ function ContainerCard({
         </div>
       </div>
 
-      <div className="text-[12px] font-mono truncate" style={{ color: '#8a8a8a' }}>
+      <div className="text-[14px] font-mono truncate" style={{ color: '#8a8a8a' }}>
         {c.repository}
       </div>
 
@@ -190,7 +190,7 @@ const MENU_WIDTH = 200
 function StoppedBadge({ status }) {
   if (status === 'running') return null
   return (
-    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0"
+    <span className="text-[11px] font-mono px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0"
       style={{
         color: status === 'exited' ? '#ff6b6b'
              : status === 'paused' ? '#f5a623'
@@ -206,7 +206,7 @@ function StoppedBadge({ status }) {
 function StatusPill({ status }) {
   const s = STATUS_CFG[status] ?? STATUS_CFG.unknown
   return (
-    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-medium"
+    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[14px] font-medium"
       style={{ color: s.color, background: s.bg, border: `1px solid ${s.border}` }}>
       <span className="w-1 h-1 rounded-full" style={{ background: s.color }} />
       {s.label}
@@ -251,7 +251,7 @@ function RowMenu({ container: c, hasCompose, isBusy, onConfirmUpdate, onComposeU
   function MenuItem({ label, icon, onSelect, danger = false }) {
     return (
       <button role="menuitem" type="button"
-        className="flex items-center gap-2 w-full px-3 py-2 text-left text-[12px] transition-colors"
+        className="flex items-center gap-2 w-full px-3 py-2 text-left text-[14px] transition-colors"
         style={{ color: danger ? '#ff6b6b' : '#ccc', background: 'transparent' }}
         onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -337,13 +337,13 @@ export default function ContainerTable({
         <span className="text-4xl mb-4 opacity-20">▲</span>
         {isFiltered ? (
           <>
-            <p className="text-[15px] font-medium mb-1" style={{ color: '#bbb' }}>No matching containers</p>
-            <p className="text-[13px]">Nothing matches the current search or filter — clear them to see all containers.</p>
+            <p className="text-[16px] font-medium mb-1" style={{ color: '#bbb' }}>No matching containers</p>
+            <p className="text-[15px]">Nothing matches the current search or filter — clear them to see all containers.</p>
           </>
         ) : (
           <>
-            <p className="text-[15px] font-medium mb-1" style={{ color: '#bbb' }}>No containers found</p>
-            <p className="text-[13px]">Click <span style={{ color: '#ddd' }}>Scan</span> to discover Docker containers.</p>
+            <p className="text-[16px] font-medium mb-1" style={{ color: '#bbb' }}>No containers found</p>
+            <p className="text-[15px]">Click <span style={{ color: '#ddd' }}>Scan</span> to discover Docker containers.</p>
           </>
         )}
       </div>
@@ -392,7 +392,7 @@ export default function ContainerTable({
                 aria-sort={col.sortable && sortKey === col.key
                   ? (sortDir === 'asc' ? 'ascending' : 'descending')
                   : undefined}
-                className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-wider whitespace-nowrap"
+                className="px-4 py-3 text-left text-[13px] font-medium uppercase tracking-wider whitespace-nowrap"
                 style={{ color: col.sortable && sortKey === col.key ? '#ccc' : '#8a8a8a' }}>
                 {col.sortable ? (
                   <button type="button"
@@ -450,7 +450,7 @@ export default function ContainerTable({
                       role="img"
                       aria-label={`Container ${c.status}`}
                     />
-                    <button type="button" className="text-[13px] font-medium text-left"
+                    <button type="button" className="text-[15px] font-medium text-left"
                       style={{ color: '#ededed', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
                       title={`View details for ${c.name}`}
                       onClick={() => onShowDetails && onShowDetails(c)}>
@@ -458,8 +458,8 @@ export default function ContainerTable({
                     </button>
                     <StoppedBadge status={c.status} />
                   </div>
-                  <span className="text-[12px] font-mono" style={{ color: '#8a8a8a' }}>{c.repository}</span>
-                  <div className="text-[10px] font-mono mt-0.5" style={{ color: '#6a6a6a' }}>{c.short_id}</div>
+                  <span className="text-[14px] font-mono" style={{ color: '#8a8a8a' }}>{c.repository}</span>
+                  <div className="text-[12px] font-mono mt-0.5" style={{ color: '#6a6a6a' }}>{c.short_id}</div>
                 </td>
 
                 {/* Tag + Digest */}
@@ -467,7 +467,7 @@ export default function ContainerTable({
                   <div className="flex flex-col gap-1">
                     <TagLabel container={c} />
                     {c.local_digest && (
-                      <span className="font-mono text-[11px] px-1.5 py-0.5" style={{ color: '#6a6a6a' }}
+                      <span className="font-mono text-[13px] px-1.5 py-0.5" style={{ color: '#6a6a6a' }}
                         title={c.local_digest}>
                         {shortDigest(c.local_digest)}
                       </span>

@@ -71,7 +71,7 @@ const App = () => {
 
         {/* Connection error */}
         {error && (
-          <div className="mb-4 px-4 py-3 rounded text-[13px] font-mono animate-fade_in"
+          <div className="mb-4 px-4 py-3 rounded text-[15px] font-mono animate-fade_in"
             style={{ background: 'rgba(255,68,68,0.07)', border: '1px solid rgba(255,68,68,0.18)', color: '#ff4444' }}>
             ✗ {error}
           </div>
@@ -104,7 +104,7 @@ const App = () => {
           <div className="flex items-center gap-3 px-4 py-3 mb-4 rounded-lg flex-wrap"
             style={{ background: 'rgba(0,112,243,0.06)', border: '1px solid rgba(0,112,243,0.25)' }}>
             <Info size={14} style={{ color: '#4a9eff', flexShrink: 0 }} />
-            <span className="text-[13px]" style={{ color: '#bbb' }}>
+            <span className="text-[15px]" style={{ color: '#bbb' }}>
               No scan data yet — container versions are unknown until the first registry scan.
             </span>
             <button className="btn btn-primary btn-sm ml-auto" onClick={triggerScan}>
@@ -118,10 +118,10 @@ const App = () => {
           style={{ border: '1px solid #1a1a1a' }}>
           <div className="flex items-center justify-between px-4 py-3"
             style={{ borderBottom: '1px solid #1a1a1a', color: '#aaaaaa', background: 'rgba(0,0,0,0.3)' }}>
-            <span className="text-[11px] font-mono uppercase tracking-wider">
+            <span className="text-[13px] font-mono uppercase tracking-wider">
               Containers
             </span>
-            <span className="text-[11px] font-mono">
+            <span className="text-[13px] font-mono">
               {visible.length} / {containers.length}
             </span>
           </div>

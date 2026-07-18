@@ -65,20 +65,20 @@
 
   /* ── Tag pills ── */
   .tag-new {
-    @apply font-mono text-[11px] px-2 py-0.5 rounded;
+    @apply font-mono text-[13px] px-2 py-0.5 rounded;
     color: #50e3c2;
     background: rgba(80,227,194,0.07);
     border: 1px solid rgba(80,227,194,0.18);
   }
   .tag-old {
-    @apply font-mono text-[11px] px-2 py-0.5 rounded line-through;
+    @apply font-mono text-[13px] px-2 py-0.5 rounded line-through;
     color: #666;
     background: rgba(255,255,255,0.04);
     border: 1px solid #222;
     opacity: 0.7;
   }
   .tag-neutral {
-    @apply font-mono text-[11px] px-2 py-0.5 rounded;
+    @apply font-mono text-[13px] px-2 py-0.5 rounded;
     color: #666;
     background: rgba(255,255,255,0.04);
     border: 1px solid #222;
@@ -91,7 +91,7 @@
    * Ghost: no border, subtle hover
    */
   .btn {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded-md text-[13px] font-medium
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-md text-[15px] font-medium
            transition-all duration-150 cursor-pointer border
            disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none
            select-none whitespace-nowrap;
@@ -142,6 +142,6 @@
   }
   .btn-red:not(:disabled):hover { background: rgba(255,68,68,0.07); border-color: rgba(255,68,68,0.5); }
 
-  .btn-sm  { @apply px-3 py-1.5 text-xs rounded; }
-  .btn-xs  { @apply px-2 py-1 text-[11px] rounded; }
+  .btn-sm  { @apply px-3 py-1.5 text-[14px] rounded; }
+  .btn-xs  { @apply px-2 py-1 text-[13px] rounded; }
 }

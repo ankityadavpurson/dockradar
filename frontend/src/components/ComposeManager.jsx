@@ -22,7 +22,7 @@ const S = {
 function StatusMsg({ msg, isError, onDismiss }) {
   if (!msg) return null
   return (
-    <div className="flex items-start gap-2 px-3 py-2 rounded text-[12px]"
+    <div className="flex items-start gap-2 px-3 py-2 rounded text-[14px]"
       style={isError
         ? { background: 'rgba(255,68,68,0.07)', border: '1px solid rgba(255,68,68,0.18)', color: '#ff4444' }
         : { background: 'rgba(80,227,194,0.07)', border: '1px solid rgba(80,227,194,0.18)', color: '#50e3c2' }
@@ -51,7 +51,7 @@ function ServicePicker({ composeFiles, labels = {}, selectedFileId, selectedServ
 
   const sel = {
     background: 'rgba(0,0,0,0.5)', border: S.border, color: '#888', borderRadius: '4px',
-    padding: '4px 24px 4px 8px', fontSize: '11px', fontFamily: 'inherit',
+    padding: '4px 24px 4px 8px', fontSize: '13px', fontFamily: 'inherit',
     appearance: 'none', width: '100%', cursor: 'pointer',
   }
 
@@ -114,16 +114,16 @@ function FileEditor({ file, onSave, onCancel }) {
       <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: S.border, background: 'rgba(0,0,0,0.5)' }}>
         <div className="flex items-center gap-2">
           <FileCode2 size={12} style={S.muted} />
-          <span className="font-mono text-[11px]" style={S.label}>{file.filename}</span>
+          <span className="font-mono text-[13px]" style={S.label}>{file.filename}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <button onClick={handleSave} disabled={saving}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-mono disabled:opacity-40"
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[13px] font-mono disabled:opacity-40"
             style={{ background: 'rgba(255,255,255,0.06)', color: '#ededed', border: S.border2 }}>
             <Save size={10} />{saving ? 'Saving…' : 'Save'}
           </button>
           <button onClick={onCancel}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px]"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[13px]"
             style={{ color: '#5a5a5a', border: S.border }}>
             <XCircle size={10} />
           </button>
@@ -132,7 +132,7 @@ function FileEditor({ file, onSave, onCancel }) {
 
       {/* Error */}
       {error && (
-        <div className="mx-3 px-2 py-1.5 rounded text-[11px] font-mono"
+        <div className="mx-3 px-2 py-1.5 rounded text-[13px] font-mono"
           style={{ background: 'rgba(255,68,68,0.07)', color: '#ff4444', border: '1px solid rgba(255,68,68,0.18)' }}>
           {error}
         </div>
@@ -144,7 +144,7 @@ function FileEditor({ file, onSave, onCancel }) {
         onChange={e => setContent(e.target.value)}
         spellCheck={false}
         rows={16}
-        className="w-full font-mono text-[11px] leading-relaxed resize-none outline-none px-3 py-2"
+        className="w-full font-mono text-[13px] leading-relaxed resize-none outline-none px-3 py-2"
         style={{ background: '#000', color: '#aaa', border: 'none', tabSize: 2 }}
       />
     </div>
@@ -192,7 +192,7 @@ function DownloadPanel({ file, onClose }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CheckCircle2 size={13} style={{ color: '#50e3c2' }} />
-          <span className="text-[13px] font-medium" style={S.primary}>Update complete</span>
+          <span className="text-[15px] font-medium" style={S.primary}>Update complete</span>
         </div>
         <button onClick={onClose} style={S.muted}
           onMouseEnter={e => e.currentTarget.style.color = '#888'}
@@ -201,13 +201,13 @@ function DownloadPanel({ file, onClose }) {
         </button>
       </div>
 
-      <p className="text-[12px] font-mono" style={S.section}>
+      <p className="text-[14px] font-mono" style={S.section}>
         Download or copy the updated <span style={S.label}>{file.filename}</span> compose file.
       </p>
 
       <div className="flex gap-2">
         <button onClick={handleDownload}
-          className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded text-[12px] font-medium transition-colors"
+          className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded text-[14px] font-medium transition-colors"
           style={{ background: '#fff', color: '#000', border: '1px solid #fff' }}
           onMouseEnter={e => e.currentTarget.style.background = '#e6e6e6'}
           onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
@@ -216,7 +216,7 @@ function DownloadPanel({ file, onClose }) {
         </button>
 
         <button onClick={handleCopy} disabled={!content}
-          className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded text-[12px] font-medium transition-colors disabled:opacity-40"
+          className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded text-[14px] font-medium transition-colors disabled:opacity-40"
           style={{ background: 'transparent', color: '#ededed', border: '1px solid #333' }}
           onMouseEnter={e => { if (content) e.currentTarget.style.background = '#1a1a1a' }}
           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
@@ -260,7 +260,7 @@ function ContainerRow({ container, association, composeFiles, labels, onAssociat
       <div className="flex items-center gap-2 min-w-0">
         <span className="w-1 h-1 rounded-full shrink-0"
           style={{ background: container.status === 'running' ? '#50e3c2' : '#333' }} />
-        <span className="font-mono text-[12px] truncate" style={{ color: '#aaa' }}
+        <span className="font-mono text-[14px] truncate" style={{ color: '#aaa' }}
           title={container.name}>{container.name}</span>
       </div>
 
@@ -270,14 +270,14 @@ function ContainerRow({ container, association, composeFiles, labels, onAssociat
       <div className="flex items-center gap-1">
         {canSave && (
           <button onClick={handleSave} disabled={saving}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[13px] font-mono"
             style={{ background: 'rgba(255,255,255,0.05)', color: '#888', border: S.border2 }}>
             <Link size={9} />{saving ? '…' : 'Link'}
           </button>
         )}
         {hasAssociation && !canSave && (
           <button onClick={() => onDisassociate(container.name)}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono opacity-40 hover:opacity-100 transition-opacity"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[13px] font-mono opacity-40 hover:opacity-100 transition-opacity"
             style={{ background: 'rgba(255,68,68,0.05)', color: '#ff4444', border: '1px solid rgba(255,68,68,0.12)' }}>
             <Link2Off size={9} />
           </button>
@@ -384,9 +384,9 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
         <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: S.border }}>
           <div className="flex items-center gap-2">
             <FileCode2 size={14} style={{ color: '#666' }} />
-            <span className="text-[14px] font-medium" style={S.primary}>Compose Files</span>
+            <span className="text-[16px] font-medium" style={S.primary}>Compose Files</span>
             {composeFiles.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono"
+              <span className="px-1.5 py-0.5 rounded text-[12px] font-mono"
                 style={{ background: '#111', color: '#7c7c7c', border: S.border }}>
                 {composeFiles.length}
               </span>
@@ -431,11 +431,11 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
                   background: dragging ? 'rgba(255,255,255,0.02)' : 'transparent',
                 }}>
                 <Upload size={18} style={{ color: dragging ? '#888' : '#333' }} />
-                <span className="text-[12px] font-mono"
+                <span className="text-[14px] font-mono"
                   style={{ color: dragging ? '#aaa' : '#666' }}>
                   {uploading ? 'Uploading…' : 'Drop compose files here, or click to browse'}
                 </span>
-                <span className="text-[10px]" style={S.muted}>.yml / .yaml only</span>
+                <span className="text-[12px]" style={S.muted}>.yml / .yaml only</span>
               </div>
               <input ref={fileInputRef} type="file" accept=".yml,.yaml" multiple className="hidden"
                 onChange={e => { handleFiles(e.target.files); e.target.value = '' }} />
@@ -443,7 +443,7 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
               {/* File list */}
               {composeFiles.length > 0 && (
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-mono uppercase tracking-wider mb-1"
+                  <span className="text-[12px] font-mono uppercase tracking-wider mb-1"
                     style={S.section}>Stored files</span>
                   {composeFiles.map(f => (
                     <div key={f.file_id} className="flex items-center justify-between px-3 py-2 rounded"
@@ -451,16 +451,16 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
                       <div className="flex items-center gap-2 min-w-0">
                         <FileCode2 size={12} style={{ color: '#5a5a5a', flexShrink: 0 }} />
                         <div className="flex flex-col min-w-0">
-                          <span className="font-mono text-[12px] truncate" style={{ color: '#aaa' }}>
+                          <span className="font-mono text-[14px] truncate" style={{ color: '#aaa' }}>
                             {f.filename}
                           </span>
                           {labels[f.file_id] !== f.filename && (
-                            <span className="font-mono text-[9px]" style={S.section}>
+                            <span className="font-mono text-[11px]" style={S.section}>
                               #{f.file_id.slice(0, 10)}
                             </span>
                           )}
                         </div>
-                        <span className="text-[11px] shrink-0" style={S.section}>
+                        <span className="text-[13px] shrink-0" style={S.section}>
                           {f.services.length} service{f.services.length !== 1 ? 's' : ''}: {f.services.slice(0, 4).join(', ')}{f.services.length > 4 ? '…' : ''}
                         </span>
                       </div>
@@ -499,14 +499,14 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
 
               {/* Container associations */}
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-mono uppercase tracking-wider mb-1"
+                <span className="text-[12px] font-mono uppercase tracking-wider mb-1"
                   style={S.section}>Container associations</span>
                 {composeFiles.length === 0 ? (
-                  <p className="text-[12px] font-mono py-2" style={S.muted}>
+                  <p className="text-[14px] font-mono py-2" style={S.muted}>
                     Upload a compose file above to start linking containers.
                   </p>
                 ) : containers.length === 0 ? (
-                  <p className="text-[12px] font-mono py-2" style={S.muted}>
+                  <p className="text-[14px] font-mono py-2" style={S.muted}>
                     No containers found. Run a scan first.
                   </p>
                 ) : (
@@ -524,19 +524,19 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-3 text-[11px] font-mono"
+        <div className="flex items-center justify-between px-5 py-3 text-[13px] font-mono"
           style={{ borderTop: S.border, color: '#666' }}>
           <span>{linkedCount} container{linkedCount !== 1 ? 's' : ''} linked</span>
           <div className="flex items-center gap-2">
             {editingFile && (
               <button onClick={() => setEditingFile(null)}
-                className="px-3 py-1 rounded text-[11px] font-mono transition-colors"
+                className="px-3 py-1 rounded text-[13px] font-mono transition-colors"
                 style={{ border: S.border, color: '#777' }}>
                 ← Back
               </button>
             )}
             <button onClick={onClose}
-              className="px-3 py-1 rounded text-[11px] font-mono transition-colors"
+              className="px-3 py-1 rounded text-[13px] font-mono transition-colors"
               style={{ border: S.border, color: '#777' }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = '#333'; e.currentTarget.style.color = '#888' }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = '#1a1a1a'; e.currentTarget.style.color = '#777' }}>

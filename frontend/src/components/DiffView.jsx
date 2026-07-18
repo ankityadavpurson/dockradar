@@ -8,7 +8,7 @@ const DiffView = ({ current, proposed }) => {
   const maxLen = Math.max(currentLines.length, proposedLines.length)
 
   return (
-    <div style={{ fontFamily: 'monospace', fontSize: '11px', lineHeight: 1.6, overflowY: 'auto', maxHeight: '260px' }}>
+    <div style={{ fontFamily: 'monospace', fontSize: '13px', lineHeight: 1.6, overflowY: 'auto', maxHeight: '260px' }}>
       {Array.from({ length: maxLen }, (_, i) => {
         const cur = currentLines[i] ?? ''
         const prop = proposedLines[i] ?? ''

@@ -27,7 +27,7 @@ export default function Toast({ toasts = [], onDismiss }) {
               background: '#111',
               border: `1px solid ${cfg.border}`,
               color: '#ededed',
-              fontSize: '13px',
+              fontSize: '15px',
               maxWidth: '360px',
               boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
             }}>
