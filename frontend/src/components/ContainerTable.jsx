@@ -1,6 +1,7 @@
-import { ArrowUpCircle, ChevronDown, ChevronUp, FileCode2, Info, MoreVertical, RefreshCw, ShieldCheck, Tag, Trash2 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { ArrowUpCircle, ChevronDown, ChevronUp, FileCode2, ShieldCheck, Tag } from 'lucide-react'
+import { useState } from 'react'
+import CheckBox from './CheckBox'
+import RowMenu from './RowMenu'
 
 const STATUS_CFG = {
   up_to_date:       { label: 'Up to date',       color: '#50e3c2', bg: 'rgba(80,227,194,0.07)',  border: 'rgba(80,227,194,0.18)'  },
@@ -215,95 +216,6 @@ function StatusPill({ status }) {
   )
 }
 
-/** Per-row ⋮ menu. Rendered position:fixed so the table's overflow-x-auto
- *  wrapper cannot clip it; closes on outside click, Escape, or scroll. */
-function RowMenu({ container: c, hasCompose, isBusy, onConfirmUpdate, onComposeUpdate, onConfirmDelete, onShowDetails }) {
-  const [open, setOpen] = useState(false)
-  const [pos, setPos] = useState({ top: 0, left: 0 })
-  const btnRef = useRef(null)
-
-  useEffect(() => {
-    if (!open) return
-    const close = () => setOpen(false)
-    const onKey = e => { if (e.key === 'Escape') setOpen(false) }
-    document.addEventListener('click', close)
-    document.addEventListener('keydown', onKey)
-    window.addEventListener('scroll', close, true)
-    return () => {
-      document.removeEventListener('click', close)
-      document.removeEventListener('keydown', onKey)
-      window.removeEventListener('scroll', close, true)
-    }
-  }, [open])
-
-  function toggle(e) {
-    e.stopPropagation()
-    if (!open && btnRef.current) {
-      const r = btnRef.current.getBoundingClientRect()
-      const menuH = 165
-      const top = r.bottom + menuH > window.innerHeight ? r.top - menuH - 4 : r.bottom + 4
-      setPos({ top, left: Math.max(8, r.right - MENU_WIDTH) })
-    }
-    setOpen(o => !o)
-  }
-
-  const outdated = c.update_status === 'update_available'
-
-  function MenuItem({ label, icon, onSelect, danger = false }) {
-    return (
-      <button role="menuitem" type="button"
-        className="flex items-center gap-2 w-full px-3 py-2 text-left text-[14px] transition-colors"
-        style={{ color: danger ? '#ff6b6b' : '#ccc', background: 'transparent' }}
-        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-        onClick={() => { setOpen(false); onSelect() }}>
-        {icon}
-        {label}
-      </button>
-    )
-  }
-
-  return (
-    <>
-      <button ref={btnRef} type="button" className="btn btn-ghost btn-xs" disabled={isBusy}
-        aria-haspopup="menu" aria-expanded={open} aria-label={`Actions for ${c.name}`}
-        title={`Actions for ${c.name}`}
-        onClick={toggle}>
-        <MoreVertical size={12} />
-      </button>
-
-      {/* Portal to <body>: the animated row keeps a `transform` (fade_in fill
-          mode "both"), which would otherwise become the containing block for
-          this fixed-position menu and strand it inside the clipped table. */}
-      {open && createPortal(
-        <div role="menu" aria-label={`Actions for ${c.name}`}
-          className="fixed z-[250] rounded-lg py-1 overflow-hidden"
-          style={{
-            top: pos.top, left: pos.left, width: MENU_WIDTH,
-            background: '#111', border: '1px solid #2a2a2a',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.55)',
-          }}
-          onClick={e => e.stopPropagation()}>
-          <MenuItem label="View details" icon={<Info size={12} />}
-            onSelect={() => onShowDetails && onShowDetails(c)} />
-          {hasCompose && (
-            <MenuItem label="Update via compose" icon={<FileCode2 size={12} />}
-              onSelect={() => onComposeUpdate && onComposeUpdate(c)} />
-          )}
-          <MenuItem
-            label={outdated ? 'Update (pull + recreate)' : 'Re-pull & recreate'}
-            icon={outdated ? <ArrowUpCircle size={12} /> : <RefreshCw size={12} />}
-            onSelect={() => onConfirmUpdate(c)} />
-          <div style={{ borderTop: '1px solid #222', margin: '4px 0' }} />
-          <MenuItem label="Remove container" icon={<Trash2 size={12} />} danger
-            onSelect={() => onConfirmDelete(c)} />
-        </div>,
-        document.body
-      )}
-    </>
-  )
-}
-
 export default function ContainerTable({
   containers, isFiltered = false, selected, isBusy,
   scanning = false, updating = false,
@@ -468,8 +380,7 @@ export default function ContainerTable({
                   <div className="flex flex-col gap-1">
                     <TagLabel container={c} />
                     {c.local_digest && (
-                      <span className="font-mono text-[13px] px-1.5 py-0.5" style={{ color: '#6a6a6a' }}
-                        title={c.local_digest}>
+                      <span className="font-mono text-[13px] text-[#6a6a6a]" title={c.local_digest}>
                         {shortDigest(c.local_digest)}
                       </span>
                     )}
@@ -495,6 +406,15 @@ export default function ContainerTable({
                 {/* Actions */}
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-1.5">
+                    <RowMenu
+                      container={c}
+                      hasCompose={hasCompose}
+                      isBusy={isBusy}
+                      onConfirmUpdate={onConfirmUpdate}
+                      onComposeUpdate={onComposeUpdate}
+                      onConfirmDelete={onConfirmDelete}
+                      onShowDetails={onShowDetails}
+                    />
                     {c.update_status === 'update_available' && (
                       hasCompose ? (
                         <button className="btn btn-ghost btn-xs" disabled={isBusy}
@@ -512,15 +432,6 @@ export default function ContainerTable({
                         </button>
                       )
                     )}
-                    <RowMenu
-                      container={c}
-                      hasCompose={hasCompose}
-                      isBusy={isBusy}
-                      onConfirmUpdate={onConfirmUpdate}
-                      onComposeUpdate={onComposeUpdate}
-                      onConfirmDelete={onConfirmDelete}
-                      onShowDetails={onShowDetails}
-                    />
                   </div>
                 </td>
               </tr>
@@ -532,17 +443,3 @@ export default function ContainerTable({
     </>
   )
 }
-
-const CheckBox = ({ checked, onChange, id, ariaLabel }) => (
-  <div className="inline-flex items-center">
-    <label className="flex items-center cursor-pointer relative">
-      <input type="checkbox" checked={checked} onChange={onChange} aria-label={ariaLabel}
-        className="peer h-3 w-3 cursor-pointer transition-all appearance-none rounded shadow hover:shadow-md border border-slate-300 checked:bg-blue-600 checked:border-blue-600" id={id} />
-      <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
-          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-        </svg>
-      </span>
-    </label>
-  </div>
-)

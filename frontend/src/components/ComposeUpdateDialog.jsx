@@ -145,20 +145,20 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '12px 20px', borderTop: '1px solid #1a1a1a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '13px', color: '#555', ...mono }}>
+        <div style={{ padding: '12px 12px 0 20px', borderTop: '1px solid #1a1a1a' }}>
+          <div style={{ fontSize: '13px', color: '#555', ...mono }}>
             {diff?.has_change ? 'File will be saved, then compose pull + up -d will run.' : 'compose pull + up -d will run without file changes.'}
-          </span>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={onCancel}
-              style={{ padding: '6px 14px', borderRadius: '6px', border: '1px solid #333', background: 'transparent', color: '#888', fontSize: '15px', cursor: 'pointer' }}>
-              Cancel
-            </button>
-            <button onClick={handleUpdate} disabled={loading || saving || !!error}
-              style={{ padding: '6px 16px', borderRadius: '6px', border: 'none', background: loading || saving || error ? '#333' : '#fff', color: '#000', fontSize: '15px', fontWeight: 600, cursor: loading || saving || error ? 'not-allowed' : 'pointer', opacity: loading || saving || error ? 0.5 : 1 }}>
-              {saving ? 'Updating…' : 'Confirm & Update'}
-            </button>
           </div>
+        </div>
+        <div style={{ padding: '12px 20px 20px 20px', display: 'flex', justifyContent: 'end', alignItems: 'center', gap: '12px' }}>
+          <button onClick={onCancel}
+            style={{ padding: '6px 14px', borderRadius: '6px', border: '1px solid #333', background: 'transparent', color: '#888', fontSize: '15px', cursor: 'pointer' }}>
+            Cancel
+          </button>
+          <button onClick={handleUpdate} disabled={loading || saving || !!error}
+            style={{ padding: '6px 16px', borderRadius: '6px', border: 'none', background: loading || saving || error ? '#333' : '#fff', color: '#000', fontSize: '15px', fontWeight: 600, cursor: loading || saving || error ? 'not-allowed' : 'pointer', opacity: loading || saving || error ? 0.5 : 1 }}>
+            {saving ? 'Updating…' : 'Confirm & Update'}
+          </button>
         </div>
       </div>
     </div>
