@@ -1,9 +1,8 @@
-import { Info } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import ComposeManager from './components/ComposeManager'
-import ContainerDetailDrawer from './components/ContainerDetailDrawer'
 import ComposeUpdateDialog from './components/ComposeUpdateDialog'
 import ConfirmDialog from './components/ConfirmDialog'
+import ContainerDetailDrawer from './components/ContainerDetailDrawer'
 import ContainerTable from './components/ContainerTable'
 import Header from './components/Header'
 import InfoBar from './components/InfoBar'
@@ -94,24 +93,11 @@ const App = () => {
           onSelectAll={() => selectAll(visible)}
           onClearSelection={clearSelection}
           onOpenCompose={() => setShowCompose(true)}
+          showFirstRunHint={showFirstRunHint}
         />
 
         {/* Info bar */}
         <InfoBar health={health} />
-
-        {/* First-run hint */}
-        {showFirstRunHint && (
-          <div className="flex items-center gap-3 px-4 py-3 mb-4 rounded-lg flex-wrap"
-            style={{ background: 'rgba(0,112,243,0.06)', border: '1px solid rgba(0,112,243,0.25)' }}>
-            <Info size={14} style={{ color: '#4a9eff', flexShrink: 0 }} />
-            <span className="text-[15px]" style={{ color: '#bbb' }}>
-              No scan data yet — container versions are unknown until the first registry scan.
-            </span>
-            <button className="btn btn-primary btn-sm ml-auto" onClick={triggerScan}>
-              Run first scan
-            </button>
-          </div>
-        )}
 
         {/* Container table */}
         <div className="rounded-lg overflow-hidden"

@@ -145,7 +145,7 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '12px 12px 0 20px', borderTop: '1px solid #1a1a1a' }}>
+        <div style={{ padding: '10px 20px 0 20px', borderTop: '1px solid #1a1a1a' }}>
           <div style={{ fontSize: '13px', color: '#555', ...mono }}>
             {diff?.has_change ? 'File will be saved, then compose pull + up -d will run.' : 'compose pull + up -d will run without file changes.'}
           </div>

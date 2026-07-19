@@ -3,10 +3,13 @@ import { Search, RefreshCw, ArrowUpCircle, UploadCloud, FileCode2, X } from 'luc
 
 export default function Toolbar({
   isBusy, selectedCount, outdatedCount, visibleCount, totalCount,
-  search, onSearch, filterOutdated, onFilterOutdated,
+  search, onSearch, filterOutdated, onFilterOutdated,  showFirstRunHint,
   onScan, onUpdateSelected, onUpdateAll, onSelectAll, onClearSelection, onOpenCompose,
 }) {
   const filtering = !!search.trim() || filterOutdated
+
+  const runText = showFirstRunHint ? 'Run first scan' : 'Scan'
+
   return (
     <div className="flex items-center gap-2 flex-wrap px-4 py-3 mb-4 rounded-lg"
       style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #1a1a1a' }}>
@@ -14,7 +17,7 @@ export default function Toolbar({
       {/* Scan */}
       <button className="btn btn-primary btn-sm" onClick={onScan} disabled={isBusy}>
         <RefreshCw size={13} className={isBusy ? 'animate-spin' : ''} />
-        {isBusy ? 'Working…' : 'Scan'}
+        {isBusy ? 'Working…' : runText}
       </button>
 
       <div className="w-px h-5 shrink-0" style={{ background: '#1a1a1a' }} />
