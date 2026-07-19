@@ -1,4 +1,3 @@
-import React from 'react'
 import { Clock, History, Mail } from 'lucide-react'
 
 /** "3m ago" style age for a past ISO timestamp; null → 'never'. */

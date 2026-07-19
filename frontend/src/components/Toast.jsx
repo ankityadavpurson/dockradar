@@ -1,5 +1,4 @@
-import React from 'react'
-import { CheckCircle2, AlertCircle, Info, AlertTriangle } from 'lucide-react'
+import { AlertCircle, AlertTriangle, CheckCircle2, Info } from 'lucide-react'
 
 const CONFIGS = {
   success: { icon: CheckCircle2, color: '#50e3c2',  border: 'rgba(80,227,194,0.2)'  },

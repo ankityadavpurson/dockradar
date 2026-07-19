@@ -1,5 +1,3 @@
-import React from 'react'
-
 /** Render compose YAML line-by-line, highlighting lines that differ */
 const DiffView = ({ current, proposed }) => {
   if (!current || !proposed) return null

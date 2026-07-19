@@ -1,4 +1,3 @@
-import React from 'react'
 import favicon from '../../assets/favicon.svg'
 
 /** "in 5h 12m" style countdown to a future date. */
