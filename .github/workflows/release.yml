@@ -1,0 +1,146 @@
+name: Release
+
+# Manually triggered release pipeline:
+#   1. Bumps the app version (backend __version__ + frontend package.json)
+#   2. Rotates CHANGELOG.md — the [Unreleased] section becomes the new version
+#   3. Commits, tags vX.Y.Z, and pushes
+#   4. Builds and pushes the Docker image tagged X.Y.Z + latest to GHCR
+#   5. Creates a GitHub Release with the changelog section + auto-generated notes
+#
+# Note: the tag is pushed with GITHUB_TOKEN, which deliberately does NOT
+# trigger other workflows (docker-publish.yml will not fire for it). That is
+# why this workflow builds and pushes the image itself.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version, without the leading v (e.g. 2.1.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write   # commit, tag, create release
+  packages: write   # push image to GHCR
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate version input
+        run: |
+          VERSION="${{ inputs.version }}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version must be semver like 2.1.0 (got '$VERSION')"
+            exit 1
+          fi
+          if git ls-remote --tags "https://github.com/${{ github.repository }}" "v$VERSION" | grep -q .; then
+            echo "::error::Tag v$VERSION already exists"
+            exit 1
+          fi
+          # Require the new version to be higher than every published one
+          LATEST=$(git ls-remote --tags "https://github.com/${{ github.repository }}" 'v*' \
+            | awk -F/ '{print $NF}' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed 's/^v//' \
+            | sort -V | tail -1)
+          if [ -n "$LATEST" ]; then
+            HIGHEST=$(printf '%s\n%s\n' "$LATEST" "$VERSION" | sort -V | tail -1)
+            if [ "$HIGHEST" != "$VERSION" ]; then
+              echo "::error::Version $VERSION is not higher than the latest release $LATEST"
+              exit 1
+            fi
+            echo "OK: $VERSION > latest release $LATEST"
+          else
+            echo "OK: first release"
+          fi
+
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bump backend version
+        run: sed -i 's/^__version__ = ".*"/__version__ = "${{ inputs.version }}"/' backend/app/main.py
+
+      - name: Bump frontend version
+        working-directory: frontend
+        run: npm pkg set version="${{ inputs.version }}"
+
+      # Guard against silent bump failures (pattern drift in main.py, etc.):
+      # the image must never be published with a version other than the input.
+      - name: Verify bumped versions match
+        run: |
+          VERSION="${{ inputs.version }}"
+          APP_VERSION=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' backend/app/main.py)
+          PKG_VERSION=$(node -p "require('./frontend/package.json').version")
+          echo "input=$VERSION  backend=$APP_VERSION  frontend=$PKG_VERSION"
+          if [ "$VERSION" != "$APP_VERSION" ] || [ "$VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::Version bump failed — backend '$APP_VERSION' / frontend '$PKG_VERSION' do not match '$VERSION'"
+            exit 1
+          fi
+
+      - name: Rotate CHANGELOG (Unreleased → new version)
+        run: |
+          DATE=$(date -u +%F)
+          awk -v ver="${{ inputs.version }}" -v date="$DATE" '
+            /^## \[Unreleased\]/ && !done {
+              print; print "";
+              print "## [" ver "] — " date;
+              done=1; next
+            }
+            { print }
+          ' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+
+      - name: Extract release notes for this version
+        run: |
+          # index() avoids regex-escaping pitfalls with the [brackets]
+          awk -v ver="${{ inputs.version }}" '
+            index($0, "## [" ver "]") == 1 { grab=1; next }
+            grab && index($0, "## [") == 1 { exit }
+            grab { print }
+          ' CHANGELOG.md > RELEASE_NOTES.md
+          if [ ! -s RELEASE_NOTES.md ]; then
+            echo "_No changelog entries — see auto-generated notes below._" > RELEASE_NOTES.md
+          fi
+          echo "--- release notes ---"; cat RELEASE_NOTES.md
+
+      - name: Commit version bump and tag
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/app/main.py frontend/package.json CHANGELOG.md
+          git commit -m "chore(release): v${{ inputs.version }}"
+          git tag "v${{ inputs.version }}"
+          git push origin HEAD --tags
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
+          tags: |
+            type=raw,value=${{ inputs.version }}
+            type=raw,value=latest
+
+      - name: Build and push versioned Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ inputs.version }}
+          name: v${{ inputs.version }}
+          body_path: RELEASE_NOTES.md
+          generate_release_notes: true
