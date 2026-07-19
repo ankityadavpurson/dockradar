@@ -1,5 +1,4 @@
-import React from 'react'
-import { Search, RefreshCw, ArrowUpCircle, UploadCloud, FileCode2, X } from 'lucide-react'
+import { ArrowUpCircle, FileCode2, RefreshCw, Search, UploadCloud, X } from 'lucide-react'
 
 export default function Toolbar({
   isBusy, selectedCount, outdatedCount, visibleCount, totalCount,

@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react'
 import { Terminal, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 
 const ProgressLog = ({ messages, scanning, updating }) => {
   const endRef = useRef(null)
@@ -41,41 +41,41 @@ const ProgressLog = ({ messages, scanning, updating }) => {
           className="fixed top-0 right-0 z-[190] h-full w-full max-w-[480px]"
           style={{ background: '#0a0a0a', borderLeft: '1px solid #1a1a1a', boxShadow: '-24px 0 60px rgba(0,0,0,0.45)' }}
         >
-            <div className="flex h-full flex-col overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid #1a1a1a', background: 'rgba(255,255,255,0.02)' }}>
-                <div className="flex items-center gap-2" style={{ color: active ? (scanning ? '#f5a623' : '#50e3c2') : '#fff' }}>
-                  <Terminal size={13} />
-                  <span className="text-[13px] font-mono uppercase tracking-wider">
-                    {scanning ? 'Scanning…' : updating ? 'Updating…' : 'Progress Log'}
-                  </span>
-                  {active && (
-                    <span className="ml-1 w-1.5 h-1.5 rounded-full animate-pulse_soft" style={{ background: '#f5a623' }} />
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  className="flex h-8 w-8 items-center justify-center rounded-md"
-                  style={{ color: '#666', border: '1px solid #222', background: 'transparent' }}
-                  onClick={() => setOpen(false)}
-                  aria-label="Close progress log"
-                >
-                  <X size={14} />
-                </button>
+          <div className="flex h-full flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid #1a1a1a', background: 'rgba(255,255,255,0.02)' }}>
+              <div className="flex items-center gap-2" style={{ color: active ? (scanning ? '#f5a623' : '#50e3c2') : '#fff' }}>
+                <Terminal size={13} />
+                <span className="text-[13px] font-mono uppercase tracking-wider">
+                  {scanning ? 'Scanning…' : updating ? 'Updating…' : 'Progress Log'}
+                </span>
+                {active && (
+                  <span className="ml-1 w-1.5 h-1.5 rounded-full animate-pulse_soft" style={{ background: '#f5a623' }} />
+                )}
               </div>
 
-              <div className="px-5 py-3 font-mono text-[13px]" style={{ borderBottom: '1px solid #141414', background: 'rgba(255,255,255,0.015)' }}>
-                {messages.length} line{messages.length === 1 ? '' : 's'}
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-5 font-mono text-[13px] leading-relaxed" style={{ background: '#000' }}
-                role="log" aria-live="polite">
-                {messages.map((msg, i) => (
-                  <div key={i} className="mb-1 break-words" style={{ color: getLineColor(msg) }}>{msg}</div>
-                ))}
-                <div ref={endRef} />
-              </div>
+              <button
+                type="button"
+                className="flex h-8 w-8 items-center justify-center rounded-md"
+                style={{ color: '#666', border: '1px solid #222', background: 'transparent' }}
+                onClick={() => setOpen(false)}
+                aria-label="Close progress log"
+              >
+                <X size={14} />
+              </button>
             </div>
+
+            <div className="px-5 py-3 font-mono text-[13px]" style={{ borderBottom: '1px solid #141414', background: 'rgba(255,255,255,0.015)' }}>
+              {messages.length} line{messages.length === 1 ? '' : 's'}
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5 font-mono text-[13px] leading-relaxed" style={{ background: '#000' }}
+              role="log" aria-live="polite">
+              {messages.map((msg, i) => (
+                <div key={i} className="mb-1 break-words" style={{ color: getLineColor(msg) }}>{msg}</div>
+              ))}
+              <div ref={endRef} />
+            </div>
+          </div>
         </div>
       )}
     </>
