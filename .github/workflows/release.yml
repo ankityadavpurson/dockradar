@@ -1,23 +1,43 @@
 name: Release
 
-# Manually triggered release pipeline:
-#   1. Bumps the app version (backend __version__ + frontend package.json)
-#   2. Rotates CHANGELOG.md — the [Unreleased] section becomes the new version
-#   3. Commits, tags vX.Y.Z, and pushes
-#   4. Builds and pushes the Docker image tagged X.Y.Z + latest to GHCR
-#   5. Creates a GitHub Release with the changelog section + auto-generated notes
+# Release pipeline. Runs automatically after a successful
+# "Build and Publish Docker Image" run on main, or manually via dispatch.
+#   1. Determines the release version — explicit input, or auto-calculated
+#      from the latest v* tag + commit messages (conventional commits)
+#   2. Bumps the app version (backend __version__ + frontend package.json)
+#   3. Rotates CHANGELOG.md — the [Unreleased] section becomes the new version
+#   4. Commits, tags vX.Y.Z, and pushes
+#   5. Builds and pushes the Docker image tagged X.Y.Z + latest to GHCR
+#   6. Creates a GitHub Release with the changelog section + auto-generated
+#      notes, and attaches the Docker image tarball as an asset
 #
 # Note: the tag is pushed with GITHUB_TOKEN, which deliberately does NOT
 # trigger other workflows (docker-publish.yml will not fire for it). That is
 # why this workflow builds and pushes the image itself.
 
 on:
+  # Auto-release: fires after the image build succeeds on main. The version
+  # is always auto-calculated in this mode (dispatch inputs are empty here).
+  workflow_run:
+    workflows: ["Build and Publish Docker Image"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version, without the leading v (e.g. 2.1.0)'
-        required: true
+        description: 'Explicit version without the leading v (leave empty to auto-calculate)'
+        required: false
         type: string
+      bump:
+        description: 'Auto-calculation mode when version is empty'
+        required: false
+        default: auto
+        type: choice
+        options:
+          - auto    # from commit messages: breaking→major, feat→minor, else patch
+          - major
+          - minor
+          - patch
 
 permissions:
   contents: write   # commit, tag, create release
@@ -26,54 +46,101 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    # For chained runs, only release after a successful build; manual
+    # dispatches always run.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
 
     steps:
-      - name: Validate version input
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Determine release version
+        id: version
         run: |
-          VERSION="${{ inputs.version }}"
-          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Version must be semver like 2.1.0 (got '$VERSION')"
-            exit 1
+          EXPLICIT="${{ inputs.version }}"
+          # inputs are empty on workflow_run triggers — default to auto
+          BUMP="${{ inputs.bump }}"
+          BUMP="${BUMP:-auto}"
+
+          # Latest released version (bare number), if any
+          LATEST=$(git tag -l 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed 's/^v//' | sort -V | tail -1)
+
+          if [ -n "$EXPLICIT" ]; then
+            if [[ ! "$EXPLICIT" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::Version must be semver like 2.1.0 (got '$EXPLICIT')"
+              exit 1
+            fi
+            VERSION="$EXPLICIT"
+            SOURCE="explicit input"
+          else
+            if [ -z "$LATEST" ]; then
+              echo "::error::No existing v* tags to calculate from — provide an explicit version for the first release."
+              exit 1
+            fi
+            if [ "$BUMP" = "auto" ]; then
+              # Conventional-commit analysis of everything since the last tag
+              SUBJECTS=$(git log --format=%s "v$LATEST..HEAD")
+              BODIES=$(git log --format=%B "v$LATEST..HEAD")
+              if [ -z "$SUBJECTS" ]; then
+                echo "::error::No commits since v$LATEST — nothing to release."
+                exit 1
+              fi
+              if echo "$BODIES" | grep -qE '^BREAKING CHANGE' || echo "$SUBJECTS" | grep -qE '^[a-z]+(\([^)]*\))?!:'; then
+                BUMP=major
+              elif echo "$SUBJECTS" | grep -qE '^feat(\([^)]*\))?:'; then
+                BUMP=minor
+              else
+                BUMP=patch
+              fi
+              echo "Auto-detected bump from commits since v$LATEST: $BUMP"
+            fi
+            IFS=. read -r MA MI PA <<< "$LATEST"
+            case "$BUMP" in
+              major) VERSION="$((MA+1)).0.0" ;;
+              minor) VERSION="$MA.$((MI+1)).0" ;;
+              patch) VERSION="$MA.$MI.$((PA+1))" ;;
+            esac
+            SOURCE="calculated ($BUMP bump from v$LATEST)"
           fi
-          if git ls-remote --tags "https://github.com/${{ github.repository }}" "v$VERSION" | grep -q .; then
+
+          # Shared safety checks
+          if git tag -l "v$VERSION" | grep -q .; then
             echo "::error::Tag v$VERSION already exists"
             exit 1
           fi
-          # Require the new version to be higher than every published one
-          LATEST=$(git ls-remote --tags "https://github.com/${{ github.repository }}" 'v*' \
-            | awk -F/ '{print $NF}' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed 's/^v//' \
-            | sort -V | tail -1)
           if [ -n "$LATEST" ]; then
             HIGHEST=$(printf '%s\n%s\n' "$LATEST" "$VERSION" | sort -V | tail -1)
             if [ "$HIGHEST" != "$VERSION" ]; then
               echo "::error::Version $VERSION is not higher than the latest release $LATEST"
               exit 1
             fi
-            echo "OK: $VERSION > latest release $LATEST"
-          else
-            echo "OK: first release"
           fi
 
-      - name: Checkout source
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "## Releasing v$VERSION" >> "$GITHUB_STEP_SUMMARY"
+          echo "Version source: $SOURCE" >> "$GITHUB_STEP_SUMMARY"
+          echo "Releasing v$VERSION ($SOURCE)"
 
       - name: Bump backend version
-        run: sed -i 's/^__version__ = ".*"/__version__ = "${{ inputs.version }}"/' backend/app/main.py
+        run: sed -i 's/^__version__ = ".*"/__version__ = "${{ steps.version.outputs.value }}"/' backend/app/main.py
 
       - name: Bump frontend version
         working-directory: frontend
-        run: npm pkg set version="${{ inputs.version }}"
+        run: npm pkg set version="${{ steps.version.outputs.value }}"
 
       # Guard against silent bump failures (pattern drift in main.py, etc.):
       # the image must never be published with a version other than the input.
       - name: Verify bumped versions match
         run: |
-          VERSION="${{ inputs.version }}"
+          VERSION="${{ steps.version.outputs.value }}"
           APP_VERSION=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' backend/app/main.py)
           PKG_VERSION=$(node -p "require('./frontend/package.json').version")
-          echo "input=$VERSION  backend=$APP_VERSION  frontend=$PKG_VERSION"
+          echo "release=$VERSION  backend=$APP_VERSION  frontend=$PKG_VERSION"
           if [ "$VERSION" != "$APP_VERSION" ] || [ "$VERSION" != "$PKG_VERSION" ]; then
             echo "::error::Version bump failed — backend '$APP_VERSION' / frontend '$PKG_VERSION' do not match '$VERSION'"
             exit 1
@@ -82,7 +149,7 @@ jobs:
       - name: Rotate CHANGELOG (Unreleased → new version)
         run: |
           DATE=$(date -u +%F)
-          awk -v ver="${{ inputs.version }}" -v date="$DATE" '
+          awk -v ver="${{ steps.version.outputs.value }}" -v date="$DATE" '
             /^## \[Unreleased\]/ && !done {
               print; print "";
               print "## [" ver "] — " date;
@@ -94,7 +161,7 @@ jobs:
       - name: Extract release notes for this version
         run: |
           # index() avoids regex-escaping pitfalls with the [brackets]
-          awk -v ver="${{ inputs.version }}" '
+          awk -v ver="${{ steps.version.outputs.value }}" '
             index($0, "## [" ver "]") == 1 { grab=1; next }
             grab && index($0, "## [") == 1 { exit }
             grab { print }
@@ -109,8 +176,8 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add backend/app/main.py frontend/package.json CHANGELOG.md
-          git commit -m "chore(release): v${{ inputs.version }}"
-          git tag "v${{ inputs.version }}"
+          git commit -m "chore(release): v${{ steps.version.outputs.value }}"
+          git tag "v${{ steps.version.outputs.value }}"
           git push origin HEAD --tags
 
       - name: Log in to GitHub Container Registry
@@ -126,7 +193,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
           tags: |
-            type=raw,value=${{ inputs.version }}
+            type=raw,value=${{ steps.version.outputs.value }}
             type=raw,value=latest
 
       - name: Build and push versioned Docker image
@@ -144,7 +211,7 @@ jobs:
         id: export
         run: |
           IMAGE=$(echo "${{ steps.meta.outputs.tags }}" | head -1)
-          ASSET="dockradar-${{ inputs.version }}-docker-image.tar.gz"
+          ASSET="dockradar-${{ steps.version.outputs.value }}-docker-image.tar.gz"
           # build-push-action builds inside buildx; pull to get it into the local daemon
           docker pull "$IMAGE"
           docker save "$IMAGE" | gzip > "$ASSET"
@@ -163,13 +230,14 @@ jobs:
           \`\`\`bash
           gunzip -c $ASSET | docker load
           \`\`\`
+          > **Note:** the *Source code (zip / tar.gz)* entries are attached automatically by GitHub and are not needed to run DockRadar — download the \`.tar.gz\` Docker image above instead.
           EOF
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ inputs.version }}
-          name: v${{ inputs.version }}
+          tag_name: v${{ steps.version.outputs.value }}
+          name: v${{ steps.version.outputs.value }}
           body_path: RELEASE_NOTES.md
           generate_release_notes: true
           files: ${{ steps.export.outputs.asset }}
