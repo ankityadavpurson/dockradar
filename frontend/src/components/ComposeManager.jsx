@@ -9,12 +9,12 @@ import { composeApi } from '../api/client'
 // ── Shared styles ─────────────────────────────────────────────────────────────
 
 const S = {
-  section:  { color: '#606060' },
-  label:    { color: '#888' },
-  primary:  { color: '#ededed' },
-  muted:    { color: '#5a5a5a' },
-  border:   '1px solid #1a1a1a',
-  border2:  '1px solid #222',
+  section: { color: '#606060' },
+  label: { color: '#888' },
+  primary: { color: '#ededed' },
+  muted: { color: '#5a5a5a' },
+  border: '1px solid #1a1a1a',
+  border2: '1px solid #222',
 }
 
 // ── Helper components ─────────────────────────────────────────────────────────
@@ -46,7 +46,7 @@ function buildFileLabels(composeFiles) {
 }
 
 function ServicePicker({ composeFiles, labels = {}, selectedFileId, selectedService, onChange }) {
-  const file     = composeFiles.find(f => f.file_id === selectedFileId)
+  const file = composeFiles.find(f => f.file_id === selectedFileId)
   const services = file?.services || []
 
   const sel = {
@@ -86,8 +86,8 @@ function ServicePicker({ composeFiles, labels = {}, selectedFileId, selectedServ
 
 function FileEditor({ file, onSave, onCancel }) {
   const [content, setContent] = useState('')
-  const [saving,  setSaving]  = useState(false)
-  const [error,   setError]   = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     composeApi.getContent(file.file_id)
@@ -160,7 +160,7 @@ function DownloadPanel({ file, onClose }) {
   useEffect(() => {
     composeApi.getContent(file.file_id)
       .then(d => setContent(d.content))
-      .catch(() => {})
+      .catch(() => { })
   }, [file.file_id])
 
   function handleDownload() {
@@ -231,9 +231,9 @@ function DownloadPanel({ file, onClose }) {
 // ── Container row ─────────────────────────────────────────────────────────────
 
 function ContainerRow({ container, association, composeFiles, labels, onAssociate, onDisassociate }) {
-  const [fileId,  setFileId]  = useState(association?.file_id || '')
+  const [fileId, setFileId] = useState(association?.file_id || '')
   const [service, setService] = useState(association?.service_name || '')
-  const [saving,  setSaving]  = useState(false)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setFileId(association?.file_id || '')
@@ -290,14 +290,15 @@ function ContainerRow({ container, association, composeFiles, labels, onAssociat
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function ComposeManager({ containers, onClose, lastUpdatedFile }) {
-  const [composeFiles,  setComposeFiles]  = useState([])
-  const [associations,  setAssociations]  = useState({})
-  const [dragging,      setDragging]      = useState(false)
-  const [uploading,     setUploading]     = useState(false)
-  const [statusMsg,     setStatusMsg]     = useState(null)
-  const [isError,       setIsError]       = useState(false)
-  const [editingFile,   setEditingFile]   = useState(null)   // ComposeFile being edited
-  const [downloadFile,  setDownloadFile]  = useState(null)   // ComposeFile for download panel
+  const [composeFiles, setComposeFiles] = useState([])
+  const [associations, setAssociations] = useState({})
+  const [dragging, setDragging] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [statusMsg, setStatusMsg] = useState(null)
+  const [isError, setIsError] = useState(false)
+  const [editingFile, setEditingFile] = useState(null)   // ComposeFile being edited
+  const [downloadFile, setDownloadFile] = useState(null)   // ComposeFile for download panel
+  const [showStoredFiles, setShowStoredFiles] = useState(false)
   const fileInputRef = useRef()
 
   function notify(msg, error = false) { setStatusMsg(msg); setIsError(error) }
@@ -443,9 +444,14 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
               {/* File list */}
               {composeFiles.length > 0 && (
                 <div className="flex flex-col gap-1">
-                  <span className="text-[12px] font-mono uppercase tracking-wider mb-1"
-                    style={S.section}>Stored files</span>
-                  {composeFiles.map(f => (
+                  <button
+                    onClick={() => setShowStoredFiles(!showStoredFiles)}
+                    className="flex items-center justify-between gap-2">
+                    <span className="text-[12px] font-mono uppercase tracking-wider mb-1"
+                      style={S.primary}>Stored files</span>
+                    <ChevronDown size={16} className={showStoredFiles ? 'rotate-180' : ''} style={S.primary} />
+                  </button>
+                  {showStoredFiles && composeFiles.map(f => (
                     <div key={f.file_id} className="flex items-center justify-between px-3 py-2 rounded"
                       style={{ background: '#111', border: S.border }}>
                       <div className="flex items-center gap-2 min-w-0">
@@ -500,7 +506,7 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
               {/* Container associations */}
               <div className="flex flex-col gap-1">
                 <span className="text-[12px] font-mono uppercase tracking-wider mb-1"
-                  style={S.section}>Container associations</span>
+                  style={S.primary}>Container associations</span>
                 {composeFiles.length === 0 ? (
                   <p className="text-[14px] font-mono py-2" style={S.muted}>
                     Upload a compose file above to start linking containers.
