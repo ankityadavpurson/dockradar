@@ -24,7 +24,7 @@ from app.api.routes import router as api_router, scheduler_svc, _scheduled_scan
 from app.core.config import config
 from app.core.logging import setup_logging
 
-__version__ = "2.0.0"
+__version__ = "12.0.0"
 
 import logging
 logger = logging.getLogger(__name__)
