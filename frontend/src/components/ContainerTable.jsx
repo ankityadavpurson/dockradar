@@ -187,8 +187,6 @@ function ContainerCard({
   )
 }
 
-const MENU_WIDTH = 200
-
 function StoppedBadge({ status }) {
   if (status === 'running') return null
   return (

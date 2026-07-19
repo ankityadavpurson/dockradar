@@ -2,6 +2,8 @@ import { ArrowUpCircle, FileCode2, Info, MoreVertical, RefreshCw, Trash2 } from 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
+const MENU_WIDTH = 200
+
 /** Per-row ⋮ menu. Rendered position:fixed so the table's overflow-x-auto
  *  wrapper cannot clip it; closes on outside click, Escape, or scroll. */
 const RowMenu = ({ container: c, hasCompose, isBusy, onConfirmUpdate, onComposeUpdate, onConfirmDelete, onShowDetails }) => {
