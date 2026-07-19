@@ -1,14 +1,13 @@
 name: CI
 
 # Quality gate: backend tests + frontend production build.
-# Runs standalone on PRs and non-main pushes; on main it runs inside the
-# "Build and Publish Docker Image" workflow via workflow_call, gating the
-# image build (see docker-publish.yml `needs: test`).
+# Runs standalone on PRs; on main it runs inside the "Build and Publish
+# Docker Image" workflow via workflow_call, gating the image build
+# (see docker-publish.yml `needs: test`).
 
 on:
   pull_request:
-  push:
-    branches-ignore: [main]   # main is covered by the publish workflow's gate
+    branches: [main]   # only PRs targeting main
   workflow_call:
 
 permissions:
