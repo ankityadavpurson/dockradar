@@ -1,4 +1,6 @@
-import { Clock, History, Mail } from 'lucide-react'
+import { useState } from 'react'
+import { Clock, History, Info, Mail } from 'lucide-react'
+import EmailConfigDialog from './EmailConfigDialog'
 
 /** "3m ago" style age for a past ISO timestamp; null → 'never'. */
 function timeAgo(iso) {
@@ -13,10 +15,12 @@ function timeAgo(iso) {
   return `${Math.floor(hours / 24)}d ago`
 }
 
-export default function InfoBar({ health }) {
+export default function InfoBar({ health, onTestEmail }) {
+  const [showEmail, setShowEmail] = useState(false)
   if (!health) return null
 
   const lastScan = timeAgo(health.last_scan)
+  const emailColor = health.email_configured ? '#50e3c2' : '#8a8a8a'
 
   return (
     <div className="flex items-center flex-wrap gap-x-4 gap-y-1 px-4 py-2 mb-4 text-[14px] font-mono rounded-md"
@@ -41,11 +45,22 @@ export default function InfoBar({ health }) {
 
       <span className="flex items-center gap-1.5">
         <Mail size={11} style={{ color: '#7a7a7a' }} />
-        Email{' '}
-        <span style={{ color: health.email_configured ? '#50e3c2' : '#8a8a8a' }}>
-          {health.email_configured ? 'configured' : 'not configured'}
-        </span>
+        Email
+        <button type="button" onClick={() => setShowEmail(true)}
+          aria-label="Email configuration details"
+          title="View email configuration"
+          className="inline-flex items-center">
+          <Info size={13} style={{ color: emailColor }} />
+        </button>
       </span>
+
+      {showEmail && (
+        <EmailConfigDialog
+          health={health}
+          onTestEmail={onTestEmail}
+          onClose={() => setShowEmail(false)}
+        />
+      )}
     </div>
   )
 }

@@ -177,6 +177,15 @@ export function useContainers() {
     }
   }, [notify, fetchContainers])
 
+  const testEmail = useCallback(async () => {
+    try {
+      const res = await api.testEmail()
+      notify(res.message, res.success ? 'success' : 'error')
+    } catch (e) {
+      notify(e.message, 'error')
+    }
+  }, [notify])
+
   // ── Selection helpers ─────────────────────────────────────────────────────
   const toggleSelect = useCallback((id) => {
     setSelected(prev => {
@@ -211,6 +220,7 @@ export function useContainers() {
     updateSelected,
     updateAll,
     deleteContainer,
+    testEmail,
     toggleSelect,
     selectAll,
     clearSelection,
