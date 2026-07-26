@@ -52,10 +52,10 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
           ? 'File will be saved, then compose pull + up -d will run.'
           : 'compose pull + up -d will run without file changes.'}
       </span>
-      <button className="btn btn-ghost btn-sm" onClick={onCancel}>Cancel</button>
       <button className="btn btn-primary btn-sm" onClick={handleUpdate} disabled={loading || saving || !!error}>
         {saving ? 'Updating…' : 'Confirm & Update'}
       </button>
+      <button className="btn btn-ghost btn-sm" onClick={onCancel}>Cancel</button>
     </>
   )
 
