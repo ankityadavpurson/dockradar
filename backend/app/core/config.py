@@ -24,6 +24,14 @@ def _int_env(name: str, default: int) -> int:
         return default
 
 
+def _bool_env(name: str, default: bool) -> bool:
+    """Read a boolean env var (true/1/yes/on). Empty → default."""
+    raw = os.getenv(name, "").strip().lower()
+    if not raw:
+        return default
+    return raw in ("1", "true", "yes", "on")
+
+
 class Config:
     """Central configuration loaded from environment variables."""
 
@@ -37,6 +45,10 @@ class Config:
     SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
     EMAIL_FROM: str    = os.getenv("EMAIL_FROM", "dockradar@example.com")
     EMAIL_TO: str      = os.getenv("EMAIL_TO", "")
+    # Transport: implicit SSL (port 465) is auto-detected; STARTTLS is used
+    # otherwise when the server offers it. Both can be forced via env.
+    SMTP_USE_SSL: bool  = _bool_env("SMTP_USE_SSL", SMTP_PORT == 465)
+    SMTP_STARTTLS: bool = _bool_env("SMTP_STARTTLS", True)
 
     # Application
     HOST: str     = os.getenv("HOST", "0.0.0.0")
@@ -60,8 +72,9 @@ class Config:
 
     @classmethod
     def email_configured(cls) -> bool:
-        """Check if email settings are fully configured."""
-        return bool(cls.SMTP_USER and cls.SMTP_PASSWORD and cls.EMAIL_TO)
+        """Email is usable when we have a host and a recipient. Auth
+        (SMTP_USER/SMTP_PASSWORD) is optional — some relays don't require it."""
+        return bool(cls.SMTP_HOST and cls.EMAIL_TO)
 
 
 config = Config()
