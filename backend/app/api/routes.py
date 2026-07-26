@@ -287,7 +287,23 @@ def health():
         "last_scan": api_state.last_scan,
         "scan_interval_hours": config.SCAN_INTERVAL_HOURS,
         "email_configured": config.email_configured(),
+        "smtp_host": config.SMTP_HOST,
+        "smtp_port": config.SMTP_PORT,
+        "email_from": config.EMAIL_FROM,
+        "email_to": config.EMAIL_TO,
+        "smtp_auth": bool(config.SMTP_USER and config.SMTP_PASSWORD),
+        "smtp_use_ssl": config.SMTP_USE_SSL,
+        "smtp_starttls": config.SMTP_STARTTLS,
     }
+
+
+# ── POST /api/email/test ─────────────────────────────────────────────────────
+
+@router.post("/email/test", summary="Send a test notification email")
+def send_test_email():
+    """Send a test email to EMAIL_TO and return the result (or the SMTP error)."""
+    ok, message = email_svc.send_test()
+    return {"success": ok, "message": message}
 
 
 # ── GET /api/containers ──────────────────────────────────────────────────────

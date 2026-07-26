@@ -15,7 +15,7 @@ const App = () => {
   const {
     containers, scanStatus, health,
     selected, loading, isBusy, error, toasts, dismissToast,
-    triggerScan, updateOne, updateSelected, updateAll, deleteContainer,
+    triggerScan, updateOne, updateSelected, updateAll, deleteContainer, testEmail,
     toggleSelect, selectAll, clearSelection,
     associations, fetchAssociations, composeUpdateOne,
   } = useContainers()
@@ -97,7 +97,7 @@ const App = () => {
         />
 
         {/* Info bar */}
-        <InfoBar health={health} />
+        <InfoBar health={health} onTestEmail={testEmail} />
 
         {/* Container table */}
         <div className="rounded-lg overflow-hidden"

@@ -117,15 +117,11 @@ function FileEditor({ file, onSave, onCancel }) {
           <span className="font-mono text-[13px]" style={S.label}>{file.filename}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <button onClick={handleSave} disabled={saving}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[13px] font-mono disabled:opacity-40"
-            style={{ background: 'rgba(255,255,255,0.06)', color: '#ededed', border: S.border2 }}>
-            <Save size={10} />{saving ? 'Saving…' : 'Save'}
+          <button onClick={handleSave} disabled={saving} className="btn btn-blue btn-xs">
+            <Save size={11} />{saving ? 'Saving…' : 'Save'}
           </button>
-          <button onClick={onCancel}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[13px]"
-            style={{ color: '#5a5a5a', border: S.border }}>
-            <XCircle size={10} />
+          <button onClick={onCancel} className="btn-icon" aria-label="Cancel edit">
+            <XCircle size={12} />
           </button>
         </div>
       </div>
@@ -188,15 +184,13 @@ function DownloadPanel({ file, onClose }) {
 
   return (
     <div className="flex flex-col gap-3 p-4 rounded-lg"
-      style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid #222' }}>
+      style={{ background: 'var(--surface-0)', border: '1px solid var(--border-2)' }}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <CheckCircle2 size={13} style={{ color: '#50e3c2' }} />
+          <CheckCircle2 size={13} style={{ color: 'var(--accent-teal)' }} />
           <span className="text-[15px] font-medium" style={S.primary}>Update complete</span>
         </div>
-        <button onClick={onClose} style={S.muted}
-          onMouseEnter={e => e.currentTarget.style.color = '#888'}
-          onMouseLeave={e => e.currentTarget.style.color = '#5a5a5a'}>
+        <button onClick={onClose} className="btn-icon" aria-label="Dismiss">
           <X size={14} />
         </button>
       </div>
@@ -206,20 +200,12 @@ function DownloadPanel({ file, onClose }) {
       </p>
 
       <div className="flex gap-2">
-        <button onClick={handleDownload}
-          className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded text-[14px] font-medium transition-colors"
-          style={{ background: '#fff', color: '#000', border: '1px solid #fff' }}
-          onMouseEnter={e => e.currentTarget.style.background = '#e6e6e6'}
-          onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
+        <button onClick={handleDownload} className="btn btn-primary btn-sm flex-1 justify-center">
           <Download size={13} />
           Download .yml
         </button>
 
-        <button onClick={handleCopy} disabled={!content}
-          className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded text-[14px] font-medium transition-colors disabled:opacity-40"
-          style={{ background: 'transparent', color: '#ededed', border: '1px solid #333' }}
-          onMouseEnter={e => { if (content) e.currentTarget.style.background = '#1a1a1a' }}
-          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+        <button onClick={handleCopy} disabled={!content} className="btn btn-blue btn-sm flex-1 justify-center">
           <ClipboardCopy size={13} />
           {copied ? 'Copied!' : 'Copy to clipboard'}
         </button>
@@ -373,30 +359,26 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
   const labels = buildFileLabels(composeFiles)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
+    <div className="modal-overlay"
       onClick={e => e.target === e.currentTarget && onClose()}>
 
-      <div className="flex flex-col w-full max-w-2xl mx-4 rounded-xl overflow-hidden"
-        role="dialog" aria-modal="true" aria-label="Compose files"
-        style={{ background: 'rgba(0,0,0,0.5)', border: S.border, maxHeight: '90vh' }}>
+      <div className="modal-panel max-w-2xl"
+        role="dialog" aria-modal="true" aria-label="Compose files">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: S.border }}>
+        <div className="modal-header">
           <div className="flex items-center gap-2">
-            <FileCode2 size={14} style={{ color: '#666' }} />
-            <span className="text-[16px] font-medium" style={S.primary}>Compose Files</span>
+            <FileCode2 size={14} style={{ color: 'var(--text-4)' }} />
+            <span className="modal-title">Compose Files</span>
             {composeFiles.length > 0 && (
               <span className="px-1.5 py-0.5 rounded text-[12px] font-mono"
-                style={{ background: '#111', color: '#7c7c7c', border: S.border }}>
+                style={{ background: 'var(--surface-1)', color: 'var(--text-3)', border: '1px solid var(--border-1)' }}>
                 {composeFiles.length}
               </span>
             )}
           </div>
-          <button onClick={onClose} style={{ color: '#666' }} aria-label="Close compose manager"
-            onMouseEnter={e => e.currentTarget.style.color = '#aaa'}
-            onMouseLeave={e => e.currentTarget.style.color = '#666'}>
-            <X size={15} />
+          <button onClick={onClose} className="btn-icon" aria-label="Close compose manager">
+            <X size={14} />
           </button>
         </div>
 
@@ -530,24 +512,17 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-3 text-[13px] font-mono"
-          style={{ borderTop: S.border, color: '#666' }}>
-          <span>{linkedCount} container{linkedCount !== 1 ? 's' : ''} linked</span>
+        <div className="modal-footer justify-between">
+          <span className="text-[13px] font-mono" style={{ color: 'var(--text-4)' }}>
+            {linkedCount} container{linkedCount !== 1 ? 's' : ''} linked
+          </span>
           <div className="flex items-center gap-2">
             {editingFile && (
-              <button onClick={() => setEditingFile(null)}
-                className="px-3 py-1 rounded text-[13px] font-mono transition-colors"
-                style={{ border: S.border, color: '#777' }}>
+              <button onClick={() => setEditingFile(null)} className="btn btn-ghost btn-sm">
                 ← Back
               </button>
             )}
-            <button onClick={onClose}
-              className="px-3 py-1 rounded text-[13px] font-mono transition-colors"
-              style={{ border: S.border, color: '#777' }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = '#333'; e.currentTarget.style.color = '#888' }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = '#1a1a1a'; e.currentTarget.style.color = '#777' }}>
-              Close
-            </button>
+            <button onClick={onClose} className="btn btn-ghost btn-sm">Close</button>
           </div>
         </div>
       </div>

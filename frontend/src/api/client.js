@@ -33,6 +33,7 @@ async function request(method, path, body) {
 export const api = {
   // Health
   health:           ()           => request('GET',    '/health'),
+  testEmail:        ()           => request('POST',   '/email/test'),
 
   // Containers
   listContainers:   ()           => request('GET',    '/containers'),

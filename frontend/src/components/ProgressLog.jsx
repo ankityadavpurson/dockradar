@@ -55,8 +55,7 @@ const ProgressLog = ({ messages, scanning, updating }) => {
 
               <button
                 type="button"
-                className="flex h-8 w-8 items-center justify-center rounded-md"
-                style={{ color: '#666', border: '1px solid #222', background: 'transparent' }}
+                className="btn-icon"
                 onClick={() => setOpen(false)}
                 aria-label="Close progress log"
               >

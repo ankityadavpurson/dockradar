@@ -30,9 +30,9 @@ export default function Header({ health, containers, scanStatus }) {
       <div className="max-w-[1400px] mx-auto w-full flex items-center gap-3 md:gap-6 px-4 md:px-6 h-14">
 
         {/* Logo */}
-        <div className="flex items-center gap-2.5 shrink-0">
-          <img src={favicon} alt="Logo" className="w-8 h-8" />
-          <span className="text-[18px] font-semibold tracking-tight text-white">
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          <img src={favicon} alt="Logo" className="w-7 h-7 sm:w-8 sm:h-8" />
+          <span className="text-[16px] sm:text-[18px] font-semibold tracking-tight text-white">
             DockRadar
           </span>
         </div>
@@ -40,10 +40,10 @@ export default function Header({ health, containers, scanStatus }) {
         {/* Divider */}
         <div className="w-px h-5 hidden sm:block" style={{ background: '#222' }} />
 
-        {/* Nav-style stat chips */}
-        <div className="flex items-center gap-5">
+        {/* Nav-style stat chips — "running" hides on mobile to save space */}
+        <div className="flex items-center gap-3 sm:gap-5 min-w-0">
           <StatChip label="containers" value={total} />
-          <StatChip label="running" value={running} active />
+          <StatChip label="running" value={running} active className="hidden sm:flex" />
           {outdated > 0 && <StatChip label="outdated" value={outdated} warn />}
         </div>
 
@@ -73,14 +73,14 @@ export default function Header({ health, containers, scanStatus }) {
   )
 }
 
-function StatChip({ label, value, active, warn }) {
+function StatChip({ label, value, active, warn, className = '' }) {
   const color = warn ? '#f5a623' : active ? '#ededed' : '#9a9a9a'
   return (
-    <div className="flex items-center gap-1.5">
-      <span className="text-[15px] font-medium tabular-nums" style={{ color }}>
+    <div className={`flex items-center gap-1.5 ${className}`}>
+      <span className="text-[14px] sm:text-[15px] font-medium tabular-nums" style={{ color }}>
         {value}
       </span>
-      <span className="text-[14px] uppercase" style={{ color: '#8a8a8a' }}>{label}</span>
+      <span className="text-[13px] sm:text-[14px] uppercase whitespace-nowrap" style={{ color: '#8a8a8a' }}>{label}</span>
     </div>
   )
 }

@@ -6,6 +6,7 @@ Sends HTML email notifications via SMTP when image updates are detected.
 import html
 import logging
 import smtplib
+import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Optional
@@ -17,6 +18,69 @@ logger = logging.getLogger(__name__)
 
 class EmailService:
     """Service for sending update notification emails."""
+
+    def _open_smtp(self) -> smtplib.SMTP:
+        """
+        Open an SMTP connection according to config:
+        - port 465 (or SMTP_USE_SSL): implicit TLS via SMTP_SSL
+        - otherwise: plain SMTP, upgraded with STARTTLS when the server
+          offers it and SMTP_STARTTLS is enabled
+        Authentication is performed only when both user and password are set,
+        so unauthenticated relays work too. Caller is responsible for closing.
+        """
+        if config.SMTP_USE_SSL:
+            server: smtplib.SMTP = smtplib.SMTP_SSL(
+                config.SMTP_HOST, config.SMTP_PORT, timeout=30,
+                context=ssl.create_default_context(),
+            )
+            server.ehlo()
+        else:
+            server = smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT, timeout=30)
+            server.ehlo()
+            if config.SMTP_STARTTLS and server.has_extn("starttls"):
+                server.starttls(context=ssl.create_default_context())
+                server.ehlo()
+
+        if config.SMTP_USER and config.SMTP_PASSWORD:
+            server.login(config.SMTP_USER, config.SMTP_PASSWORD)
+        return server
+
+    @staticmethod
+    def _friendly_error(exc: Exception) -> str:
+        """Turn an SMTP/connection exception into an actionable message."""
+        if isinstance(exc, smtplib.SMTPAuthenticationError):
+            return ("Authentication failed — check SMTP_USER / SMTP_PASSWORD "
+                    "(for Gmail, use an App Password, not your account password).")
+        if isinstance(exc, smtplib.SMTPConnectError) or isinstance(exc, (OSError, ssl.SSLError)):
+            return f"Could not connect to {config.SMTP_HOST}:{config.SMTP_PORT} — {exc}"
+        if isinstance(exc, smtplib.SMTPException):
+            return f"SMTP error: {exc}"
+        return f"Unexpected error: {exc}"
+
+    def send_test(self) -> tuple[bool, str]:
+        """
+        Send a minimal test email to EMAIL_TO. Returns (success, message)
+        where message is safe to show the user (the real SMTP error on failure).
+        """
+        if not config.email_configured():
+            return False, "Email is not configured — set SMTP_HOST and EMAIL_TO."
+        try:
+            msg = MIMEText(
+                "This is a test email from DockRadar.\n\n"
+                "If you received this, update notifications are working.",
+                "plain",
+            )
+            msg["Subject"] = "[DockRadar] Test email"
+            msg["From"] = config.EMAIL_FROM
+            msg["To"] = config.EMAIL_TO
+            with self._open_smtp() as server:
+                server.sendmail(config.EMAIL_FROM, config.EMAIL_TO, msg.as_string())
+            logger.info("Sent test email to %s", config.EMAIL_TO)
+            return True, f"Test email sent to {config.EMAIL_TO}."
+        except Exception as exc:
+            message = self._friendly_error(exc)
+            logger.error("Test email failed: %s", message)
+            return False, message
 
     def send_update_notification(self, updates: list[dict]) -> bool:
         """
@@ -49,20 +113,14 @@ class EmailService:
             msg.attach(MIMEText(text_body, "plain"))
             msg.attach(MIMEText(html_body, "html"))
 
-            with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT, timeout=30) as server:
-                server.ehlo()
-                server.starttls()
-                server.login(config.SMTP_USER, config.SMTP_PASSWORD)
+            with self._open_smtp() as server:
                 server.sendmail(config.EMAIL_FROM, config.EMAIL_TO, msg.as_string())
 
             logger.info("Sent update notification email to %s (%d updates)", config.EMAIL_TO, len(updates))
             return True
 
-        except smtplib.SMTPException as exc:
-            logger.error("SMTP error sending notification: %s", exc)
-            return False
         except Exception as exc:
-            logger.error("Unexpected error sending email: %s", exc)
+            logger.error("Failed to send notification email: %s", self._friendly_error(exc))
             return False
 
     def _build_html(self, updates: list[dict]) -> str:
