@@ -113,7 +113,7 @@ export default function ContainerDetailDrawer({ name, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[210]"
-      style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(3px)' }}
+      style={{ background: 'var(--overlay)', backdropFilter: 'blur(4px)' }}
       onClick={e => e.target === e.currentTarget && onClose()}>
 
       <div role="dialog" aria-modal="true" aria-label={`Details for ${name}`}
@@ -144,9 +144,7 @@ export default function ContainerDetailDrawer({ name, onClose }) {
               </span>
             )}
           </div>
-          <button type="button" onClick={onClose} aria-label="Close details"
-            className="flex h-8 w-8 items-center justify-center rounded-md shrink-0"
-            style={{ color: '#8a8a8a', border: '1px solid #222' }}>
+          <button type="button" onClick={onClose} aria-label="Close details" className="btn-icon shrink-0">
             <X size={14} />
           </button>
         </div>
