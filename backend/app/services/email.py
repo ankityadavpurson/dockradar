@@ -126,15 +126,20 @@ class EmailService:
             return False
 
     def _build_html(self, updates: list[dict]) -> str:
-        cell = "padding:9px 10px;border-bottom:1px solid #f0f0f0;font-family:'Courier New',monospace;"
+        brand = "#1847c9"
+        base = "padding:9px 10px;border-bottom:1px solid #f0f0f0;"
+        cell = base + "font-family:'Courier New',monospace;"
+        th = "text-align:left;padding:9px 10px;background:#f1f5f9;border-bottom:1px solid #e2e8f0;color:#334155;font-weight:600;"
+        badge = (f"display:inline-block;padding:2px 8px;background:#eef2fc;color:{brand};"
+                 "border-radius:10px;font-size:12px;font-family:'Courier New',monospace;")
         rows = ""
         for u in updates:
             esc = {k: html.escape(str(v)) for k, v in u.items()}
             rows += f"""
             <tr>
-                <td style="{cell}">{esc['container_name']}</td>
+                <td style="{cell}color:#1a1a1a;">{esc['container_name']}</td>
                 <td style="{cell}color:#374151;">{esc['image']}</td>
-                <td style="{cell}">{esc['tag']}</td>
+                <td style="{base}"><span style="{badge}">{esc['tag']}</span></td>
                 <td style="{cell}color:#6b7280;">{esc['digest']}</td>
             </tr>"""
 
@@ -144,28 +149,29 @@ class EmailService:
         if config.APP_URL:
             url = html.escape(config.APP_URL)
             button = f"""
-    <div style="margin:22px 0 4px">
-      <a href="{url}" style="display:inline-block;padding:9px 18px;border:1px solid #d1d5db;border-radius:6px;color:#1a1a1a;text-decoration:none;font-size:14px;font-weight:600">Open DockRadar</a>
-    </div>"""
+      <div style="margin:22px 0 4px">
+        <a href="{url}" style="display:inline-block;padding:10px 20px;background:{brand};border-radius:6px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600">Open DockRadar</a>
+      </div>"""
 
         return f"""<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#f4f4f5">
   <div style="max-width:680px;margin:0 auto;padding:24px;font-family:Arial,Helvetica,sans-serif;color:#1a1a1a">
-    <div style="background:#ffffff;border:1px solid #e5e5e5;border-radius:6px;padding:28px">
-      <h1 style="margin:0 0 2px;font-size:20px;font-weight:700;color:#1a1a1a">DockRadar</h1>
+    <div style="background:#ffffff;border:1px solid #e5e5e5;border-top:3px solid {brand};border-radius:6px;padding:28px">
+      <h1 style="margin:0 0 2px;font-size:20px;font-weight:700;color:{brand}">DockRadar</h1>
       <p style="margin:0 0 20px;font-size:13px;color:#6b7280">Docker image monitoring and update dashboard</p>
-      <hr style="border:none;border-top:1px solid #e5e5e5;margin:0 0 20px">
-      <h2 style="margin:0 0 6px;font-size:16px;font-weight:600;color:#1a1a1a">{title}</h2>
-      <p style="margin:0 0 18px;font-size:14px;color:#374151">The following container images have newer versions available:</p>
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:12px 14px;margin:0 0 18px">
+        <span style="font-size:15px;font-weight:600;color:#92400e">{title}</span>
+      </div>
+      <p style="margin:0 0 16px;font-size:14px;color:#374151">The following container images have newer versions available:</p>
       <table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead>
           <tr>
-            <th style="text-align:left;padding:9px 10px;border-bottom:2px solid #e5e5e5;color:#374151;font-weight:600">Container</th>
-            <th style="text-align:left;padding:9px 10px;border-bottom:2px solid #e5e5e5;color:#374151;font-weight:600">Image</th>
-            <th style="text-align:left;padding:9px 10px;border-bottom:2px solid #e5e5e5;color:#374151;font-weight:600">Tag</th>
-            <th style="text-align:left;padding:9px 10px;border-bottom:2px solid #e5e5e5;color:#374151;font-weight:600">Digest</th>
+            <th style="{th}">Container</th>
+            <th style="{th}">Image</th>
+            <th style="{th}">Tag</th>
+            <th style="{th}">Digest</th>
           </tr>
         </thead>
         <tbody>{rows}</tbody>
