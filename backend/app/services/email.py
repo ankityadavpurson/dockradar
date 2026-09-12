@@ -57,24 +57,36 @@ class EmailService:
             return f"SMTP error: {exc}"
         return f"Unexpected error: {exc}"
 
+    # Sample rows used by the test email so it looks exactly like a real
+    # notification while making clear the entries are examples.
+    _TEST_SAMPLE = [
+        {"container_name": "example-web", "image": "nginx", "tag": "latest", "digest": "a1b2c3d4e5f6"},
+        {"container_name": "example-db", "image": "postgres", "tag": "16-alpine", "digest": "0f1e2d3c4b5a"},
+    ]
+
+    def _send(self, subject: str, updates: list[dict], note: Optional[str] = None):
+        """Build and send a styled multipart (text + HTML) email. Raises on failure."""
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = config.EMAIL_FROM
+        msg["To"] = config.EMAIL_TO
+        msg.attach(MIMEText(self._build_text(updates, note), "plain"))
+        msg.attach(MIMEText(self._build_html(updates, note), "html"))
+        with self._open_smtp() as server:
+            server.sendmail(config.EMAIL_FROM, config.EMAIL_TO, msg.as_string())
+
     def send_test(self) -> tuple[bool, str]:
         """
-        Send a minimal test email to EMAIL_TO. Returns (success, message)
-        where message is safe to show the user (the real SMTP error on failure).
+        Send a styled test email to EMAIL_TO (the same design as a real update
+        notification, with sample data). Returns (success, message) where
+        message is safe to show the user (the real SMTP error on failure).
         """
         if not config.email_configured():
             return False, "Email is not configured — set SMTP_HOST and EMAIL_TO."
+        note = ("This is a test email confirming your SMTP settings are working. "
+                "The table below is sample data.")
         try:
-            msg = MIMEText(
-                "This is a test email from DockRadar.\n\n"
-                "If you received this, update notifications are working.",
-                "plain",
-            )
-            msg["Subject"] = "[DockRadar] Test email"
-            msg["From"] = config.EMAIL_FROM
-            msg["To"] = config.EMAIL_TO
-            with self._open_smtp() as server:
-                server.sendmail(config.EMAIL_FROM, config.EMAIL_TO, msg.as_string())
+            self._send("[DockRadar] Test email", self._TEST_SAMPLE, note=note)
             logger.info("Sent test email to %s", config.EMAIL_TO)
             return True, f"Test email sent to {config.EMAIL_TO}."
         except Exception as exc:
@@ -103,29 +115,14 @@ class EmailService:
         title = f"{len(updates)} image update{'s' if len(updates) != 1 else ''} available"
 
         try:
-            subject = f"[DockRadar] {title}"
-            html_body = self._build_html(updates)
-            text_body = self._build_text(updates)
-
-            msg = MIMEMultipart("alternative")
-            msg["Subject"] = subject
-            msg["From"] = config.EMAIL_FROM
-            msg["To"] = config.EMAIL_TO
-
-            msg.attach(MIMEText(text_body, "plain"))
-            msg.attach(MIMEText(html_body, "html"))
-
-            with self._open_smtp() as server:
-                server.sendmail(config.EMAIL_FROM, config.EMAIL_TO, msg.as_string())
-
+            self._send(f"[DockRadar] {title}", updates)
             logger.info("Sent update notification email to %s (%d updates)", config.EMAIL_TO, len(updates))
             return True
-
         except Exception as exc:
             logger.error("Failed to send notification email: %s", self._friendly_error(exc))
             return False
 
-    def _build_html(self, updates: list[dict]) -> str:
+    def _build_html(self, updates: list[dict], note: Optional[str] = None) -> str:
         brand = "#1847c9"
         base = "padding:9px 10px;border-bottom:1px solid #f0f0f0;"
         cell = base + "font-family:'Courier New',monospace;"
@@ -145,6 +142,13 @@ class EmailService:
 
         title = f"{len(updates)} image update{'s' if len(updates) != 1 else ''} available"
 
+        note_banner = ""
+        if note:
+            note_banner = f"""
+      <div style="background:#eef2fc;border:1px solid #c7d6f5;border-radius:6px;padding:10px 14px;margin:0 0 18px">
+        <span style="font-size:13px;color:{brand}">{html.escape(note)}</span>
+      </div>"""
+
         button = ""
         if config.APP_URL:
             url = html.escape(config.APP_URL)
@@ -160,7 +164,7 @@ class EmailService:
   <div style="max-width:680px;margin:0 auto;padding:24px;font-family:Arial,Helvetica,sans-serif;color:#1a1a1a">
     <div style="background:#ffffff;border:1px solid #e5e5e5;border-top:3px solid {brand};border-radius:6px;padding:28px">
       <h1 style="margin:0 0 2px;font-size:20px;font-weight:700;color:{brand}">DockRadar</h1>
-      <p style="margin:0 0 20px;font-size:13px;color:#6b7280">Docker image monitoring and update dashboard</p>
+      <p style="margin:0 0 20px;font-size:13px;color:#6b7280">Docker image monitoring and update dashboard</p>{note_banner}
       <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:12px 14px;margin:0 0 18px">
         <span style="font-size:15px;font-weight:600;color:#92400e">{title}</span>
       </div>
@@ -182,8 +186,11 @@ class EmailService:
 </body>
 </html>"""
 
-    def _build_text(self, updates: list[dict]) -> str:
+    def _build_text(self, updates: list[dict], note: Optional[str] = None) -> str:
         lines = ["DockRadar — Update Notification", "=" * 40, ""]
+        if note:
+            lines.append(note)
+            lines.append("")
         lines.append(f"{len(updates)} image update(s) available:\n")
         for u in updates:
             lines.append(f"  Container : {u['container_name']}")
