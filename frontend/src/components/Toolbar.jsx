@@ -11,7 +11,7 @@ export default function Toolbar({
 
   return (
     <div className="flex items-center gap-2 flex-wrap px-4 py-3 mb-4 rounded-lg"
-      style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #1a1a1a' }}>
+      style={{ background: 'var(--surface-raised)', border: '1px solid var(--border-1)' }}>
 
       {/* Scan */}
       <button className="btn btn-primary btn-sm" onClick={onScan} disabled={isBusy}>
@@ -19,7 +19,7 @@ export default function Toolbar({
         {isBusy ? 'Working…' : runText}
       </button>
 
-      <div className="w-px h-5 shrink-0" style={{ background: '#1a1a1a' }} />
+      <div className="w-px h-5 shrink-0" style={{ background: 'var(--border-1)' }} />
 
       {/* Update selected */}
       <button className="btn btn-ghost btn-sm" onClick={onUpdateSelected}
@@ -28,7 +28,7 @@ export default function Toolbar({
         Update Selected
         {selectedCount > 0 && (
           <span className="ml-0.5 px-1.5 py-0.5 rounded text-[12px] font-mono"
-            style={{ background: '#1a1a1a', color: '#888', border: '1px solid #222' }}>
+            style={{ background: 'var(--surface-2)', color: 'var(--text-3)', border: '1px solid var(--border-2)' }}>
             {selectedCount}
           </span>
         )}
@@ -41,13 +41,13 @@ export default function Toolbar({
         Update All
         {outdatedCount > 0 && (
           <span className="ml-0.5 px-1.5 py-0.5 rounded text-[12px] font-mono"
-            style={{ background: 'rgba(245,166,35,0.08)', color: '#f5a623', border: '1px solid rgba(245,166,35,0.2)' }}>
+            style={{ background: 'rgba(245,166,35,0.08)', color: 'var(--accent-amber)', border: '1px solid rgba(245,166,35,0.2)' }}>
             {outdatedCount}
           </span>
         )}
       </button>
 
-      <div className="w-px h-5 shrink-0" style={{ background: '#1a1a1a' }} />
+      <div className="w-px h-5 shrink-0" style={{ background: 'var(--border-1)' }} />
 
       {/* Compose */}
       <button className="btn btn-ghost btn-sm" onClick={onOpenCompose}
@@ -61,23 +61,23 @@ export default function Toolbar({
       {/* Search */}
       <div className="relative">
         <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-          style={{ color: '#606060' }} />
+          style={{ color: 'var(--text-4)' }} />
         <input
           type="text"
           placeholder="Search…"
           value={search}
           onChange={e => onSearch(e.target.value)}
           className="pl-8 pr-7 py-1.5 rounded text-[14px] w-44 focus:w-64 transition-all outline-none"
-          style={{ background: '#111', border: '1px solid #222', color: '#ededed' }}
-          onFocus={e => e.target.style.borderColor = '#444'}
-          onBlur={e  => e.target.style.borderColor = '#222'}
+          style={{ background: 'var(--input-bg)', border: '1px solid var(--border-2)', color: 'var(--text-1)' }}
+          onFocus={e => e.target.style.borderColor = 'var(--border-3)'}
+          onBlur={e  => e.target.style.borderColor = 'var(--border-2)'}
         />
         {search && (
           <button type="button" onClick={() => onSearch('')} aria-label="Clear search"
             className="absolute right-2 top-1/2 -translate-y-1/2"
-            style={{ color: '#606060' }}
-            onMouseEnter={e => e.currentTarget.style.color = '#aaa'}
-            onMouseLeave={e => e.currentTarget.style.color = '#606060'}>
+            style={{ color: 'var(--text-4)' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-2)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-4)'}>
             <X size={11} />
           </button>
         )}
@@ -85,7 +85,7 @@ export default function Toolbar({
 
       {/* Match count while filtering */}
       {filtering && (
-        <span className="text-[13px] font-mono whitespace-nowrap" style={{ color: '#8a8a8a' }}
+        <span className="text-[13px] font-mono whitespace-nowrap" style={{ color: 'var(--text-3)' }}
           title="Matching / total containers">
           {visibleCount} / {totalCount}
         </span>
@@ -93,19 +93,19 @@ export default function Toolbar({
 
       {/* Outdated filter toggle */}
       <label className="flex items-center gap-2 cursor-pointer select-none text-[14px]"
-        style={{ color: '#9a9a9a' }}>
+        style={{ color: 'var(--text-3)' }}>
         <div className="relative">
           <input type="checkbox" checked={filterOutdated}
             onChange={e => onFilterOutdated(e.target.checked)} className="sr-only peer" />
           <div className="w-7 h-3.5 rounded-full transition-colors"
-            style={{ background: filterOutdated ? '#f5a623' : '#222' }} />
+            style={{ background: filterOutdated ? 'var(--accent-amber)' : 'var(--border-3)' }} />
           <div className="absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white transition-all"
             style={{ left: filterOutdated ? '17px' : '2px' }} />
         </div>
         Outdated only
       </label>
 
-      <div className="w-px h-5 shrink-0" style={{ background: '#1a1a1a' }} />
+      <div className="w-px h-5 shrink-0" style={{ background: 'var(--border-1)' }} />
 
       <button className="btn btn-ghost btn-xs" onClick={onSelectAll}
         title="Select all visible containers">

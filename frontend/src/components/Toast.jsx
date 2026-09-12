@@ -1,10 +1,10 @@
 import { AlertCircle, AlertTriangle, CheckCircle2, Info } from 'lucide-react'
 
 const CONFIGS = {
-  success: { icon: CheckCircle2, color: '#50e3c2',  border: 'rgba(80,227,194,0.2)'  },
-  error:   { icon: AlertCircle,  color: '#ff4444',  border: 'rgba(255,68,68,0.2)'   },
-  warning: { icon: AlertTriangle,color: '#f5a623',  border: 'rgba(245,166,35,0.2)'  },
-  info:    { icon: Info,         color: '#8a8a8a',  border: '#222'                  },
+  success: { icon: CheckCircle2, color: 'var(--accent-teal)',  border: 'rgba(80,227,194,0.2)'  },
+  error:   { icon: AlertCircle,  color: 'var(--accent-red)',  border: 'rgba(255,68,68,0.2)'   },
+  warning: { icon: AlertTriangle,color: 'var(--accent-amber)',  border: 'rgba(245,166,35,0.2)'  },
+  info:    { icon: Info,         color: 'var(--text-3)',  border: 'var(--border-2)'        },
 }
 
 export default function Toast({ toasts = [], onDismiss }) {
@@ -23,9 +23,9 @@ export default function Toast({ toasts = [], onDismiss }) {
             title="Dismiss"
             onClick={() => onDismiss?.(t.id)}
             style={{
-              background: '#111',
+              background: 'var(--surface-1)',
               border: `1px solid ${cfg.border}`,
-              color: '#ededed',
+              color: 'var(--text-1)',
               fontSize: '15px',
               maxWidth: '360px',
               boxShadow: '0 8px 32px rgba(0,0,0,0.5)',

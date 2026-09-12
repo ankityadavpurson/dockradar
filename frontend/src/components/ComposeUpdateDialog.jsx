@@ -85,7 +85,7 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
             <div className="flex items-baseline gap-2">
               <span className="text-[12px] w-14 shrink-0" style={{ color: 'var(--text-4)' }}>Current</span>
               <code className="text-[14px] px-2 py-0.5 rounded break-all"
-                style={{ color: '#ff6b6b', background: 'rgba(255,68,68,0.08)' }}>{diff.current_image}</code>
+                style={{ color: 'var(--accent-red)', background: 'rgba(255,68,68,0.08)' }}>{diff.current_image}</code>
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-[12px] w-14 shrink-0" style={{ color: 'var(--text-4)' }}>Latest</span>
@@ -117,7 +117,7 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
               onChange={e => setContent(e.target.value)}
               spellCheck={false}
               className="w-full font-mono text-[13px] leading-relaxed resize-y outline-none p-3"
-              style={{ minHeight: '220px', maxHeight: '320px', background: '#000', color: 'var(--text-2)', border: 'none', tabSize: 2 }}
+              style={{ minHeight: '220px', maxHeight: '320px', background: 'var(--surface-0)', color: 'var(--text-2)', border: 'none', tabSize: 2 }}
             />
           ) : (
             diff.has_change

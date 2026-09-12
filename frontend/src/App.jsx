@@ -61,7 +61,7 @@ const App = () => {
 
       {health && !health.docker_connected && (
         <div className="px-4 py-3 text-[14px] font-mono"
-          style={{ background: 'rgba(255,68,68,0.1)', borderBottom: '1px solid rgba(255,68,68,0.25)', color: '#ff4444' }}>
+          style={{ background: 'rgba(255,68,68,0.1)', borderBottom: '1px solid rgba(255,68,68,0.25)', color: 'var(--accent-red)' }}>
           Can't reach the Docker daemon. DockRadar can't scan or update containers until it reconnects — check that Docker is running and the socket (or DOCKER_HOST) is accessible.
         </div>
       )}
@@ -79,7 +79,7 @@ const App = () => {
         {/* Connection error */}
         {error && (
           <div className="mb-4 px-4 py-3 rounded text-[15px] font-mono animate-fade_in"
-            style={{ background: 'rgba(255,68,68,0.07)', border: '1px solid rgba(255,68,68,0.18)', color: '#ff4444' }}>
+            style={{ background: 'rgba(255,68,68,0.07)', border: '1px solid rgba(255,68,68,0.18)', color: 'var(--accent-red)' }}>
             ✗ {error}
           </div>
         )}
@@ -109,9 +109,9 @@ const App = () => {
 
         {/* Container table */}
         <div className="rounded-lg overflow-hidden"
-          style={{ border: '1px solid #1a1a1a' }}>
+          style={{ border: '1px solid var(--border-1)' }}>
           <div className="flex items-center justify-between px-4 py-3"
-            style={{ borderBottom: '1px solid #1a1a1a', color: '#aaaaaa', background: 'rgba(0,0,0,0.3)' }}>
+            style={{ borderBottom: '1px solid var(--border-1)', color: 'var(--text-3)', background: 'var(--surface-raised)' }}>
             <span className="text-[13px] font-mono uppercase tracking-wider">
               Containers
             </span>

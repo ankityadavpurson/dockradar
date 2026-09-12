@@ -1,4 +1,5 @@
 import favicon from '../../assets/favicon.svg'
+import ThemeToggle from './ThemeToggle'
 
 /** "in 5h 12m" style countdown to a future date. */
 function relativeTime(date) {
@@ -26,19 +27,21 @@ export default function Header({ health, containers, scanStatus }) {
   const nextScanTitle = nextScanValid ? nextScanDate.toLocaleString() : undefined
 
   return (
-    <header className="sticky top-0 z-50 bg-[rgba(0,0,0,0.5)] backdrop-blur-sm border-b border-[#1a1a1a]">
+    <header className="sticky top-0 z-50 backdrop-blur-sm"
+      style={{ background: 'var(--surface-raised)', borderBottom: '1px solid var(--border-1)' }}>
       <div className="max-w-[1400px] mx-auto w-full flex items-center gap-3 md:gap-6 px-4 md:px-6 h-14">
 
         {/* Logo */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           <img src={favicon} alt="Logo" className="w-7 h-7 sm:w-8 sm:h-8" />
-          <span className="text-[16px] sm:text-[18px] font-semibold tracking-tight text-white">
+          <span className="text-[16px] sm:text-[18px] font-semibold tracking-tight"
+            style={{ color: 'var(--text-strong)' }}>
             DockRadar
           </span>
         </div>
 
         {/* Divider */}
-        <div className="w-px h-5 hidden sm:block" style={{ background: '#222' }} />
+        <div className="w-px h-5 hidden sm:block" style={{ background: 'var(--border-2)' }} />
 
         {/* Nav-style stat chips — "running" hides on mobile to save space */}
         <div className="flex items-center gap-3 sm:gap-5 min-w-0">
@@ -51,38 +54,42 @@ export default function Header({ health, containers, scanStatus }) {
 
         {/* Next scan */}
         {health?.docker_connected && (
-          <span className="text-[14px] hidden md:block" style={{ color: '#9a9a9a' }} title={nextScanTitle}>
+          <span className="text-[14px] hidden md:block" style={{ color: 'var(--text-3)' }} title={nextScanTitle}>
             Next scan:{' '}
-            <span style={{ color: '#ccc' }}>{nextScanLabel}</span>
+            <span style={{ color: 'var(--text-2)' }}>{nextScanLabel}</span>
           </span>
         )}
 
-        <div className="w-px h-5 hidden md:block" style={{ background: '#222' }} />
+        <div className="w-px h-5 hidden md:block" style={{ background: 'var(--border-2)' }} />
 
         {/* Docker status — dot only on small screens */}
         <div className="flex items-center gap-2 text-[14px] shrink-0"
           title={health?.docker_connected ? 'Docker connected' : 'Docker offline'}>
           <span className="w-1.5 h-1.5 rounded-full" style={{
-            background: health?.docker_connected ? '#50e3c2' : '#ff4444',
+            background: health?.docker_connected ? 'var(--accent-teal)' : 'var(--accent-red)',
             boxShadow: health?.docker_connected ? '0 0 5px rgba(80,227,194,0.5)' : 'none',
           }} />
-          <span className="hidden sm:inline" style={{ color: health?.docker_connected ? '#aaa' : '#ff4444' }}>
+          <span className="hidden sm:inline" style={{ color: health?.docker_connected ? 'var(--text-2)' : 'var(--accent-red)' }}>
             {health?.docker_connected ? 'Docker connected' : 'Docker offline'}
           </span>
         </div>
+
+        <div className="w-px h-5 hidden sm:block" style={{ background: 'var(--border-2)' }} />
+
+        <ThemeToggle />
       </div>
     </header>
   )
 }
 
 function StatChip({ label, value, active, warn, className = '' }) {
-  const color = warn ? '#f5a623' : active ? '#ededed' : '#9a9a9a'
+  const color = warn ? 'var(--accent-amber)' : active ? 'var(--text-1)' : 'var(--text-3)'
   return (
     <div className={`flex items-center gap-1.5 ${className}`}>
       <span className="text-[14px] sm:text-[15px] font-medium tabular-nums" style={{ color }}>
         {value}
       </span>
-      <span className="text-[13px] sm:text-[14px] uppercase whitespace-nowrap" style={{ color: '#8a8a8a' }}>{label}</span>
+      <span className="text-[13px] sm:text-[14px] uppercase whitespace-nowrap" style={{ color: 'var(--text-3)' }}>{label}</span>
     </div>
   )
 }

@@ -24,13 +24,13 @@ const ProgressLog = ({ messages, scanning, updating }) => {
         <button
           type="button"
           className="fixed right-4 bottom-4 z-[190] flex items-center gap-2 rounded-lg px-3 py-2 font-mono text-[13px] uppercase tracking-wider"
-          style={{ background: '#111', border: '1px solid #222', boxShadow: '0 12px 40px rgba(0,0,0,0.35)' }}
+          style={{ background: 'var(--surface-1)', border: '1px solid var(--border-2)', boxShadow: '0 12px 40px rgba(0,0,0,0.35)' }}
           onClick={() => setOpen(true)}
         >
           <Terminal size={12} />
           <span>{active ? (scanning ? 'Scanning…' : 'Updating…') : 'View Log'}</span>
           {active && (
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse_soft" style={{ background: '#f5a623' }} />
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse_soft" style={{ background: 'var(--accent-amber)' }} />
           )}
         </button>
       )}
@@ -39,17 +39,17 @@ const ProgressLog = ({ messages, scanning, updating }) => {
       {open && (
         <div
           className="fixed top-0 right-0 z-[190] h-full w-full max-w-[480px]"
-          style={{ background: '#0a0a0a', borderLeft: '1px solid #1a1a1a', boxShadow: '-24px 0 60px rgba(0,0,0,0.45)' }}
+          style={{ background: 'var(--surface-0)', borderLeft: '1px solid var(--border-1)', boxShadow: '-24px 0 60px rgba(0,0,0,0.45)' }}
         >
           <div className="flex h-full flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid #1a1a1a', background: 'rgba(255,255,255,0.02)' }}>
-              <div className="flex items-center gap-2" style={{ color: active ? (scanning ? '#f5a623' : '#50e3c2') : '#fff' }}>
+            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border-1)', background: 'var(--surface-raised)' }}>
+              <div className="flex items-center gap-2" style={{ color: active ? (scanning ? 'var(--accent-amber)' : 'var(--accent-teal)') : 'var(--text-1)' }}>
                 <Terminal size={13} />
                 <span className="text-[13px] font-mono uppercase tracking-wider">
                   {scanning ? 'Scanning…' : updating ? 'Updating…' : 'Progress Log'}
                 </span>
                 {active && (
-                  <span className="ml-1 w-1.5 h-1.5 rounded-full animate-pulse_soft" style={{ background: '#f5a623' }} />
+                  <span className="ml-1 w-1.5 h-1.5 rounded-full animate-pulse_soft" style={{ background: 'var(--accent-amber)' }} />
                 )}
               </div>
 
@@ -63,11 +63,11 @@ const ProgressLog = ({ messages, scanning, updating }) => {
               </button>
             </div>
 
-            <div className="px-5 py-3 font-mono text-[13px]" style={{ borderBottom: '1px solid #141414', background: 'rgba(255,255,255,0.015)' }}>
+            <div className="px-5 py-3 font-mono text-[13px]" style={{ borderBottom: '1px solid var(--border-1)', background: 'var(--surface-raised)' }}>
               {messages.length} line{messages.length === 1 ? '' : 's'}
             </div>
 
-            <div className="flex-1 overflow-y-auto p-5 font-mono text-[13px] leading-relaxed" style={{ background: '#000' }}
+            <div className="flex-1 overflow-y-auto p-5 font-mono text-[13px] leading-relaxed" style={{ background: 'var(--surface-0)' }}
               role="log" aria-live="polite">
               {messages.map((msg, i) => (
                 <div key={i} className="mb-1 break-words" style={{ color: getLineColor(msg) }}>{msg}</div>
@@ -82,11 +82,11 @@ const ProgressLog = ({ messages, scanning, updating }) => {
 }
 
 function getLineColor(msg) {
-  if (msg.includes('✓') || msg.includes('complete') || msg.includes('up to date')) return '#50e3c2'
-  if (msg.includes('✗') || msg.includes('failed') || msg.includes('error')) return '#ff4444'
-  if (msg.includes('⚠') || msg.includes('warn') || msg.includes('Pulling') || msg.includes('Updating')) return '#f5a623'
-  if (msg.includes('✅') || msg.includes('Scan complete')) return '#50e3c2'
-  return '#fff'
+  if (msg.includes('✓') || msg.includes('complete') || msg.includes('up to date')) return 'var(--accent-teal)'
+  if (msg.includes('✗') || msg.includes('failed') || msg.includes('error')) return 'var(--accent-red)'
+  if (msg.includes('⚠') || msg.includes('warn') || msg.includes('Pulling') || msg.includes('Updating')) return 'var(--accent-amber)'
+  if (msg.includes('✅') || msg.includes('Scan complete')) return 'var(--accent-teal)'
+  return 'var(--text-1)'
 }
 
 export default ProgressLog

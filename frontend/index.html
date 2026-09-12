@@ -5,10 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DockRadar</title>
     <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
-    <style>
-      /* Prevent flash of unstyled content */
-      html { background: #252529; }
-    </style>
+    <script>
+      /* Resolve the theme before first paint to avoid a flash of the wrong theme. */
+      (function () {
+        try {
+          var t = localStorage.getItem('dockradar_theme') || 'system';
+          var resolved = (t === 'light' || t === 'dark')
+            ? t
+            : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+          document.documentElement.setAttribute('data-theme', resolved);
+          document.documentElement.style.backgroundColor = resolved === 'light' ? '#f4f4f5' : '#1e1e1e';
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
