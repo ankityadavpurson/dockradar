@@ -60,8 +60,13 @@ DockRadar can control Docker containers on the host. Treat it as a privileged se
 
 5. Secrets handling
 
-- Never commit `.env`.
-- Rotate SMTP/API credentials if exposure is suspected.
+- Never commit `.env`. It holds live runtime secrets — Docker Compose loads it
+  into the container via `env_file`, and it is excluded from the image by
+  `.dockerignore` and from git by `.gitignore`.
+- Restrict `.env` file permissions on the host (e.g. `chmod 600 .env`), since it
+  contains the SMTP password and any `API_KEY`.
+- Rotate SMTP/API credentials if exposure is suspected. For Gmail, revoke the
+  App Password from your Google account.
 
 ## Disclosure and Credit
 

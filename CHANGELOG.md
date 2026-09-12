@@ -29,6 +29,7 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Upload hardening for compose files: 1 MiB size cap, UTF-8 validation, missing-filename guard.
 
 ### Fixed
+- `docker-compose.yml` now loads `.env` via `env_file`, so SMTP/email, `API_KEY`, and all other settings actually reach the container (previously only `HOST`/`PORT`/`DOCKER_HOST`/`HIDDEN_REPOSITORY` were passed, making email impossible to configure in a Compose deployment). Container-critical values stay pinned in the compose file.
 - "Update Selected" sent container IDs where the API expects names, so it always failed with 404.
 - A crash during a scan or update could leave the busy flag stuck, blocking all further scans/updates until restart — workers now always release state.
 - Scan/update state transitions are now atomic (thread lock); the scheduler skips its run instead of racing a user-triggered scan/update, and single-container updates now mark the app busy.
