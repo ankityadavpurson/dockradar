@@ -231,12 +231,15 @@ def _maybe_notify(outdated: list[ContainerInfo]):
         return
     if not config.email_configured():
         return
+    def _short_digest(d: Optional[str]) -> str:
+        return d.replace("sha256:", "")[:12] if d else "—"
+
     payload = [
         {
             "container_name": c.name,
-            "image_name": c.image_name,
-            "current_tag": c.tag,
-            "latest_tag": c.latest_tag or "unknown",
+            "image": c.repository,
+            "tag": c.tag,
+            "digest": _short_digest(c.local_digest),
         }
         for c in outdated
     ]

@@ -88,7 +88,7 @@ class EmailService:
 
         Args:
             updates: List of dicts with keys:
-                     container_name, image_name, current_tag, latest_tag
+                     container_name, image, tag, digest
         Returns:
             True if email was sent successfully.
         """
@@ -100,8 +100,10 @@ class EmailService:
             logger.info("No updates to notify about.")
             return False
 
+        title = f"{len(updates)} image update{'s' if len(updates) != 1 else ''} available"
+
         try:
-            subject = f"[DockRadar] {len(updates)} image update(s) available"
+            subject = f"[DockRadar] {title}"
             html_body = self._build_html(updates)
             text_body = self._build_text(updates)
 
@@ -124,41 +126,52 @@ class EmailService:
             return False
 
     def _build_html(self, updates: list[dict]) -> str:
+        cell = "padding:9px 10px;border-bottom:1px solid #f0f0f0;font-family:'Courier New',monospace;"
         rows = ""
         for u in updates:
             esc = {k: html.escape(str(v)) for k, v in u.items()}
             rows += f"""
             <tr>
-                <td style="padding:10px;border-bottom:1px solid #2a2a3e;font-family:monospace">{esc['container_name']}</td>
-                <td style="padding:10px;border-bottom:1px solid #2a2a3e;font-family:monospace">{esc['image_name']}</td>
-                <td style="padding:10px;border-bottom:1px solid #2a2a3e;color:#ff6b6b;font-family:monospace">{esc['current_tag']}</td>
-                <td style="padding:10px;border-bottom:1px solid #2a2a3e;color:#51cf66;font-family:monospace">{esc['latest_tag']}</td>
+                <td style="{cell}">{esc['container_name']}</td>
+                <td style="{cell}color:#374151;">{esc['image']}</td>
+                <td style="{cell}">{esc['tag']}</td>
+                <td style="{cell}color:#6b7280;">{esc['digest']}</td>
             </tr>"""
+
+        title = f"{len(updates)} image update{'s' if len(updates) != 1 else ''} available"
+
+        button = ""
+        if config.APP_URL:
+            url = html.escape(config.APP_URL)
+            button = f"""
+    <div style="margin:22px 0 4px">
+      <a href="{url}" style="display:inline-block;padding:9px 18px;border:1px solid #d1d5db;border-radius:6px;color:#1a1a1a;text-decoration:none;font-size:14px;font-weight:600">Open DockRadar</a>
+    </div>"""
 
         return f"""<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"></head>
-<body style="background:#0f0f1a;color:#e0e0ff;font-family:sans-serif;margin:0;padding:20px">
-  <div style="max-width:700px;margin:0 auto">
-    <h1 style="color:#00d4ff;letter-spacing:2px;margin-bottom:4px">🐳 DockRadar</h1>
-    <p style="color:#888;margin-top:0">Docker image monitoring and update dashboard</p>
-    <hr style="border-color:#2a2a3e">
-    <h2 style="color:#ffd43b">⚠ {len(updates)} Update(s) Available</h2>
-    <p>The following container images have newer versions available:</p>
-    <table style="width:100%;border-collapse:collapse;background:#1a1a2e;border-radius:8px;overflow:hidden">
-      <thead>
-        <tr style="background:#252545">
-          <th style="padding:12px;text-align:left;color:#00d4ff">Container</th>
-          <th style="padding:12px;text-align:left;color:#00d4ff">Image</th>
-          <th style="padding:12px;text-align:left;color:#00d4ff">Current</th>
-          <th style="padding:12px;text-align:left;color:#00d4ff">Latest</th>
-        </tr>
-      </thead>
-      <tbody>{rows}</tbody>
-    </table>
-    <p style="margin-top:24px;color:#888;font-size:12px">
-      Sent by DockRadar &mdash; Your Docker monitoring companion.
-    </p>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f4f4f5">
+  <div style="max-width:680px;margin:0 auto;padding:24px;font-family:Arial,Helvetica,sans-serif;color:#1a1a1a">
+    <div style="background:#ffffff;border:1px solid #e5e5e5;border-radius:6px;padding:28px">
+      <h1 style="margin:0 0 2px;font-size:20px;font-weight:700;color:#1a1a1a">DockRadar</h1>
+      <p style="margin:0 0 20px;font-size:13px;color:#6b7280">Docker image monitoring and update dashboard</p>
+      <hr style="border:none;border-top:1px solid #e5e5e5;margin:0 0 20px">
+      <h2 style="margin:0 0 6px;font-size:16px;font-weight:600;color:#1a1a1a">{title}</h2>
+      <p style="margin:0 0 18px;font-size:14px;color:#374151">The following container images have newer versions available:</p>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:9px 10px;border-bottom:2px solid #e5e5e5;color:#374151;font-weight:600">Container</th>
+            <th style="text-align:left;padding:9px 10px;border-bottom:2px solid #e5e5e5;color:#374151;font-weight:600">Image</th>
+            <th style="text-align:left;padding:9px 10px;border-bottom:2px solid #e5e5e5;color:#374151;font-weight:600">Tag</th>
+            <th style="text-align:left;padding:9px 10px;border-bottom:2px solid #e5e5e5;color:#374151;font-weight:600">Digest</th>
+          </tr>
+        </thead>
+        <tbody>{rows}</tbody>
+      </table>{button}
+      <p style="margin:22px 0 0;font-size:12px;color:#9ca3af">Sent by DockRadar</p>
+    </div>
   </div>
 </body>
 </html>"""
@@ -168,8 +181,11 @@ class EmailService:
         lines.append(f"{len(updates)} image update(s) available:\n")
         for u in updates:
             lines.append(f"  Container : {u['container_name']}")
-            lines.append(f"  Image     : {u['image_name']}")
-            lines.append(f"  Current   : {u['current_tag']}")
-            lines.append(f"  Latest    : {u['latest_tag']}")
+            lines.append(f"  Image     : {u['image']}")
+            lines.append(f"  Tag       : {u['tag']}")
+            lines.append(f"  Digest    : {u['digest']}")
+            lines.append("")
+        if config.APP_URL:
+            lines.append(f"Open DockRadar: {config.APP_URL}")
             lines.append("")
         return "\n".join(lines)
