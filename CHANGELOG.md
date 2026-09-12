@@ -9,6 +9,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.4.0] — 2026-09-12
+
 ## [13.3.0] — 2026-07-26
 
 ## [13.2.1] — 2026-07-19
