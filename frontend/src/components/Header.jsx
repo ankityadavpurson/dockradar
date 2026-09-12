@@ -50,10 +50,12 @@ export default function Header({ health, containers, scanStatus }) {
         <div className="flex-1" />
 
         {/* Next scan */}
-        <span className="text-[14px] hidden md:block" style={{ color: '#9a9a9a' }} title={nextScanTitle}>
-          Next scan:{' '}
-          <span style={{ color: '#ccc' }}>{nextScanLabel}</span>
-        </span>
+        {health?.docker_connected && (
+          <span className="text-[14px] hidden md:block" style={{ color: '#9a9a9a' }} title={nextScanTitle}>
+            Next scan:{' '}
+            <span style={{ color: '#ccc' }}>{nextScanLabel}</span>
+          </span>
+        )}
 
         <div className="w-px h-5 hidden md:block" style={{ background: '#222' }} />
 

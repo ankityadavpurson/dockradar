@@ -58,6 +58,14 @@ const App = () => {
 
   return (
     <div className="min-h-screen">
+
+      {!health?.docker_connected && (
+        <div className="px-4 py-3 text-[14px] font-mono"
+          style={{ background: 'rgba(255,68,68,0.1)', borderBottom: '1px solid rgba(255,68,68,0.25)', color: '#ff4444' }}>
+          Can't reach the Docker daemon. DockRadar can't scan or update containers until it reconnects — check that Docker is running and the socket (or DOCKER_HOST) is accessible.
+        </div>
+      )}
+
       {/* Header */}
       <Header
         health={health}
