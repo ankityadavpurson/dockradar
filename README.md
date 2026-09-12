@@ -117,9 +117,23 @@ yarn install
 yarn dev
 ```
 
-## Docker Run (Single Container)
+## Docker
 
-Build and run:
+### Docker Compose (recommended)
+
+```bash
+cp .env.example .env    # then edit .env (SMTP/email, API_KEY, …)
+docker compose up -d --build
+```
+
+`docker-compose.yml` reads your `.env` automatically (via `env_file`), so every
+setting — including SMTP/email and `API_KEY` — applies inside the container.
+`.env` is optional; without it the app starts on sensible defaults. Regardless
+of what `.env` contains, the container always listens on port `8086` and reaches
+Docker through the mounted socket (`HOST`, `PORT`, and `DOCKER_HOST` are pinned
+in the compose file). Requires Docker Compose v2.24+.
+
+### Docker Run (single container)
 
 ```bash
 docker build -t dockradar:latest .
@@ -129,8 +143,6 @@ docker run --rm -p 8086:8086 \
   --env-file .env \
   dockradar:latest
 ```
-
-The provided root `docker-compose.yml` also runs the app on port `8086`.
 
 ## API Endpoints
 
@@ -162,7 +174,12 @@ Compose management:
 
 ## Environment Variables
 
-See `.env.example` for the full list.
+See `.env.example` for the full list. Configuration is delivered via
+environment variables, loaded automatically depending on how you run DockRadar:
+
+- **Docker Compose** — reads `.env` in the project root (`env_file: .env`).
+- **`docker run`** — pass `--env-file .env`.
+- **Start scripts / manual run** — `.env` is loaded from the project root.
 
 Most important values:
 
@@ -174,6 +191,25 @@ Most important values:
 - `API_KEY` — optional; when set, every `/api` route except `/api/health` requires the `X-Api-Key` header. Give the key to the UI once via the browser console: `localStorage.setItem('dockradar_api_key', '<key>')`
 - `HIDDEN_REPOSITORY` — comma-separated container or repository names (case-insensitive, exact match) to hide from DockRadar entirely: not listed, not scanned, not auto-updated
 - `REGISTRY_CACHE_TTL`
+
+### Email notifications (Gmail)
+
+Gmail requires an [App Password](https://myaccount.google.com/apppasswords) —
+not your account password — and 2-Step Verification must be enabled to create
+one. Set:
+
+```bash
+SMTP_USER=you@gmail.com
+SMTP_PASSWORD=your_16_char_app_password
+EMAIL_FROM=you@gmail.com
+EMAIL_TO=where-to-notify@example.com
+```
+
+`SMTP_HOST`/`SMTP_PORT` default to `smtp.gmail.com:587` (STARTTLS); use port
+`465` for implicit SSL. After setting these, restart DockRadar, then click the
+ⓘ icon next to **Email** in the UI → **Send test email** to verify. Scans that
+find new updates then send a notification (deduplicated so the same update is
+announced only once).
 
 ## Update Limitations
 
