@@ -55,6 +55,10 @@ class Config:
     PORT: int     = _int_env("PORT", 8086)
     LOG_FILE: str = os.getenv("LOG_FILE", "dockradar.log")
 
+    # Public URL of the DockRadar UI, used for the link in notification emails.
+    # e.g. http://192.168.1.10:8086 — leave blank to omit the link.
+    APP_URL: str = os.getenv("APP_URL", "").rstrip("/")
+
     # Comma-separated container or repository names to hide from DockRadar
     # entirely (not listed, not scanned, not auto-updated).
     # e.g. HIDDEN_REPOSITORY=dockradar-v2-app,portainer

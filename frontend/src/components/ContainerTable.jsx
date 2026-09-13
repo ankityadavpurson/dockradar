@@ -4,18 +4,18 @@ import CheckBox from './CheckBox'
 import RowMenu from './RowMenu'
 
 const STATUS_CFG = {
-  up_to_date:       { label: 'Up to date',       color: '#50e3c2', bg: 'rgba(80,227,194,0.07)',  border: 'rgba(80,227,194,0.18)'  },
-  update_available: { label: 'Update available', color: '#f5a623', bg: 'rgba(245,166,35,0.07)', border: 'rgba(245,166,35,0.18)'  },
-  error:            { label: 'Error',            color: '#ff4444', bg: 'rgba(255,68,68,0.07)',   border: 'rgba(255,68,68,0.18)'   },
-  unknown:          { label: 'Unknown',          color: '#444',    bg: 'rgba(255,255,255,0.03)', border: '#1a1a1a'                },
+  up_to_date:       { label: 'Up to date',       color: 'var(--accent-teal)', bg: 'rgba(80,227,194,0.07)',  border: 'rgba(80,227,194,0.18)'  },
+  update_available: { label: 'Update available', color: 'var(--accent-amber)', bg: 'rgba(245,166,35,0.07)', border: 'rgba(245,166,35,0.18)'  },
+  error:            { label: 'Error',            color: 'var(--accent-red)', bg: 'rgba(255,68,68,0.07)',   border: 'rgba(255,68,68,0.18)'   },
+  unknown:          { label: 'Unknown',          color: 'var(--text-4)',    bg: 'var(--hover-bg)', border: 'var(--border-1)'                },
 }
 
 const DOCKER_DOT = {
-  running:  { bg: '#50e3c2', shadow: '0 0 5px rgba(80,227,194,0.5)' },
-  exited:   { bg: '#ff4444', shadow: 'none' },
-  paused:   { bg: '#f5a623', shadow: 'none' },
-  created:  { bg: '#888',    shadow: 'none' },
-  dead:     { bg: '#333',    shadow: 'none' },
+  running:  { bg: 'var(--accent-teal)', shadow: '0 0 5px rgba(80,227,194,0.5)' },
+  exited:   { bg: 'var(--accent-red)', shadow: 'none' },
+  paused:   { bg: 'var(--accent-amber)', shadow: 'none' },
+  created:  { bg: 'var(--text-3)',    shadow: 'none' },
+  dead:     { bg: 'var(--border-3)',    shadow: 'none' },
 }
 
 // One entry per body cell (after the checkbox) — keep in sync with the <td>s.
@@ -45,21 +45,21 @@ function TagLabel({ container: c }) {
   if (c.update_status === 'update_available') {
     return (
       <span className="inline-block font-mono text-[14px]"
-        style={{ color: '#7a7a7a', textDecoration: 'line-through' }}>
+        style={{ color: 'var(--text-4)', textDecoration: 'line-through' }}>
         {label}
       </span>
     )
   }
   if (c.tag === 'latest') {
     return (
-      <span className="inline-block font-mono text-[14px]" style={{ color: '#8a8a8a' }}>
+      <span className="inline-block font-mono text-[14px]" style={{ color: 'var(--text-3)' }}>
         latest
       </span>
     )
   }
   return (
     <span className="inline-block font-mono text-[14px] px-1.5 py-0.5 rounded w-fit"
-      style={{ color: '#aaa', background: 'rgba(255,255,255,0.03)', border: '1px solid #1a1a1a' }}
+      style={{ color: 'var(--text-2)', background: 'var(--hover-bg)', border: '1px solid var(--border-1)' }}
       title={isDigestTag ? c.tag : undefined}>
       {label}
     </span>
@@ -67,9 +67,9 @@ function TagLabel({ container: c }) {
 }
 
 const CHECK_STYLES = {
-  ok:   { color: '#50e3c2', background: 'rgba(80,227,194,0.05)',  border: '1px solid rgba(80,227,194,0.15)' },
-  warn: { color: '#f5a623', background: 'rgba(245,166,35,0.07)',  border: '1px solid rgba(245,166,35,0.18)' },
-  dim:  { color: '#7a7a7a', background: 'rgba(255,255,255,0.02)', border: '1px solid #1a1a1a' },
+  ok:   { color: 'var(--accent-teal)', background: 'rgba(80,227,194,0.05)',  border: '1px solid rgba(80,227,194,0.15)' },
+  warn: { color: 'var(--accent-amber)', background: 'rgba(245,166,35,0.07)',  border: '1px solid rgba(245,166,35,0.18)' },
+  dim:  { color: 'var(--text-4)', background: 'var(--hover-bg)', border: '1px solid var(--border-1)' },
 }
 
 function CheckChip({ style, icon, label, title }) {
@@ -88,7 +88,7 @@ function VersionCheckCell({ container }) {
   const tagsMatch = !latest_tag || latest_tag === tag || latest_tag === 'unknown'
 
   if (update_status === 'unknown' || update_status === 'error') {
-    return <span style={{ color: '#333' }}>—</span>
+    return <span style={{ color: 'var(--text-4)' }}>—</span>
   }
 
   // A newer tag exists — the genuinely interesting tag-level state.
@@ -123,14 +123,14 @@ function ContainerCard({
   c, isSel, refreshing, hasCompose, assoc, isBusy,
   onToggleSelect, onConfirmUpdate, onComposeUpdate, onConfirmDelete, onShowDetails,
 }) {
-  const dot = DOCKER_DOT[c.status] ?? { bg: '#333', shadow: 'none' }
+  const dot = DOCKER_DOT[c.status] ?? { bg: 'var(--border-3)', shadow: 'none' }
   const isRunning = c.status === 'running'
 
   return (
     <div className="px-4 py-3 flex flex-col gap-2.5"
       style={{
-        borderBottom: '1px solid #111',
-        background: isSel ? 'rgba(255,255,255,0.03)' : 'transparent',
+        borderBottom: '1px solid var(--border-1)',
+        background: isSel ? 'var(--row-hover)' : 'transparent',
         filter: isRunning ? undefined : 'brightness(0.65)',
       }}>
       <div className="flex items-center gap-2.5 min-w-0">
@@ -140,7 +140,7 @@ function ContainerCard({
           style={{ background: dot.bg, boxShadow: dot.shadow }}
           role="img" aria-label={`Container ${c.status}`} />
         <button type="button" className="text-[15px] font-medium truncate text-left"
-          style={{ color: '#ededed', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+          style={{ color: 'var(--text-1)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
           title={`View details for ${c.name}`}
           onClick={() => onShowDetails && onShowDetails(c)}>
           {c.name}
@@ -170,7 +170,7 @@ function ContainerCard({
         </div>
       </div>
 
-      <div className="text-[14px] font-mono truncate" style={{ color: '#8a8a8a' }}>
+      <div className="text-[14px] font-mono truncate" style={{ color: 'var(--text-3)' }}>
         {c.repository}
       </div>
 
@@ -192,11 +192,11 @@ function StoppedBadge({ status }) {
   return (
     <span className="text-[11px] font-mono px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0"
       style={{
-        color: status === 'exited' ? '#ff6b6b'
-             : status === 'paused' ? '#f5a623'
-             : '#888',
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid #222',
+        color: status === 'exited' ? 'var(--accent-red)'
+             : status === 'paused' ? 'var(--accent-amber)'
+             : 'var(--text-3)',
+        background: 'var(--hover-bg)',
+        border: '1px solid var(--border-2)',
       }}>
       {status}
     </span>
@@ -244,17 +244,17 @@ export default function ContainerTable({
 
   if (containers.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20" style={{ color: '#8a8a8a' }}>
+      <div className="flex flex-col items-center justify-center py-20" style={{ color: 'var(--text-3)' }}>
         <span className="text-4xl mb-4 opacity-20">▲</span>
         {isFiltered ? (
           <>
-            <p className="text-[16px] font-medium mb-1" style={{ color: '#bbb' }}>No matching containers</p>
+            <p className="text-[16px] font-medium mb-1" style={{ color: 'var(--text-2)' }}>No matching containers</p>
             <p className="text-[15px]">Nothing matches the current search or filter — clear them to see all containers.</p>
           </>
         ) : (
           <>
-            <p className="text-[16px] font-medium mb-1" style={{ color: '#bbb' }}>No containers found</p>
-            <p className="text-[15px]">Click <span style={{ color: '#ddd' }}>Scan</span> to discover Docker containers.</p>
+            <p className="text-[16px] font-medium mb-1" style={{ color: 'var(--text-2)' }}>No containers found</p>
+            <p className="text-[15px]">Click <span style={{ color: 'var(--text-1)' }}>Scan</span> to discover Docker containers.</p>
           </>
         )}
       </div>
@@ -286,7 +286,7 @@ export default function ContainerTable({
     <div className="overflow-x-auto hidden md:block">
       <table className="w-full border-collapse">
         <thead>
-          <tr style={{ borderBottom: '1px solid #1a1a1a' }}>
+          <tr style={{ borderBottom: '1px solid var(--border-1)' }}>
             <th className="w-10 pl-4 py-3 text-left">
               <CheckBox
                 id="check-all"
@@ -304,7 +304,7 @@ export default function ContainerTable({
                   ? (sortDir === 'asc' ? 'ascending' : 'descending')
                   : undefined}
                 className="px-4 py-3 text-left text-[13px] font-medium uppercase tracking-wider whitespace-nowrap"
-                style={{ color: col.sortable && sortKey === col.key ? '#ccc' : '#8a8a8a' }}>
+                style={{ color: col.sortable && sortKey === col.key ? 'var(--text-2)' : 'var(--text-3)' }}>
                 {col.sortable ? (
                   <button type="button"
                     onClick={() => handleSort(col.key)}
@@ -327,7 +327,7 @@ export default function ContainerTable({
 
         <tbody>
           {sorted.map((c, idx) => {
-            const dot        = DOCKER_DOT[c.status] ?? { bg: '#333', shadow: 'none' }
+            const dot        = DOCKER_DOT[c.status] ?? { bg: 'var(--border-3)', shadow: 'none' }
             const isSel      = selected.has(c.id)
             const assoc      = associations[c.name]
             const hasCompose = !!assoc
@@ -339,8 +339,8 @@ export default function ContainerTable({
               <tr key={c.id}
                 className="animate-fade_in"
                 style={{
-                  borderBottom: '1px solid #111',
-                  background: isSel ? 'rgba(255,255,255,0.03)' : 'transparent',
+                  borderBottom: '1px solid var(--border-1)',
+                  background: isSel ? 'var(--row-hover)' : 'transparent',
                   animationDelay: `${idx * 20}ms`,
                   // fade_in's fill-mode owns `opacity`, so dim via filter
                   filter: isRunning ? undefined : 'brightness(0.65)',
@@ -362,15 +362,15 @@ export default function ContainerTable({
                       aria-label={`Container ${c.status}`}
                     />
                     <button type="button" className="text-[15px] font-medium text-left"
-                      style={{ color: '#ededed', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                      style={{ color: 'var(--text-1)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
                       title={`View details for ${c.name}`}
                       onClick={() => onShowDetails && onShowDetails(c)}>
                       {c.name}
                     </button>
                     <StoppedBadge status={c.status} />
                   </div>
-                  <span className="text-[14px] font-mono" style={{ color: '#8a8a8a' }}>{c.repository}</span>
-                  <div className="text-[12px] font-mono mt-0.5" style={{ color: '#6a6a6a' }}>{c.short_id}</div>
+                  <span className="text-[14px] font-mono" style={{ color: 'var(--text-3)' }}>{c.repository}</span>
+                  <div className="text-[12px] font-mono mt-0.5" style={{ color: 'var(--text-4)' }}>{c.short_id}</div>
                 </td>
 
                 {/* Tag + Digest */}
@@ -378,7 +378,7 @@ export default function ContainerTable({
                   <div className="flex flex-col gap-1">
                     <TagLabel container={c} />
                     {c.local_digest && (
-                      <span className="font-mono text-[13px] text-[#6a6a6a]" title={c.local_digest}>
+                      <span className="font-mono text-[13px]" style={{ color: 'var(--text-4)' }} title={c.local_digest}>
                         {shortDigest(c.local_digest)}
                       </span>
                     )}

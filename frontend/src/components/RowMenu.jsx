@@ -42,7 +42,7 @@ const RowMenu = ({ container: c, hasCompose, isBusy, onConfirmUpdate, onComposeU
     return (
       <button role="menuitem" type="button"
         className="flex items-center gap-2 w-full px-3 py-2 text-left text-[14px] transition-colors"
-        style={{ color: danger ? '#ff6b6b' : '#ccc', background: 'transparent' }}
+        style={{ color: danger ? 'var(--accent-red)' : 'var(--text-2)', background: 'transparent' }}
         onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
         onClick={() => { setOpen(false); onSelect() }}>
@@ -69,7 +69,7 @@ const RowMenu = ({ container: c, hasCompose, isBusy, onConfirmUpdate, onComposeU
           className="fixed z-[250] rounded-lg py-1 overflow-hidden"
           style={{
             top: pos.top, left: pos.left, width: MENU_WIDTH,
-            background: '#111', border: '1px solid #2a2a2a',
+            background: 'var(--surface-1)', border: '1px solid var(--border-3)',
             boxShadow: '0 12px 40px rgba(0,0,0,0.55)',
           }}
           onClick={e => e.stopPropagation()}>
@@ -83,7 +83,7 @@ const RowMenu = ({ container: c, hasCompose, isBusy, onConfirmUpdate, onComposeU
             label={outdated ? 'Update (pull + recreate)' : 'Re-pull & recreate'}
             icon={outdated ? <ArrowUpCircle size={12} /> : <RefreshCw size={12} />}
             onSelect={() => onConfirmUpdate(c)} />
-          <div style={{ borderTop: '1px solid #222', margin: '4px 0' }} />
+          <div style={{ borderTop: '1px solid var(--border-2)', margin: '4px 0' }} />
           <MenuItem label="Remove container" icon={<Trash2 size={12} />} danger
             onSelect={() => onConfirmDelete(c)} />
         </div>,

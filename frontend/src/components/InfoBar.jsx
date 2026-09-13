@@ -20,31 +20,31 @@ export default function InfoBar({ health, onTestEmail }) {
   if (!health) return null
 
   const lastScan = timeAgo(health.last_scan)
-  const emailColor = health.email_configured ? '#50e3c2' : '#8a8a8a'
+  const emailColor = health.email_configured ? 'var(--accent-teal)' : 'var(--text-3)'
 
   return (
     <div className="flex items-center flex-wrap gap-x-4 gap-y-1 px-4 py-2 mb-4 text-[14px] font-mono rounded-md"
-      style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #1a1a1a', color: '#8a8a8a' }}>
+      style={{ background: 'var(--surface-raised)', border: '1px solid var(--border-1)', color: 'var(--text-3)' }}>
 
       <span className="flex items-center gap-1.5">
-        <Clock size={11} style={{ color: '#7a7a7a' }} />
+        <Clock size={11} style={{ color: 'var(--text-4)' }} />
         Scan every{' '}
-        <span style={{ color: '#bbb' }}>{health.scan_interval_hours}h</span>
+        <span style={{ color: 'var(--text-2)' }}>{health.scan_interval_hours}h</span>
       </span>
 
-      <div className="w-px h-3" style={{ background: '#1a1a1a' }} />
+      <div className="w-px h-3" style={{ background: 'var(--border-1)' }} />
 
       <span className="flex items-center gap-1.5"
         title={health.last_scan ? new Date(health.last_scan).toLocaleString() : undefined}>
-        <History size={11} style={{ color: '#7a7a7a' }} />
+        <History size={11} style={{ color: 'var(--text-4)' }} />
         Last scan{' '}
-        <span style={{ color: health.last_scan ? '#bbb' : '#8a8a8a' }}>{lastScan}</span>
+        <span style={{ color: health.last_scan ? 'var(--text-2)' : 'var(--text-3)' }}>{lastScan}</span>
       </span>
 
-      <div className="w-px h-3" style={{ background: '#1a1a1a' }} />
+      <div className="w-px h-3" style={{ background: 'var(--border-1)' }} />
 
       <span className="flex items-center gap-1.5">
-        <Mail size={11} style={{ color: '#7a7a7a' }} />
+        <Mail size={11} style={{ color: 'var(--text-4)' }} />
         Email
         <button type="button" onClick={() => setShowEmail(true)}
           aria-label="Email configuration details"

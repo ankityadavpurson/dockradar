@@ -5,9 +5,9 @@ import {
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
 
-const MUTED  = { color: '#8a8a8a' }
-const VALUE  = { color: '#ccc' }
-const BORDER = '1px solid #1a1a1a'
+const MUTED  = { color: 'var(--text-3)' }
+const VALUE  = { color: 'var(--text-2)' }
+const BORDER = '1px solid var(--border-1)'
 
 /**
  * Collapsible section. The `preview` renders inline in the header while
@@ -19,7 +19,7 @@ function Disclosure({ icon, title, count, preview, defaultOpen = false, children
     // shrink-0: without it the flex column squashes cards (overflow-hidden
     // lets them shrink below content height) instead of scrolling the body.
     <div className="rounded-lg overflow-hidden shrink-0"
-      style={{ border: BORDER, background: 'rgba(255,255,255,0.015)' }}>
+      style={{ border: BORDER, background: 'var(--surface-raised)' }}>
       <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open}
         className="w-full flex items-center gap-2 px-3 py-2.5 text-left cursor-pointer">
         <ChevronRight size={12} className="shrink-0 transition-transform"
@@ -30,20 +30,20 @@ function Disclosure({ icon, title, count, preview, defaultOpen = false, children
         </span>
         {count !== undefined && count > 0 && (
           <span className="text-[11px] font-mono px-1.5 rounded shrink-0"
-            style={{ background: '#161616', border: BORDER, color: '#8a8a8a' }}>
+            style={{ background: 'var(--surface-2)', border: BORDER, color: 'var(--text-3)' }}>
             {count}
           </span>
         )}
         {!open && preview && (
           <span className="ml-auto text-[13px] font-mono truncate text-right"
-            style={{ color: '#6a6a6a', maxWidth: '55%' }}>
+            style={{ color: 'var(--text-4)', maxWidth: '55%' }}>
             {preview}
           </span>
         )}
       </button>
       {open && (
         <div className="px-3 pb-3 pt-2 flex flex-col gap-1.5"
-          style={{ borderTop: '1px solid #141414' }}>
+          style={{ borderTop: '1px solid var(--border-1)' }}>
           {children}
         </div>
       )}
@@ -118,19 +118,19 @@ export default function ContainerDetailDrawer({ name, onClose }) {
 
       <div role="dialog" aria-modal="true" aria-label={`Details for ${name}`}
         className="absolute top-0 right-0 h-full w-full max-w-[520px] flex flex-col"
-        style={{ background: '#000', borderLeft: BORDER, boxShadow: '-24px 0 60px rgba(0,0,0,0.45)' }}>
+        style={{ background: 'var(--surface-0)', borderLeft: BORDER, boxShadow: '-24px 0 60px rgba(0,0,0,0.45)' }}>
 
         {/* Header — the essentials, nothing else */}
         <div className="flex items-start justify-between px-5 py-4 gap-3"
-          style={{ borderBottom: BORDER, background: 'rgba(255,255,255,0.02)' }}>
+          style={{ borderBottom: BORDER, background: 'var(--surface-raised)' }}>
           <div className="flex flex-col gap-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-[16px] font-medium truncate" style={{ color: '#ededed' }}>{name}</span>
+              <span className="text-[16px] font-medium truncate" style={{ color: 'var(--text-1)' }}>{name}</span>
               {data && (
                 <span className="text-[11px] font-mono px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0"
                   style={{
-                    color: data.status === 'running' ? '#50e3c2' : '#f5a623',
-                    background: 'rgba(255,255,255,0.04)', border: '1px solid #222',
+                    color: data.status === 'running' ? 'var(--accent-teal)' : 'var(--accent-amber)',
+                    background: 'var(--hover-bg)', border: '1px solid var(--border-2)',
                   }}>
                   {data.status}
                 </span>
@@ -140,7 +140,7 @@ export default function ContainerDetailDrawer({ name, onClose }) {
               <span className="text-[13px] font-mono truncate" style={MUTED}
                 title={data.local_digest || undefined}>
                 {data.image}
-                {data.local_digest && <span style={{ color: '#5a5a5a' }}> @ {shortDigest(data.local_digest)}</span>}
+                {data.local_digest && <span style={{ color: 'var(--text-4)' }}> @ {shortDigest(data.local_digest)}</span>}
               </span>
             )}
           </div>
@@ -153,7 +153,7 @@ export default function ContainerDetailDrawer({ name, onClose }) {
         <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2">
           {error && (
             <div className="px-3 py-2 rounded text-[14px] font-mono shrink-0"
-              style={{ background: 'rgba(255,68,68,0.07)', border: '1px solid rgba(255,68,68,0.18)', color: '#ff4444' }}>
+              style={{ background: 'rgba(255,68,68,0.07)', border: '1px solid rgba(255,68,68,0.18)', color: 'var(--accent-red)' }}>
               {error}
             </div>
           )}
@@ -185,7 +185,7 @@ export default function ContainerDetailDrawer({ name, onClose }) {
                   <div className="flex flex-wrap gap-1.5">
                     {envKeys.map(k => (
                       <span key={k} className="text-[12px] font-mono px-1.5 py-0.5 rounded"
-                        style={{ color: '#aaa', background: 'rgba(255,255,255,0.03)', border: BORDER }}>
+                        style={{ color: 'var(--text-2)', background: 'var(--hover-bg)', border: BORDER }}>
                         {k}
                       </span>
                     ))}
@@ -242,13 +242,13 @@ export default function ContainerDetailDrawer({ name, onClose }) {
             </Disclosure>
 
             {/* Update-coverage note — present but quiet */}
-            <Disclosure icon={<Info size={12} style={{ color: '#f5a623' }} />}
+            <Disclosure icon={<Info size={12} style={{ color: 'var(--accent-amber)' }} />}
               title="Direct update coverage" preview="what survives an update?">
-              <p className="text-[12px] leading-relaxed" style={{ color: '#9a9a9a' }}>
+              <p className="text-[12px] leading-relaxed" style={{ color: 'var(--text-3)' }}>
                 Direct updates recreate this container from the configuration above.{' '}
-                <span style={{ color: '#ccc' }}>Preserved:</span> ports, bind mounts, env vars,
+                <span style={{ color: 'var(--text-2)' }}>Preserved:</span> ports, bind mounts, env vars,
                 restart policy, network mode, labels, command/entrypoint.{' '}
-                <span style={{ color: '#ccc' }}>Not preserved:</span> named volumes attached
+                <span style={{ color: 'var(--text-2)' }}>Not preserved:</span> named volumes attached
                 via <code>--mount</code>, multiple networks, and advanced options — use a
                 compose association for containers that rely on them.
               </p>
