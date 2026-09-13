@@ -4,9 +4,11 @@
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](https://www.python.org/)
 [![React](https://img.shields.io/badge/React-18-61dafb)](https://react.dev/)
 
-Docker image monitoring and update dashboard.
+Know when your containers are out of date — and update them in one click.
 
-DockRadar is a FastAPI + React application that scans Docker containers, compares current image tags/digests with upstream registries, and supports update workflows from the UI.
+DockRadar is a self-hosted dashboard that keeps an eye on the Docker images running on your host. It periodically checks each container's image against its upstream registry, tells you which ones have a newer tag or digest available, and lets you apply updates — one container, a selected few, or all at once — without dropping to the command line. For containers managed by Compose, it edits and re-runs the compose file for you; for the rest, it recreates the container from its captured configuration. Optional email alerts mean you don't even have to open the dashboard to find out something needs attention.
+
+Built with a FastAPI backend and a React frontend, it runs as a single container next to your Docker socket.
 
 ## Features
 
@@ -14,10 +16,12 @@ DockRadar is a FastAPI + React application that scans Docker containers, compare
 - Tag + digest-based update detection (parallel registry checks)
 - Single, selected, or bulk updates
 - Optional docker-compose based update flow
+- Per-container detail view (ports, mounts, env keys, networks, labels, update coverage)
 - Background scan scheduler
 - Optional email notifications (sent when a scan finds new updates; deduplicated so the same update is only announced once)
 - Optional API-key protection (`API_KEY`)
 - Hide containers from the dashboard (`HIDDEN_REPOSITORY`)
+- Dark / light / system theme toggle
 
 ## Project Layout
 
@@ -54,8 +58,8 @@ dockradar/
 1. Clone:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/dockradar-v2.git
-cd dockradar-v2
+git clone https://github.com/{YOUR_USERNAME}/dockradar.git
+cd dockradar
 ```
 
 2. Run one of the platform start scripts:
@@ -149,8 +153,10 @@ docker run --rm -p 8086:8086 \
 Core:
 
 - `GET /api/health`
+- `POST /api/email/test`
 - `GET /api/containers`
 - `GET /api/containers/{name}`
+- `GET /api/containers/{name}/details`
 - `POST /api/scan`
 - `GET /api/scan/status`
 - `POST /api/containers/{name}/update`
@@ -187,6 +193,7 @@ Most important values:
 - `SCAN_INTERVAL_HOURS`
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`
 - `EMAIL_FROM`, `EMAIL_TO`
+- `APP_URL` — public URL of the UI; adds an "Open DockRadar" link to notification emails
 - `HOST`, `PORT`
 - `API_KEY` — optional; when set, every `/api` route except `/api/health` requires the `X-Api-Key` header. Give the key to the UI once via the browser console: `localStorage.setItem('dockradar_api_key', '<key>')`
 - `HIDDEN_REPOSITORY` — comma-separated container or repository names (case-insensitive, exact match) to hide from DockRadar entirely: not listed, not scanned, not auto-updated
