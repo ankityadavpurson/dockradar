@@ -8,7 +8,16 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+# DOCKRADAR_ENV_FILE points at an explicit config file (used by the macOS
+# LaunchAgent, which has no EnvironmentFile equivalent); otherwise .env is
+# discovered as before. Existing environment variables always take precedence.
+_ENV_FILE = os.getenv("DOCKRADAR_ENV_FILE", "").strip()
+if _ENV_FILE:
+    # Installer-managed file: values are literal (no ${VAR} expansion), so
+    # passwords containing "${" are not mangled.
+    load_dotenv(_ENV_FILE, interpolate=False)
+else:
+    load_dotenv()
 
 logger = logging.getLogger(__name__)
 

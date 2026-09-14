@@ -1,6 +1,8 @@
 """Tests for config parsing (HIDDEN_REPOSITORY, COMPOSE_DIR) and container filtering."""
 
 import os
+import subprocess
+import sys
 from pathlib import Path
 
 from app.core.config import _path_env, config
@@ -111,6 +113,26 @@ class TestComposeDir:
     def test_tilde_is_expanded(self, monkeypatch):
         monkeypatch.setenv("COMPOSE_DIR", "~/dockradar")
         assert _path_env("COMPOSE_DIR", Path("/unused")) == Path.home() / "dockradar"
+
+    def test_dockradar_env_file_is_loaded(self, tmp_path):
+        # Runs in a subprocess because config is evaluated at import time.
+        # The password uses the single-quoted form install-macos.sh writes.
+        env_file = tmp_path / "dockradar.env"
+        env_file.write_text(
+            "EMAIL_TO=me@test.local\n"
+            "SMTP_PASSWORD='p@ss w0rd\"#$x\\\\y&|/\\'${HOME}'\n",
+            encoding="utf-8",
+        )
+        env = {k: v for k, v in os.environ.items() if k not in ("EMAIL_TO", "SMTP_PASSWORD")}
+        env["DOCKRADAR_ENV_FILE"] = str(env_file)
+        out = subprocess.run(
+            [sys.executable, "-c",
+             "from app.core.config import config; print(config.EMAIL_TO); print(config.SMTP_PASSWORD)"],
+            cwd=Path(__file__).resolve().parents[1],
+            env=env, capture_output=True, text=True, check=True,
+        ).stdout.splitlines()
+        # ${HOME} stays literal: the installer-managed file is not interpolated.
+        assert out == ["me@test.local", "p@ss w0rd\"#$x\\y&|/'${HOME}"]
 
     def test_config_default_points_at_backend(self):
         # Unless overridden in the test environment, the default is unchanged

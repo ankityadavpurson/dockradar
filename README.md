@@ -170,6 +170,41 @@ port, user, app password, recipient) and then starts the service on port
 > root-equivalent on the host. Set `API_KEY` if port 8086 is reachable from
 > other machines.
 
+## Install on macOS (native, without Docker)
+
+Run DockRadar as a per-user LaunchAgent that starts at login. It uses the same
+prebuilt release tarball as Linux — nothing is built on your Mac.
+
+Requirements: Python 3.10+ (`brew install python@3.12`) and Docker Desktop,
+OrbStack or Colima. Run the installer as **your normal user — not with sudo**
+(Docker Desktop's socket belongs to your user).
+
+```bash
+curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install-macos.sh | bash
+```
+
+As on Linux, the first install offers to set up email notifications. By default
+DockRadar listens on `127.0.0.1:8086` (this Mac only) — set `HOST=0.0.0.0` and
+`API_KEY` in the config to reach it from other devices.
+
+| What | Where |
+| --- | --- |
+| Configuration (SMTP, `API_KEY`, `HOST`, …) | `~/Library/Application Support/DockRadar/dockradar.env` |
+| Compose files (data) | `~/Library/Application Support/DockRadar/compose_files` |
+| Logs | `~/Library/Logs/DockRadar/` |
+| LaunchAgent | `~/Library/LaunchAgents/com.dockradar.plist` |
+
+- **Change settings**: edit the config file, run
+  `launchctl kickstart -k gui/$(id -u)/com.dockradar`, then use **Send test email** in the UI.
+- **Upgrade**: re-run the install command (config and data are kept).
+- **Uninstall**:
+
+  ```bash
+  curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install-macos.sh | bash -s -- --uninstall
+  ```
+
+  Add `--purge` to also delete the config, compose files and logs.
+
 ## Docker
 
 ### Docker Compose (recommended)
@@ -304,6 +339,7 @@ pytest
 ## Documentation
 
 - Testing the native Linux install on WSL: [`docs/testing-native-install-wsl.md`](docs/testing-native-install-wsl.md)
+- Testing the native macOS install: [`docs/testing-native-install-macos.md`](docs/testing-native-install-macos.md)
 - Security policy: `SECURITY.md`
 - Contributing guide: `CONTRIBUTING.md`
 - Changelog: `CHANGELOG.md`

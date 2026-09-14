@@ -181,7 +181,7 @@ jobs:
             backend/ "dist-native/$STAGE/backend/"
           cp -r frontend/dist "dist-native/$STAGE/frontend/dist"
           cp -r packaging .env.example LICENSE README.md "dist-native/$STAGE/"
-          cp scripts/install.sh "dist-native/$STAGE/install.sh"
+          cp scripts/install.sh scripts/install-macos.sh "dist-native/$STAGE/"
           echo "$VERSION" > "dist-native/$STAGE/VERSION"
 
           # Smoke test: the packaged backend installs, imports, and finds the
@@ -299,6 +299,12 @@ jobs:
           curl -fsSL https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.value }}/install.sh | sudo bash -s -- --version ${{ steps.version.outputs.value }}
           \`\`\`
           Requires systemd, Python 3.10+ and Docker Engine. Uses \`${{ steps.tarball.outputs.asset }}\` from the assets below.
+
+          ### Native macOS install (LaunchAgent, run without sudo)
+          \`\`\`bash
+          curl -fsSL https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.value }}/install-macos.sh | bash -s -- --version ${{ steps.version.outputs.value }}
+          \`\`\`
+          Requires Python 3.10+ (\`brew install python@3.12\`) and Docker Desktop, OrbStack or Colima. Uses the same tarball.
           EOF
 
       - name: Create GitHub Release
@@ -313,3 +319,4 @@ jobs:
             ${{ steps.tarball.outputs.asset }}
             ${{ steps.tarball.outputs.asset }}.sha256
             scripts/install.sh
+            scripts/install-macos.sh
