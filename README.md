@@ -340,7 +340,7 @@ pytest
 
 ## Documentation
 
-- Testing the native Linux install on WSL: [`docs/testing-native-install-wsl.md`](docs/testing-native-install-wsl.md)
+- Testing the native Linux install (including WSL): [`docs/testing-native-install-linux.md`](docs/testing-native-install-linux.md)
 - Testing the native macOS install: [`docs/testing-native-install-macos.md`](docs/testing-native-install-macos.md)
 - Security policy: `SECURITY.md`
 - Contributing guide: `CONTRIBUTING.md`

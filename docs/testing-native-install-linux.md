@@ -1,12 +1,19 @@
-# Testing the Native Linux Install on WSL
+# Testing the Native Linux Install
 
 Use this guide to test the native (systemd) install, upgrade, and uninstall of
-DockRadar on WSL2 Ubuntu **before a release exists on GitHub**. Instead of
+DockRadar on Linux **before a release exists on GitHub**. Instead of
 downloading a release, you build the tarball from your clone and point the
 installer at it with `--tarball`.
 
-Run every command in the **Ubuntu (WSL) terminal**, in the **same terminal
-session** — step 1 sets shell variables that later steps use.
+Works on any **systemd-based distribution** — Ubuntu, Debian, Fedora,
+RHEL/Rocky/Alma, Arch, openSUSE — on a desktop, server, or VM.
+
+> **Using WSL on Windows?** This guide works in WSL2 too. Read
+> [Using WSL](#using-wsl) first for the few extra setup steps.
+
+Run every command in a terminal on the Linux machine, in the **same terminal
+session** — step 1 sets shell variables that later steps use. You need `sudo`
+rights.
 
 ---
 
@@ -18,22 +25,28 @@ Check that systemd is running (should print `systemd`):
 ps -p 1 -o comm=
 ```
 
-> If it prints `init`, enable systemd: add `[boot]` / `systemd=true` to
-> `/etc/wsl.conf`, then run `wsl --shutdown` in PowerShell and reopen Ubuntu.
-
-Check Python venv support (should print `venv ok`):
+Check Python 3.10+ with venv support (should print `venv ok`):
 
 ```bash
-python3 -c "import venv, ensurepip" && echo "venv ok"
+python3 -c "import sys, venv, ensurepip; assert sys.version_info >= (3, 10)" && echo "venv ok"
 ```
 
-> If it fails: `sudo apt install -y python3-venv`
+> If it fails, install Python with venv support:
+>
+> | Distribution | Command |
+> | --- | --- |
+> | Ubuntu / Debian | `sudo apt install -y python3 python3-venv` |
+> | Fedora / RHEL family | `sudo dnf install -y python3` |
+> | Arch | `sudo pacman -S python` |
+> | openSUSE | `sudo zypper install python3` |
 
-Check Docker and the compose plugin:
+Check Docker Engine and the compose plugin:
 
 ```bash
 docker compose version
 ```
+
+> If missing, install Docker Engine: <https://docs.docker.com/engine/install/>
 
 Check Node.js 18+ and Yarn 1.x (needed once, to build the frontend):
 
@@ -41,7 +54,8 @@ Check Node.js 18+ and Yarn 1.x (needed once, to build the frontend):
 node --version && yarn --version
 ```
 
-> If Yarn is missing: `npm install -g yarn`
+> If Yarn is missing: `npm install -g yarn`. For Node.js, use your
+> distribution's package or <https://nodejs.org/en/download>.
 
 Port 8086 must be free. If the Docker version of DockRadar is running, stop it
 from its project folder:
@@ -60,9 +74,6 @@ Clone the repository (skip if you already have a clone — just `cd` into it):
 git clone https://github.com/ankityadavpurson/dockradar.git && cd dockradar
 ```
 
-> Any existing clone works, including one on the Windows drive
-> (e.g. `cd /mnt/c/path/to/dockradar`). Check out the branch you want to test.
-
 From the **repository root**, set the variables used by every later step
 (version is read from `backend/app/main.py`):
 
@@ -75,9 +86,9 @@ What each variable holds:
 | Variable | What it is | Example value |
 | --- | --- | --- |
 | `$VERSION` | The app version, read from `__version__` in `backend/app/main.py`. Used in the folder and tarball names, and shown by the installer (`DockRadar v<version> is running`). | `2.0.0` |
-| `$BUILD` | Scratch folder in your WSL home where the package is assembled. Safe to delete after testing (step 7). | `/home/you/dr-build` |
+| `$BUILD` | Scratch folder in your home where the package is assembled. Safe to delete after testing (step 7). | `/home/you/dr-build` |
 | `$STAGE` | The unpacked package folder inside `$BUILD` — the same layout as the release tarball (`backend/`, `frontend/dist/`, `packaging/`, `install.sh`, `VERSION`). Steps 2–7 run the installer from here: `$STAGE/install.sh`. | `/home/you/dr-build/dockradar-2.0.0` |
-| `$TARBALL` | The packaged release file built from `$STAGE` — the same file CI attaches to a GitHub Release. Passed to the installer with `--tarball`; a matching `$TARBALL.sha256` checksum sits next to it and is verified during install. | `/home/you/dr-build/dockradar-2.0.0.tar.gz` |
+| `$TARBALL` | The packaged release file built from `$STAGE` — the same file CI attaches to a GitHub Release (one file for both Linux and macOS). Passed to the installer with `--tarball`; a matching `$TARBALL.sha256` checksum sits next to it and is verified during install. | `/home/you/dr-build/dockradar-2.0.0.tar.gz` |
 
 Check them at any time:
 
@@ -114,7 +125,8 @@ Copy the built frontend, packaging, and installer:
 cp -r frontend/dist "$STAGE/frontend/" && cp -r packaging .env.example LICENSE README.md scripts/install.sh "$STAGE/" && echo "$VERSION" > "$STAGE/VERSION"
 ```
 
-Strip Windows line endings (only matters for clones made on Windows):
+Strip Windows line endings (only matters if the clone was made on Windows,
+e.g. under `/mnt/c` in WSL — harmless otherwise):
 
 ```bash
 sed -i 's/\r$//' "$STAGE/install.sh" "$STAGE/packaging/dockradar.service" "$STAGE/.env.example"
@@ -150,9 +162,10 @@ When prompted:
 | SMTP username | your Gmail address |
 | SMTP password | a Gmail [App Password](https://myaccount.google.com/apppasswords) (input is hidden) |
 | From address / Send notifications to | your addresses |
-| DockRadar URL for email links | `http://localhost:8086` |
+| DockRadar URL for email links | the address you open DockRadar with, e.g. `http://localhost:8086` or `http://<server-ip>:8086` |
 
-**Expected:** ends with `DockRadar v<version> is running.`
+**Expected:** the output starts with `Detected linux` and ends with
+`DockRadar v<version> is running.`
 
 ---
 
@@ -173,7 +186,7 @@ curl -s http://localhost:8086/api/health
 Your email answers were saved:
 
 ```bash
-sudo grep -E '^(SMTP_|EMAIL_|APP_URL)' /etc/dockradar/dockradar.env
+sudo grep -E '^(SMTP_|EMAIL_|APP_URL|HOST|COMPOSE_DIR|LOG_FILE)' /etc/dockradar/dockradar.env
 ```
 
 Config file permissions (should be `root:dockradar 640`):
@@ -188,9 +201,10 @@ Live logs (Ctrl+C to stop):
 journalctl -u dockradar -f
 ```
 
-In the **Windows browser**:
+In a **browser** — <http://localhost:8086> on the same machine, or
+`http://<server-ip>:8086` from another device:
 
-1. Open <http://localhost:8086> — your containers should be listed.
+1. Your containers should be listed.
 2. Click the ⓘ next to **Email** → **Send test email** — the email should arrive.
 3. Upload a compose file.
 
@@ -229,7 +243,7 @@ sudo bash -s -- --tarball "$TARBALL" < "$STAGE/install.sh"
 **Expected:**
 
 - No email prompts (the config already exists).
-- The output says `Restarting dockradar...`.
+- The output says `Restarting DockRadar...`.
 - Your settings in `/etc/dockradar/dockradar.env` are unchanged.
 - The uploaded compose file is still in `/var/lib/dockradar/compose_files`.
 
@@ -292,15 +306,49 @@ Clean up afterwards with step 7.
 
 ---
 
+## Using WSL
+
+The native Linux install works inside **WSL2** (for example Ubuntu from the
+Microsoft Store). Follow steps 0–7 in the WSL terminal, with these extras:
+
+1. **Use WSL2, not WSL1** — in PowerShell, `wsl -l -v` should show `VERSION 2`
+   for your distribution.
+2. **Enable systemd** — if step 0 prints `init` instead of `systemd`, add this
+   to `/etc/wsl.conf` inside WSL:
+
+   ```ini
+   [boot]
+   systemd=true
+   ```
+
+   Then run `wsl --shutdown` in PowerShell and reopen the WSL terminal.
+3. **Docker** — either install Docker Engine inside WSL, or enable
+   **Docker Desktop → Settings → Resources → WSL integration** for your
+   distribution. `docker compose version` must work inside WSL.
+4. **Where to clone** — cloning inside the Linux home (`~/`) is fastest. A
+   clone on the Windows drive (`/mnt/c/...`) also works; the `sed` line-ending
+   step in step 1 handles its CRLF line endings.
+5. **Opening the UI** — WSL forwards `localhost`, so open
+   <http://localhost:8086> in your **Windows** browser. In the email prompt, use
+   `http://localhost:8086` as the DockRadar URL.
+6. **Service lifetime** — DockRadar runs only while the WSL distribution is
+   running. WSL stops it after all WSL terminals are closed for a while;
+   systemd starts DockRadar again automatically the next time the distribution
+   starts.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Check |
 | --- | --- |
 | `No such file or directory` for `$STAGE` / `$TARBALL` | New terminal session — `cd` to the repo root and re-run the variables command in step 1. |
-| `systemd is required but does not appear to be running` | Enable systemd in `/etc/wsl.conf` (see step 0). |
-| `Python venv support is missing` | `sudo apt install -y python3-venv` |
-| `DockRadar did not answer on port 8086 yet` | `journalctl -u dockradar -n 50` — often port 8086 is already in use. |
+| `On Linux, run the installer as root` | Add `sudo` (see step 2). |
+| `systemd is required but does not appear to be running` | The installer needs systemd. On WSL, enable it (see [Using WSL](#using-wsl)). |
+| `Python 3.10+ with venv support not found` | Install Python with venv (see step 0). |
+| `DockRadar did not answer on port 8086 yet` | `journalctl -u dockradar -n 50` — often port 8086 is already in use (`sudo ss -ltnp \| grep 8086`). |
 | Containers list is empty / Docker errors | `id -nG dockradar` should include `docker`; `ls -l /var/run/docker.sock`. |
+| UI unreachable from another device | Open port 8086 in the firewall (`sudo ufw allow 8086/tcp` or `sudo firewall-cmd --add-port=8086/tcp --permanent && sudo firewall-cmd --reload`), and set `API_KEY`. |
 | Test email fails | Gmail needs an App Password and 2-Step Verification; re-check `SMTP_*` values. |
 | `$'\r': command not found` | Re-run the `sed -i 's/\r$//'` command from step 1. |
 
