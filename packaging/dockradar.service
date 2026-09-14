@@ -1,0 +1,35 @@
+[Unit]
+Description=DockRadar - Docker image monitoring and update dashboard
+Documentation=https://github.com/ankityadavpurson/dockradar
+After=network-online.target docker.service
+Wants=network-online.target docker.service
+
+[Service]
+Type=simple
+User=dockradar
+Group=dockradar
+# Access to the Docker socket comes from the user's membership in the
+# "docker" group (added by install.sh).
+
+WorkingDirectory=/opt/dockradar/current/backend
+# The app loads its configuration (SMTP, API_KEY, COMPOSE_DIR, LOG_FILE, …)
+# from this file itself, with the same parser on Linux and macOS.
+Environment=DOCKRADAR_ENV_FILE=/etc/dockradar/dockradar.env
+Environment=HOME=/var/lib/dockradar
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+
+# Created and owned by the service user: /var/lib/dockradar, /var/log/dockradar
+StateDirectory=dockradar
+LogsDirectory=dockradar
+
+ExecStart=/opt/dockradar/venv/bin/python -m app.main
+Restart=on-failure
+RestartSec=5
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

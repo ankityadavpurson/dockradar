@@ -1,6 +1,11 @@
-"""Tests for HIDDEN_REPOSITORY parsing and container filtering."""
+"""Tests for config parsing (HIDDEN_REPOSITORY, COMPOSE_DIR) and container filtering."""
 
-from app.core.config import config
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+from app.core.config import _path_env, config
 from app.services.docker import ContainerInfo, DockerService
 
 
@@ -88,3 +93,50 @@ class TestGetAllContainersFiltering:
         infos = [_make_info("a", "x/a"), _make_info("b", "x/b")]
         svc = self._service_with(monkeypatch, infos, frozenset())
         assert len(svc.get_all_containers()) == 2
+
+
+class TestComposeDir:
+    def test_default_is_backend_compose_files(self):
+        backend_dir = Path(__file__).resolve().parents[1]
+        assert _path_env("DOCKRADAR_TEST_UNSET", backend_dir / "compose_files") == (
+            backend_dir / "compose_files"
+        )
+
+    def test_env_override(self, monkeypatch, tmp_path):
+        monkeypatch.setenv("COMPOSE_DIR", str(tmp_path / "store"))
+        assert _path_env("COMPOSE_DIR", Path("/unused")) == tmp_path / "store"
+
+    def test_blank_env_falls_back_to_default(self, monkeypatch):
+        monkeypatch.setenv("COMPOSE_DIR", "   ")
+        assert _path_env("COMPOSE_DIR", Path("/fallback")) == Path("/fallback")
+
+    def test_tilde_is_expanded(self, monkeypatch):
+        monkeypatch.setenv("COMPOSE_DIR", "~/dockradar")
+        assert _path_env("COMPOSE_DIR", Path("/unused")) == Path.home() / "dockradar"
+
+    def test_dockradar_env_file_is_loaded(self, tmp_path):
+        # Runs in a subprocess because config is evaluated at import time.
+        # The password uses the single-quoted form install.sh writes.
+        env_file = tmp_path / "dockradar.env"
+        env_file.write_text(
+            "EMAIL_TO=me@test.local\n"
+            "SMTP_PASSWORD='p@ss w0rd\"#$x\\\\y&|/\\'${HOME}'\n",
+            encoding="utf-8",
+        )
+        env = {k: v for k, v in os.environ.items() if k not in ("EMAIL_TO", "SMTP_PASSWORD")}
+        env["DOCKRADAR_ENV_FILE"] = str(env_file)
+        out = subprocess.run(
+            [sys.executable, "-c",
+             "from app.core.config import config; print(config.EMAIL_TO); print(config.SMTP_PASSWORD)"],
+            cwd=Path(__file__).resolve().parents[1],
+            env=env, capture_output=True, text=True, check=True,
+        ).stdout.splitlines()
+        # ${HOME} stays literal: the installer-managed file is not interpolated.
+        assert out == ["me@test.local", "p@ss w0rd\"#$x\\y&|/'${HOME}"]
+
+    def test_config_default_points_at_backend(self):
+        # Unless overridden in the test environment, the default is unchanged
+        # from the pre-COMPOSE_DIR location so Docker/dev setups keep working.
+        backend_dir = Path(__file__).resolve().parents[1]
+        if not os.getenv("COMPOSE_DIR"):
+            assert config.COMPOSE_DIR == backend_dir / "compose_files"

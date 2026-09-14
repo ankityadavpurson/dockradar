@@ -54,3 +54,13 @@ jobs:
       - name: Build production bundle
         working-directory: frontend
         run: yarn build
+
+  shell-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      # shellcheck is preinstalled on GitHub's Ubuntu runners
+      - name: Lint shell scripts
+        run: shellcheck scripts/install.sh scripts/start.sh

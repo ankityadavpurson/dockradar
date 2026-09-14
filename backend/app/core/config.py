@@ -5,9 +5,19 @@ Loads and validates environment variables for the application.
 
 import logging
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+# DOCKRADAR_ENV_FILE points at an explicit config file (set by the native
+# installer's systemd unit on Linux and LaunchAgent on macOS); otherwise .env
+# is discovered as before. Existing environment variables always take precedence.
+_ENV_FILE = os.getenv("DOCKRADAR_ENV_FILE", "").strip()
+if _ENV_FILE:
+    # Installer-managed file: values are literal (no ${VAR} expansion), so
+    # passwords containing "${" are not mangled.
+    load_dotenv(_ENV_FILE, interpolate=False)
+else:
+    load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +42,20 @@ def _bool_env(name: str, default: bool) -> bool:
     return raw in ("1", "true", "yes", "on")
 
 
+def _path_env(name: str, default: Path) -> Path:
+    """Read a filesystem path env var (~ expanded). Empty → default."""
+    raw = os.getenv(name, "").strip()
+    return Path(raw).expanduser() if raw else default
+
+
 class Config:
     """Central configuration loaded from environment variables."""
+
+    # Storage — where uploaded compose files live. Defaults to backend/
+    # compose_files; native Linux installs set /var/lib/dockradar/compose_files.
+    COMPOSE_DIR: Path = _path_env(
+        "COMPOSE_DIR", Path(__file__).resolve().parents[2] / "compose_files"
+    )
 
     # Scheduler
     SCAN_INTERVAL_HOURS: int = _int_env("SCAN_INTERVAL_HOURS", 6)

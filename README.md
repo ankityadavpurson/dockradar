@@ -121,6 +121,92 @@ yarn install
 yarn dev
 ```
 
+## Install on Linux (native, without Docker)
+
+Run DockRadar directly on a Linux host as a systemd service. One `install.sh`
+serves Linux and macOS — it detects the OS (see the macOS section below). Nothing is
+built on the host — the installer downloads a release tarball with the
+frontend prebuilt.
+
+Requirements: systemd, Python 3.10+ with `venv` (Debian/Ubuntu:
+`sudo apt install python3-venv`), and Docker Engine with the compose plugin.
+
+```bash
+curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install.sh | sudo bash
+```
+
+On first install the script offers to set up email notifications (SMTP host,
+port, user, app password, recipient) and then starts the service on port
+`8086`. Running natively also enables compose-based updates, since the host's
+`docker compose` is available.
+
+| What | Where |
+| --- | --- |
+| Configuration (SMTP, `API_KEY`, `PORT`, …) | `/etc/dockradar/dockradar.env` |
+| Compose files (data) | `/var/lib/dockradar/compose_files` |
+| Logs | `journalctl -u dockradar -f` or `/var/log/dockradar/` |
+| Application | `/opt/dockradar/current` |
+
+- **Change settings** (e.g. email): edit `/etc/dockradar/dockradar.env`, run
+  `sudo systemctl restart dockradar`, then use **Send test email** in the UI.
+- **Upgrade**: re-run the install command (config and data are kept). Pin a
+  version with `… | sudo bash -s -- --version 2.1.0`.
+- **Unattended install** (values after `sudo`, which strips your environment):
+
+  ```bash
+  curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install.sh | sudo SMTP_HOST=smtp.gmail.com EMAIL_TO=you@example.com bash -s -- --non-interactive
+  ```
+
+- **Uninstall** (keeps config, data and logs):
+
+  ```bash
+  curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install.sh | sudo bash -s -- --uninstall
+  ```
+
+  Use `--uninstall --purge` to also delete `/etc/dockradar`, `/var/lib/dockradar`,
+  `/var/log/dockradar` and the `dockradar` user. Offline, the installer is also on
+  disk: `sudo bash /opt/dockradar/current/install.sh --uninstall`.
+
+> The `dockradar` service user is added to the `docker` group, which is
+> root-equivalent on the host. Set `API_KEY` if port 8086 is reachable from
+> other machines.
+
+## Install on macOS (native, without Docker)
+
+Run DockRadar as a per-user LaunchAgent that starts at login. It is the same
+`install.sh` and release tarball as Linux — the installer detects macOS, and
+nothing is built on your Mac.
+
+Requirements: Python 3.10+ (`brew install python@3.12`) and Docker Desktop,
+OrbStack or Colima. Run the installer as **your normal user — not with sudo**
+(Docker Desktop's socket belongs to your user).
+
+```bash
+curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install.sh | bash
+```
+
+As on Linux, the first install offers to set up email notifications. By default
+DockRadar listens on `127.0.0.1:8086` (this Mac only) — set `HOST=0.0.0.0` and
+`API_KEY` in the config to reach it from other devices.
+
+| What | Where |
+| --- | --- |
+| Configuration (SMTP, `API_KEY`, `HOST`, …) | `~/Library/Application Support/DockRadar/dockradar.env` |
+| Compose files (data) | `~/Library/Application Support/DockRadar/compose_files` |
+| Logs | `~/Library/Logs/DockRadar/` |
+| LaunchAgent | `~/Library/LaunchAgents/com.dockradar.plist` |
+
+- **Change settings**: edit the config file, run
+  `launchctl kickstart -k gui/$(id -u)/com.dockradar`, then use **Send test email** in the UI.
+- **Upgrade**: re-run the install command (config and data are kept).
+- **Uninstall**:
+
+  ```bash
+  curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install.sh | bash -s -- --uninstall
+  ```
+
+  Add `--purge` to also delete the config, compose files and logs.
+
 ## Docker
 
 ### Docker Compose (recommended)
@@ -250,10 +336,12 @@ pytest
 
 - Frontend uses relative `/api` requests and Vite proxy in development.
 - Backend serves `frontend/dist` when a production build exists.
-- Uploaded compose/runtime data is stored in `backend/compose_files/` and should not be committed.
+- Uploaded compose/runtime data is stored in `backend/compose_files/` (override with `COMPOSE_DIR`) and should not be committed.
 
 ## Documentation
 
+- Testing the native Linux install (including WSL): [`docs/testing-native-install-linux.md`](docs/testing-native-install-linux.md)
+- Testing the native macOS install: [`docs/testing-native-install-macos.md`](docs/testing-native-install-macos.md)
 - Security policy: `SECURITY.md`
 - Contributing guide: `CONTRIBUTING.md`
 - Changelog: `CHANGELOG.md`

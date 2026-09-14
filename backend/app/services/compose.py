@@ -14,11 +14,13 @@ from typing import Optional
 
 import yaml
 
+from app.core.config import config
+
 logger = logging.getLogger(__name__)
 
-# Directory where uploaded compose files are stored — anchored to backend/
-# so the location doesn't depend on the process working directory.
-COMPOSE_STORE_DIR = Path(__file__).resolve().parents[2] / "compose_files"
+# Directory where uploaded compose files are stored. Defaults to backend/
+# compose_files; native installs point COMPOSE_DIR at /var/lib/dockradar.
+COMPOSE_STORE_DIR = config.COMPOSE_DIR
 ASSOCIATIONS_FILE = COMPOSE_STORE_DIR / "associations.json"
 METADATA_FILE     = COMPOSE_STORE_DIR / "metadata.json"   # file_id → original filename
 
@@ -74,7 +76,7 @@ class ComposeService:
     """
 
     def __init__(self):
-        COMPOSE_STORE_DIR.mkdir(exist_ok=True)
+        COMPOSE_STORE_DIR.mkdir(parents=True, exist_ok=True)
         self._files:  dict[str, ComposeFile] = {}       # file_id → ComposeFile
         # container_name → (file_id, service_name)
         self._associations: dict[str, tuple[str, str]] = {}
