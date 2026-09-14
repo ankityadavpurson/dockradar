@@ -67,7 +67,7 @@ From the **repository root**, set the variables used by every later step
 (version is read from `backend/app/main.py`):
 
 ```bash
-export VERSION="$(sed -n 's/^__version__ = "\(.*\)"/\1/p' backend/app/main.py | tr -d '\r')" BUILD=~/dr-build && export STAGE="$BUILD/dockradar-$VERSION" TARBALL="$BUILD/dockradar-$VERSION-linux.tar.gz" && echo "Building DockRadar $VERSION → $TARBALL"
+export VERSION="$(sed -n 's/^__version__ = "\(.*\)"/\1/p' backend/app/main.py | tr -d '\r')" BUILD=~/dr-build && export STAGE="$BUILD/dockradar-$VERSION" TARBALL="$BUILD/dockradar-$VERSION.tar.gz" && echo "Building DockRadar $VERSION → $TARBALL"
 ```
 
 What each variable holds:
@@ -77,7 +77,7 @@ What each variable holds:
 | `$VERSION` | The app version, read from `__version__` in `backend/app/main.py`. Used in the folder and tarball names, and shown by the installer (`DockRadar v<version> is running`). | `2.0.0` |
 | `$BUILD` | Scratch folder in your WSL home where the package is assembled. Safe to delete after testing (step 7). | `/home/you/dr-build` |
 | `$STAGE` | The unpacked package folder inside `$BUILD` — the same layout as the release tarball (`backend/`, `frontend/dist/`, `packaging/`, `install.sh`, `VERSION`). Steps 2–7 run the installer from here: `$STAGE/install.sh`. | `/home/you/dr-build/dockradar-2.0.0` |
-| `$TARBALL` | The packaged release file built from `$STAGE` — the same file CI attaches to a GitHub Release. Passed to the installer with `--tarball`; a matching `$TARBALL.sha256` checksum sits next to it and is verified during install. | `/home/you/dr-build/dockradar-2.0.0-linux.tar.gz` |
+| `$TARBALL` | The packaged release file built from `$STAGE` — the same file CI attaches to a GitHub Release. Passed to the installer with `--tarball`; a matching `$TARBALL.sha256` checksum sits next to it and is verified during install. | `/home/you/dr-build/dockradar-2.0.0.tar.gz` |
 
 Check them at any time:
 
@@ -126,7 +126,7 @@ Create the tarball and its checksum:
 tar -C "$BUILD" -czf "$TARBALL" "dockradar-$VERSION" && (cd "$BUILD" && sha256sum "$(basename "$TARBALL")" > "$(basename "$TARBALL").sha256") && ls -lh "$BUILD"
 ```
 
-These commands mirror the "Build native Linux tarball" step in
+These commands mirror the "Build native install tarball" step in
 `.github/workflows/release.yml`.
 
 ---

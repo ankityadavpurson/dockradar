@@ -12,11 +12,10 @@ Group=dockradar
 # "docker" group (added by install.sh).
 
 WorkingDirectory=/opt/dockradar/current/backend
-EnvironmentFile=-/etc/dockradar/dockradar.env
-# Paths below override anything in the env file so data never lands in /opt.
+# The app loads its configuration (SMTP, API_KEY, COMPOSE_DIR, LOG_FILE, …)
+# from this file itself, with the same parser on Linux and macOS.
+Environment=DOCKRADAR_ENV_FILE=/etc/dockradar/dockradar.env
 Environment=HOME=/var/lib/dockradar
-Environment=COMPOSE_DIR=/var/lib/dockradar/compose_files
-Environment=LOG_FILE=/var/log/dockradar/dockradar.log
 Environment=PYTHONUNBUFFERED=1
 Environment=PYTHONDONTWRITEBYTECODE=1
 

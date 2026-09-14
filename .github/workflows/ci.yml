@@ -63,4 +63,4 @@ jobs:
 
       # shellcheck is preinstalled on GitHub's Ubuntu runners
       - name: Lint shell scripts
-        run: shellcheck scripts/install.sh scripts/install-macos.sh scripts/start.sh
+        run: shellcheck scripts/install.sh scripts/start.sh

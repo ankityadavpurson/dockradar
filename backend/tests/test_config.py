@@ -116,7 +116,7 @@ class TestComposeDir:
 
     def test_dockradar_env_file_is_loaded(self, tmp_path):
         # Runs in a subprocess because config is evaluated at import time.
-        # The password uses the single-quoted form install-macos.sh writes.
+        # The password uses the single-quoted form install.sh writes.
         env_file = tmp_path / "dockradar.env"
         env_file.write_text(
             "EMAIL_TO=me@test.local\n"

@@ -57,7 +57,7 @@ git clone https://github.com/ankityadavpurson/dockradar.git && cd dockradar
 From the **repository root**, set the variables used by every later step:
 
 ```bash
-export VERSION="$(sed -n 's/^__version__ = "\(.*\)"/\1/p' backend/app/main.py | tr -d '\r')" BUILD=~/dr-build DR_HOME="$HOME/Library/Application Support/DockRadar" && export STAGE="$BUILD/dockradar-$VERSION" TARBALL="$BUILD/dockradar-$VERSION-linux.tar.gz" && echo "Building DockRadar $VERSION → $TARBALL"
+export VERSION="$(sed -n 's/^__version__ = "\(.*\)"/\1/p' backend/app/main.py | tr -d '\r')" BUILD=~/dr-build DR_HOME="$HOME/Library/Application Support/DockRadar" && export STAGE="$BUILD/dockradar-$VERSION" TARBALL="$BUILD/dockradar-$VERSION.tar.gz" && echo "Building DockRadar $VERSION → $TARBALL"
 ```
 
 What each variable holds:
@@ -66,8 +66,8 @@ What each variable holds:
 | --- | --- | --- |
 | `$VERSION` | The app version, read from `__version__` in `backend/app/main.py`. Used in the folder and tarball names, and shown by the installer (`DockRadar v<version> is running`). | `2.0.0` |
 | `$BUILD` | Scratch folder in your home where the package is assembled. Safe to delete after testing (step 8). | `/Users/you/dr-build` |
-| `$STAGE` | The unpacked package folder inside `$BUILD` — the same layout as the release tarball (`backend/`, `frontend/dist/`, `packaging/`, `install-macos.sh`, `VERSION`). Steps 2–8 run the installer from here: `$STAGE/install-macos.sh`. | `/Users/you/dr-build/dockradar-2.0.0` |
-| `$TARBALL` | The packaged release file built from `$STAGE` — the same file CI attaches to a GitHub Release (the `-linux` name is historical; macOS uses the same file). Passed to the installer with `--tarball`; a matching `$TARBALL.sha256` checksum sits next to it and is verified during install. | `/Users/you/dr-build/dockradar-2.0.0-linux.tar.gz` |
+| `$STAGE` | The unpacked package folder inside `$BUILD` — the same layout as the release tarball (`backend/`, `frontend/dist/`, `packaging/`, `install.sh`, `VERSION`). Steps 2–8 run the installer from here: `$STAGE/install.sh`. | `/Users/you/dr-build/dockradar-2.0.0` |
+| `$TARBALL` | The packaged release file built from `$STAGE` — the same file CI attaches to a GitHub Release (one file for both Linux and macOS). Passed to the installer with `--tarball`; a matching `$TARBALL.sha256` checksum sits next to it and is verified during install. | `/Users/you/dr-build/dockradar-2.0.0.tar.gz` |
 | `$DR_HOME` | Where the installer puts DockRadar for your user: app, venv, config and compose files. Used in the checks below. Quoted everywhere because the path contains a space. | `/Users/you/Library/Application Support/DockRadar` |
 
 Check them at any time:
@@ -102,14 +102,14 @@ tar -C backend --exclude=tests --exclude=compose_files --exclude=__pycache__ --e
 Copy the built frontend, packaging, and installers:
 
 ```bash
-cp -R frontend/dist "$STAGE/frontend/" && cp -R packaging .env.example LICENSE README.md scripts/install.sh scripts/install-macos.sh "$STAGE/" && echo "$VERSION" > "$STAGE/VERSION"
+cp -R frontend/dist "$STAGE/frontend/" && cp -R packaging .env.example LICENSE README.md scripts/install.sh "$STAGE/" && echo "$VERSION" > "$STAGE/VERSION"
 ```
 
 Strip Windows line endings (only matters for clones made on Windows — note
 macOS `sed -i` needs the empty `''`):
 
 ```bash
-sed -i '' 's/\r$//' "$STAGE/install-macos.sh" "$STAGE/.env.example"
+sed -i '' 's/\r$//' "$STAGE/install.sh" "$STAGE/.env.example"
 ```
 
 Create the tarball and its checksum (macOS uses `shasum -a 256`):
@@ -118,19 +118,19 @@ Create the tarball and its checksum (macOS uses `shasum -a 256`):
 tar -C "$BUILD" -czf "$TARBALL" "dockradar-$VERSION" && (cd "$BUILD" && shasum -a 256 "$(basename "$TARBALL")" > "$(basename "$TARBALL").sha256") && ls -lh "$BUILD"
 ```
 
-These commands mirror the "Build native Linux tarball" step in
+These commands mirror the "Build native install tarball" step in
 `.github/workflows/release.yml`.
 
 ---
 
 ## 2. Install (piped, like `curl | bash`)
 
-Feeding the script through stdin (`bash -s -- … < install-macos.sh`) behaves
+Feeding the script through stdin (`bash -s -- … < install.sh`) behaves
 the same as `curl … | bash`, so this also tests the interactive email prompts
 in that mode. **No `sudo`.**
 
 ```bash
-bash -s -- --tarball "$TARBALL" < "$STAGE/install-macos.sh"
+bash -s -- --tarball "$TARBALL" < "$STAGE/install.sh"
 ```
 
 When prompted:
@@ -237,7 +237,7 @@ curl -s http://localhost:8086/api/health
 ## 6. Upgrade (re-run the installer)
 
 ```bash
-bash -s -- --tarball "$TARBALL" < "$STAGE/install-macos.sh"
+bash -s -- --tarball "$TARBALL" < "$STAGE/install.sh"
 ```
 
 **Expected:**
@@ -252,7 +252,7 @@ bash -s -- --tarball "$TARBALL" < "$STAGE/install-macos.sh"
 ## 7. Uninstall (keeps config, data, logs)
 
 ```bash
-bash -s -- --uninstall < "$STAGE/install-macos.sh"
+bash -s -- --uninstall < "$STAGE/install.sh"
 ```
 
 The LaunchAgent and application are gone (should print
@@ -269,14 +269,14 @@ ls "$DR_HOME"
 ```
 
 > **Optional — offline uninstall:** reinstall with step 2, then run
-> `bash "$DR_HOME/current/install-macos.sh" --uninstall`.
+> `bash "$DR_HOME/current/install.sh" --uninstall`.
 
 ---
 
 ## 8. Purge (full cleanup)
 
 ```bash
-bash -s -- --uninstall --purge < "$STAGE/install-macos.sh"
+bash -s -- --uninstall --purge < "$STAGE/install.sh"
 ```
 
 Nothing should be left (both paths missing):
@@ -298,7 +298,7 @@ rm -rf "$BUILD"
 Tests the non-interactive path with email settings from environment variables:
 
 ```bash
-SMTP_HOST=smtp.gmail.com SMTP_USER=you@gmail.com SMTP_PASSWORD='your app password' EMAIL_TO=you@example.com bash -s -- --tarball "$TARBALL" --non-interactive < "$STAGE/install-macos.sh"
+SMTP_HOST=smtp.gmail.com SMTP_USER=you@gmail.com SMTP_PASSWORD='your app password' EMAIL_TO=you@example.com bash -s -- --tarball "$TARBALL" --non-interactive < "$STAGE/install.sh"
 ```
 
 Clean up afterwards with step 8.
@@ -326,9 +326,9 @@ Clean up afterwards with step 8.
 No clone or build is needed — use the GitHub commands (no `sudo`):
 
 ```bash
-curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install-macos.sh | bash
+curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install.sh | bash
 ```
 
 ```bash
-curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install-macos.sh | bash -s -- --uninstall
+curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install.sh | bash -s -- --uninstall
 ```

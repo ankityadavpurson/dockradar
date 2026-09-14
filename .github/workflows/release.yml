@@ -152,9 +152,10 @@ jobs:
             exit 1
           fi
 
-      # Native Linux tarball: backend + prebuilt frontend, installed by
-      # scripts/install.sh as a systemd service. Built before tagging so a
-      # broken build never leaves a tag behind.
+      # Native install tarball: backend + prebuilt frontend, installed by
+      # scripts/install.sh as a systemd service (Linux) or LaunchAgent
+      # (macOS). Built before tagging so a broken build never leaves a tag
+      # behind.
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -165,12 +166,12 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Build native Linux tarball
+      - name: Build native install tarball
         id: tarball
         run: |
           VERSION="${{ steps.version.outputs.value }}"
           STAGE="dockradar-$VERSION"
-          ASSET="dockradar-$VERSION-linux.tar.gz"
+          ASSET="dockradar-$VERSION.tar.gz"
 
           (cd frontend && yarn install --frozen-lockfile && yarn build)
 
@@ -181,7 +182,7 @@ jobs:
             backend/ "dist-native/$STAGE/backend/"
           cp -r frontend/dist "dist-native/$STAGE/frontend/dist"
           cp -r packaging .env.example LICENSE README.md "dist-native/$STAGE/"
-          cp scripts/install.sh scripts/install-macos.sh "dist-native/$STAGE/"
+          cp scripts/install.sh "dist-native/$STAGE/"
           echo "$VERSION" > "dist-native/$STAGE/VERSION"
 
           # Smoke test: the packaged backend installs, imports, and finds the
@@ -294,17 +295,16 @@ jobs:
           \`\`\`
           > **Note:** the *Source code (zip / tar.gz)* entries are attached automatically by GitHub and are not needed to run DockRadar — download the \`.tar.gz\` Docker image above instead.
 
-          ### Native Linux install (systemd, no container)
+          ### Native install — Linux & macOS (no container)
+          One installer detects the OS: a systemd service on Linux, a per-user LaunchAgent on macOS.
           \`\`\`bash
+          # Linux — requires systemd, Python 3.10+ and Docker Engine
           curl -fsSL https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.value }}/install.sh | sudo bash -s -- --version ${{ steps.version.outputs.value }}
-          \`\`\`
-          Requires systemd, Python 3.10+ and Docker Engine. Uses \`${{ steps.tarball.outputs.asset }}\` from the assets below.
 
-          ### Native macOS install (LaunchAgent, run without sudo)
-          \`\`\`bash
-          curl -fsSL https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.value }}/install-macos.sh | bash -s -- --version ${{ steps.version.outputs.value }}
+          # macOS — run WITHOUT sudo; requires Python 3.10+ and Docker Desktop, OrbStack or Colima
+          curl -fsSL https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.value }}/install.sh | bash -s -- --version ${{ steps.version.outputs.value }}
           \`\`\`
-          Requires Python 3.10+ (\`brew install python@3.12\`) and Docker Desktop, OrbStack or Colima. Uses the same tarball.
+          Uses \`${{ steps.tarball.outputs.asset }}\` from the assets below.
           EOF
 
       - name: Create GitHub Release
@@ -319,4 +319,3 @@ jobs:
             ${{ steps.tarball.outputs.asset }}
             ${{ steps.tarball.outputs.asset }}.sha256
             scripts/install.sh
-            scripts/install-macos.sh

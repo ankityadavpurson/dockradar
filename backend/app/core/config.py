@@ -8,9 +8,9 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# DOCKRADAR_ENV_FILE points at an explicit config file (used by the macOS
-# LaunchAgent, which has no EnvironmentFile equivalent); otherwise .env is
-# discovered as before. Existing environment variables always take precedence.
+# DOCKRADAR_ENV_FILE points at an explicit config file (set by the native
+# installer's systemd unit on Linux and LaunchAgent on macOS); otherwise .env
+# is discovered as before. Existing environment variables always take precedence.
 _ENV_FILE = os.getenv("DOCKRADAR_ENV_FILE", "").strip()
 if _ENV_FILE:
     # Installer-managed file: values are literal (no ${VAR} expansion), so

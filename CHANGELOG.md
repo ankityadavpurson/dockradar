@@ -15,8 +15,7 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **`HIDDEN_REPOSITORY`** environment variable (comma-separated, case-insensitive container or repository names) to hide containers from listing, scanning, and bulk updates.
 - Backend unit test suite (`backend/tests`, run with `pytest`) covering registry helpers, image-reference parsing, compose storage/associations, and hidden-container filtering; `requirements-dev.txt` added.
 - Upload hardening for compose files: 1 MiB size cap, UTF-8 validation, missing-filename guard.
-- **Native Linux install** (no container): `install.sh` sets up a systemd service from a prebuilt release tarball (`dockradar-X.Y.Z-linux.tar.gz`), with interactive email setup on first install, upgrade-in-place, and `--uninstall`. Releases now attach the tarball, its `.sha256`, and `install.sh`.
-- **Native macOS install**: `install-macos.sh` runs DockRadar as a per-user LaunchAgent from the same release tarball (config in `~/Library/Application Support/DockRadar`, logs in `~/Library/Logs/DockRadar`), listening on localhost by default. Detects the Docker Desktop / OrbStack / Colima socket.
+- **Native install for Linux and macOS** (no container): a single `install.sh` detects the OS and installs DockRadar from a prebuilt release tarball (`dockradar-X.Y.Z.tar.gz`) — as a systemd service on Linux, or a per-user LaunchAgent on macOS (config in `~/Library/Application Support/DockRadar`, localhost-only by default, auto-detects the Docker Desktop / OrbStack / Colima socket). Includes interactive email setup on first install, upgrade-in-place, and `--uninstall` / `--purge`. Releases now attach the tarball, its `.sha256`, and `install.sh`.
 - **`DOCKRADAR_ENV_FILE`** environment variable to load configuration from an explicit file.
 - **`COMPOSE_DIR`** environment variable to relocate compose-file storage (default unchanged: `backend/compose_files`).
 

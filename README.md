@@ -123,7 +123,8 @@ yarn dev
 
 ## Install on Linux (native, without Docker)
 
-Run DockRadar directly on a Linux host as a systemd service. Nothing is
+Run DockRadar directly on a Linux host as a systemd service. One `install.sh`
+serves Linux and macOS — it detects the OS (see the macOS section below). Nothing is
 built on the host — the installer downloads a release tarball with the
 frontend prebuilt.
 
@@ -172,15 +173,16 @@ port, user, app password, recipient) and then starts the service on port
 
 ## Install on macOS (native, without Docker)
 
-Run DockRadar as a per-user LaunchAgent that starts at login. It uses the same
-prebuilt release tarball as Linux — nothing is built on your Mac.
+Run DockRadar as a per-user LaunchAgent that starts at login. It is the same
+`install.sh` and release tarball as Linux — the installer detects macOS, and
+nothing is built on your Mac.
 
 Requirements: Python 3.10+ (`brew install python@3.12`) and Docker Desktop,
 OrbStack or Colima. Run the installer as **your normal user — not with sudo**
 (Docker Desktop's socket belongs to your user).
 
 ```bash
-curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install-macos.sh | bash
+curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install.sh | bash
 ```
 
 As on Linux, the first install offers to set up email notifications. By default
@@ -200,7 +202,7 @@ DockRadar listens on `127.0.0.1:8086` (this Mac only) — set `HOST=0.0.0.0` and
 - **Uninstall**:
 
   ```bash
-  curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install-macos.sh | bash -s -- --uninstall
+  curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install.sh | bash -s -- --uninstall
   ```
 
   Add `--purge` to also delete the config, compose files and logs.
