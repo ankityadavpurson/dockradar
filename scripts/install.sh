@@ -111,7 +111,7 @@ if [ "$OS" = "linux" ]; then
     LOGS_CMD="journalctl -u $SVC_NAME -f"
 else
     [ "$(id -u)" -ne 0 ] || error "On macOS, run the installer as your normal user, without sudo — DockRadar runs as a per-user LaunchAgent so it can reach Docker Desktop."
-    [ -n "${HOME:-}" ] && [ -d "$HOME" ] || error "HOME is not set."
+    if [ -z "${HOME:-}" ] || [ ! -d "$HOME" ]; then error "HOME is not set."; fi
     APP_ROOT="$HOME/Library/Application Support/DockRadar"
     ENV_FILE="$APP_ROOT/dockradar.env"
     DATA_DIR="$APP_ROOT/compose_files"
@@ -286,7 +286,7 @@ find_python() {
     local c p
     for c in python3.14 python3.13 python3.12 python3.11 python3.10 python3; do
         for p in "$(command -v "$c" 2>/dev/null || true)" "/opt/homebrew/bin/$c" "/usr/local/bin/$c"; do
-            [ -n "$p" ] && [ -x "$p" ] || continue
+            if [ -z "$p" ] || [ ! -x "$p" ]; then continue; fi
             if [ "$OS" = "macos" ] && [ "$p" = "/usr/bin/python3" ] && ! xcode-select -p &>/dev/null; then
                 continue
             fi
