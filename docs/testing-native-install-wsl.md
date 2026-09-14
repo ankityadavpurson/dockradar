@@ -2,11 +2,11 @@
 
 Use this guide to test the native (systemd) install, upgrade, and uninstall of
 DockRadar on WSL2 Ubuntu **before a release exists on GitHub**. Instead of
-downloading a release, you build the tarball locally and point the installer at
-it with `--tarball`.
+downloading a release, you build the tarball from your clone and point the
+installer at it with `--tarball`.
 
-Run every command in the **Ubuntu (WSL) terminal** unless a step says
-PowerShell.
+Run every command in the **Ubuntu (WSL) terminal**, in the **same terminal
+session** — step 1 sets shell variables that later steps use.
 
 ---
 
@@ -35,58 +35,99 @@ Check Docker and the compose plugin:
 docker compose version
 ```
 
-Port 8086 must be free. If the Docker version of DockRadar is running, stop it
-(**PowerShell**, in `C:\Dev\dockradar-v2`):
+Check Node.js 18+ and Yarn 1.x (needed once, to build the frontend):
 
-```powershell
-docker compose down
+```bash
+node --version && yarn --version
 ```
 
-If the frontend changed since the last build, rebuild it (**PowerShell**, in
-`C:\Dev\dockradar-v2\frontend`):
+> If Yarn is missing: `npm install -g yarn`
 
-```powershell
-yarn build
+Port 8086 must be free. If the Docker version of DockRadar is running, stop it
+from its project folder:
+
+```bash
+docker compose down
 ```
 
 ---
 
-## 1. Build the release tarball
+## 1. Get the code and build the release tarball
 
-These commands mirror the "Build native Linux tarball" step in
-`.github/workflows/release.yml`.
+Clone the repository (skip if you already have a clone — just `cd` into it):
+
+```bash
+git clone https://github.com/ankityadavpurson/dockradar.git && cd dockradar
+```
+
+> Any existing clone works, including one on the Windows drive
+> (e.g. `cd /mnt/c/path/to/dockradar`). Check out the branch you want to test.
+
+From the **repository root**, set the variables used by every later step
+(version is read from `backend/app/main.py`):
+
+```bash
+export VERSION="$(sed -n 's/^__version__ = "\(.*\)"/\1/p' backend/app/main.py | tr -d '\r')" BUILD=~/dr-build && export STAGE="$BUILD/dockradar-$VERSION" TARBALL="$BUILD/dockradar-$VERSION-linux.tar.gz" && echo "Building DockRadar $VERSION → $TARBALL"
+```
+
+What each variable holds:
+
+| Variable | What it is | Example value |
+| --- | --- | --- |
+| `$VERSION` | The app version, read from `__version__` in `backend/app/main.py`. Used in the folder and tarball names, and shown by the installer (`DockRadar v<version> is running`). | `2.0.0` |
+| `$BUILD` | Scratch folder in your WSL home where the package is assembled. Safe to delete after testing (step 7). | `/home/you/dr-build` |
+| `$STAGE` | The unpacked package folder inside `$BUILD` — the same layout as the release tarball (`backend/`, `frontend/dist/`, `packaging/`, `install.sh`, `VERSION`). Steps 2–7 run the installer from here: `$STAGE/install.sh`. | `/home/you/dr-build/dockradar-2.0.0` |
+| `$TARBALL` | The packaged release file built from `$STAGE` — the same file CI attaches to a GitHub Release. Passed to the installer with `--tarball`; a matching `$TARBALL.sha256` checksum sits next to it and is verified during install. | `/home/you/dr-build/dockradar-2.0.0-linux.tar.gz` |
+
+Check them at any time:
+
+```bash
+echo "VERSION=$VERSION  BUILD=$BUILD  STAGE=$STAGE  TARBALL=$TARBALL"
+```
+
+> These are ordinary shell variables, so they exist only in the current
+> terminal session. Opened a new terminal later? `cd` back to the repository
+> root and re-run the command above before continuing. If the `echo` shows
+> empty values, that is the reason.
+
+Build the frontend:
+
+```bash
+(cd frontend && yarn install --frozen-lockfile && yarn build)
+```
 
 Create the staging folders:
 
 ```bash
-cd /mnt/c/Dev/dockradar-v2 && rm -rf ~/dr-build && mkdir -p ~/dr-build/dockradar-2.0.0/backend ~/dr-build/dockradar-2.0.0/frontend
+rm -rf "$BUILD" && mkdir -p "$STAGE/backend" "$STAGE/frontend"
 ```
 
 Copy the backend (without tests, compose files, caches, logs, `.env`):
 
 ```bash
-tar -C backend --exclude=tests --exclude=compose_files --exclude=__pycache__ --exclude=.pytest_cache --exclude='*.log' --exclude=.env -cf - . | tar -C ~/dr-build/dockradar-2.0.0/backend -xf -
+tar -C backend --exclude=tests --exclude=compose_files --exclude=__pycache__ --exclude=.pytest_cache --exclude='*.log' --exclude=.env -cf - . | tar -C "$STAGE/backend" -xf -
 ```
 
 Copy the built frontend, packaging, and installer:
 
 ```bash
-cp -r frontend/dist ~/dr-build/dockradar-2.0.0/frontend/ && cp -r packaging .env.example LICENSE README.md scripts/install.sh ~/dr-build/dockradar-2.0.0/ && echo 2.0.0 > ~/dr-build/dockradar-2.0.0/VERSION
+cp -r frontend/dist "$STAGE/frontend/" && cp -r packaging .env.example LICENSE README.md scripts/install.sh "$STAGE/" && echo "$VERSION" > "$STAGE/VERSION"
 ```
 
-Strip Windows line endings (in case the checkout has CRLF):
+Strip Windows line endings (only matters for clones made on Windows):
 
 ```bash
-sed -i 's/\r$//' ~/dr-build/dockradar-2.0.0/install.sh ~/dr-build/dockradar-2.0.0/packaging/dockradar.service ~/dr-build/dockradar-2.0.0/.env.example
+sed -i 's/\r$//' "$STAGE/install.sh" "$STAGE/packaging/dockradar.service" "$STAGE/.env.example"
 ```
 
 Create the tarball and its checksum:
 
 ```bash
-cd ~/dr-build && tar -czf dockradar-2.0.0-linux.tar.gz dockradar-2.0.0 && sha256sum dockradar-2.0.0-linux.tar.gz > dockradar-2.0.0-linux.tar.gz.sha256
+tar -C "$BUILD" -czf "$TARBALL" "dockradar-$VERSION" && (cd "$BUILD" && sha256sum "$(basename "$TARBALL")" > "$(basename "$TARBALL").sha256") && ls -lh "$BUILD"
 ```
 
-> Replace `2.0.0` everywhere if `__version__` in `backend/app/main.py` differs.
+These commands mirror the "Build native Linux tarball" step in
+`.github/workflows/release.yml`.
 
 ---
 
@@ -97,7 +138,7 @@ as `curl … | sudo bash`, so this also tests the interactive email prompts in
 that mode.
 
 ```bash
-sudo bash -s -- --tarball ~/dr-build/dockradar-2.0.0-linux.tar.gz < ~/dr-build/dockradar-2.0.0/install.sh
+sudo bash -s -- --tarball "$TARBALL" < "$STAGE/install.sh"
 ```
 
 When prompted:
@@ -111,7 +152,7 @@ When prompted:
 | From address / Send notifications to | your addresses |
 | DockRadar URL for email links | `http://localhost:8086` |
 
-**Expected:** ends with `DockRadar v2.0.0 is running.`
+**Expected:** ends with `DockRadar v<version> is running.`
 
 ---
 
@@ -182,7 +223,7 @@ Then click **Send test email** in the UI again.
 ## 5. Upgrade (re-run the installer)
 
 ```bash
-sudo bash -s -- --tarball ~/dr-build/dockradar-2.0.0-linux.tar.gz < ~/dr-build/dockradar-2.0.0/install.sh
+sudo bash -s -- --tarball "$TARBALL" < "$STAGE/install.sh"
 ```
 
 **Expected:**
@@ -197,7 +238,7 @@ sudo bash -s -- --tarball ~/dr-build/dockradar-2.0.0-linux.tar.gz < ~/dr-build/d
 ## 6. Uninstall (keeps config, data, logs)
 
 ```bash
-sudo bash -s -- --uninstall < ~/dr-build/dockradar-2.0.0/install.sh
+sudo bash -s -- --uninstall < "$STAGE/install.sh"
 ```
 
 The service and application are gone (both should report "not found" /
@@ -221,7 +262,7 @@ sudo ls /etc/dockradar /var/lib/dockradar
 ## 7. Purge (full cleanup)
 
 ```bash
-sudo bash -s -- --uninstall --purge < ~/dr-build/dockradar-2.0.0/install.sh
+sudo bash -s -- --uninstall --purge < "$STAGE/install.sh"
 ```
 
 Nothing should be left (all three paths missing, and `no such user`):
@@ -233,7 +274,7 @@ ls /etc/dockradar /var/lib/dockradar /var/log/dockradar; id dockradar
 Remove the build folder:
 
 ```bash
-rm -rf ~/dr-build
+rm -rf "$BUILD"
 ```
 
 ---
@@ -244,7 +285,7 @@ Tests the non-interactive path with email settings from environment variables
 (values go after `sudo`, which strips your environment):
 
 ```bash
-sudo SMTP_HOST=smtp.gmail.com SMTP_USER=you@gmail.com SMTP_PASSWORD='your app password' EMAIL_TO=you@example.com bash -s -- --tarball ~/dr-build/dockradar-2.0.0-linux.tar.gz --non-interactive < ~/dr-build/dockradar-2.0.0/install.sh
+sudo SMTP_HOST=smtp.gmail.com SMTP_USER=you@gmail.com SMTP_PASSWORD='your app password' EMAIL_TO=you@example.com bash -s -- --tarball "$TARBALL" --non-interactive < "$STAGE/install.sh"
 ```
 
 Clean up afterwards with step 7.
@@ -255,6 +296,7 @@ Clean up afterwards with step 7.
 
 | Symptom | Check |
 | --- | --- |
+| `No such file or directory` for `$STAGE` / `$TARBALL` | New terminal session — `cd` to the repo root and re-run the variables command in step 1. |
 | `systemd is required but does not appear to be running` | Enable systemd in `/etc/wsl.conf` (see step 0). |
 | `Python venv support is missing` | `sudo apt install -y python3-venv` |
 | `DockRadar did not answer on port 8086 yet` | `journalctl -u dockradar -n 50` — often port 8086 is already in use. |
@@ -266,7 +308,7 @@ Clean up afterwards with step 7.
 
 ## Once a real release exists
 
-Replace the local commands with the GitHub ones:
+No clone or build is needed — use the GitHub commands:
 
 ```bash
 curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install.sh | sudo bash
