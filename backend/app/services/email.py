@@ -60,8 +60,11 @@ class EmailService:
     # Sample rows used by the test email so it looks exactly like a real
     # notification while making clear the entries are examples.
     _TEST_SAMPLE = [
-        {"container_name": "example-web", "image": "nginx", "tag": "latest", "digest": "a1b2c3d4e5f6"},
-        {"container_name": "example-db", "image": "postgres", "tag": "16-alpine", "digest": "0f1e2d3c4b5a"},
+        {"container_name": "nginx-proxy-manager", "image": "jc21/nginx-proxy-manager", "tag": "latest", "digest": "a1b2c3d4e5f6"},
+        {"container_name": "postgresql-db-1", "image": "postgres", "tag": "16-alpine", "digest": "0f1e2d3c4b5a"},
+        {"container_name": "qbittorrent", "image": "linuxserver/qbittorrent", "tag": "latest", "digest": "0f1e2d3c4b5a"},
+        {"container_name": "portainer", "image": "portainer/portainer-ce", "tag": "latest", "digest": "0f1e2d3c4b5a"},
+        {"container_name": "home-assistant", "image": "ghcr.io/home-assistant/home-assistant", "tag": "stable", "digest": "0f1e2d3c4b5a"},
     ]
 
     def _send(self, subject: str, updates: list[dict], note: Optional[str] = None):
