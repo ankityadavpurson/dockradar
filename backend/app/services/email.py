@@ -124,63 +124,70 @@ class EmailService:
 
     def _build_html(self, updates: list[dict], note: Optional[str] = None) -> str:
         brand = "#1847c9"
-        base = "padding:9px 10px;border-bottom:1px solid #f0f0f0;"
-        cell = base + "font-family:'Courier New',monospace;"
+        cell = "padding:9px 10px;border-bottom:1px solid #f0f0f0;font-family:'Courier New',monospace;word-break:break-word;overflow-wrap:anywhere;"
+        nowrap_cell = cell + "white-space:nowrap;"
+        badge_cell = "padding:9px 10px;border-bottom:1px solid #f0f0f0;white-space:nowrap;"
         th = "text-align:left;padding:9px 10px;background:#f1f5f9;border-bottom:1px solid #e2e8f0;color:#334155;font-weight:600;"
+        th_nowrap = th + "white-space:nowrap;"
         badge = (f"display:inline-block;padding:2px 8px;background:#eef2fc;color:{brand};"
                  "border-radius:10px;font-size:12px;font-family:'Courier New',monospace;")
         rows = ""
         for u in updates:
             esc = {k: html.escape(str(v)) for k, v in u.items()}
             rows += f"""
-            <tr>
-                <td style="{cell}color:#1a1a1a;">{esc['container_name']}</td>
+              <tr>
+                <td style="{nowrap_cell}color:#1a1a1a;">{esc['container_name']}</td>
                 <td style="{cell}color:#374151;">{esc['image']}</td>
-                <td style="{base}"><span style="{badge}">{esc['tag']}</span></td>
-                <td style="{cell}color:#6b7280;">{esc['digest']}</td>
-            </tr>"""
+                <td style="{badge_cell}"><span style="{badge}">{esc['tag']}</span></td>
+                <td style="{nowrap_cell}color:#6b7280;">{esc['digest']}</td>
+              </tr>"""
 
         title = f"{len(updates)} image update{'s' if len(updates) != 1 else ''} available"
 
         note_banner = ""
         if note:
             note_banner = f"""
-      <div style="background:#eef2fc;border:1px solid #c7d6f5;border-radius:6px;padding:10px 14px;margin:0 0 18px">
-        <span style="font-size:13px;color:{brand}">{html.escape(note)}</span>
-      </div>"""
+        <div style="background:#eef2fc;border:1px solid #c7d6f5;border-radius:6px;padding:10px 14px;margin:0 0 18px;">
+          <span style="font-size:13px;line-height:1.5;color:{brand};">{html.escape(note)}</span>
+        </div>"""
 
         button = ""
         if config.APP_URL:
             url = html.escape(config.APP_URL)
             button = f"""
-      <div style="margin:22px 0 4px">
-        <a href="{url}" style="display:inline-block;padding:10px 20px;background:{brand};border-radius:6px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600">Open DockRadar</a>
-      </div>"""
+        <div style="margin:22px 0 4px;">
+          <a href="{url}" style="display:inline-block;padding:10px 20px;background:{brand};border-radius:6px;color:#ffffff;text-decoration:none;font-size:14px;line-height:1.4;font-weight:600;">Open DockRadar</a>
+        </div>"""
 
         return f"""<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#f4f4f5">
-  <div style="max-width:680px;margin:0 auto;padding:24px;font-family:Arial,Helvetica,sans-serif;color:#1a1a1a">
-    <div style="background:#ffffff;border:1px solid #e5e5e5;border-top:3px solid {brand};border-radius:6px;padding:28px">
-      <h1 style="margin:0 0 2px;font-size:20px;font-weight:700;color:{brand}">DockRadar</h1>
-      <p style="margin:0 0 20px;font-size:13px;color:#6b7280">Docker image monitoring and update dashboard</p>{note_banner}
-      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:12px 14px;margin:0 0 18px">
-        <span style="font-size:15px;font-weight:600;color:#92400e">{title}</span>
+<body style="margin:0;padding:0;background:#f4f4f5;">
+  <div style="width:100%;background:#f4f4f5;padding:20px 0;">
+    <div style="max-width:680px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;color:#1a1a1a;">
+      <div style="background:#ffffff;padding:12px;">
+        <h1 style="margin:0 0 2px;font-size:20px;line-height:1.4;font-weight:700;color:{brand};">DockRadar</h1>
+        <hr style="border:0;border-top:2px solid #e5e5e5;margin:6px 0 10px;">
+        <p style="margin:0 0 20px;font-size:13px;line-height:1.5;color:#6b7280;">Docker image monitoring and update dashboard</p>{note_banner}
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:12px 14px;margin:0 0 18px;">
+          <span style="font-size:15px;line-height:1.4;font-weight:600;color:#92400e;">{title}</span>
+        </div>
+        <p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#374151;">The following container images have newer versions available:</p>
+        <div style="width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+              <tr>
+                <th style="{th_nowrap}">Container</th>
+                <th style="{th}">Image</th>
+                <th style="{th_nowrap}">Tag</th>
+                <th style="{th_nowrap}">Digest</th>
+              </tr>
+            </thead>
+            <tbody>{rows}</tbody>
+          </table>
+        </div>{button}
+        <p style="margin:22px 0 0;font-size:12px;line-height:1.5;color:#9ca3af;">Sent by DockRadar</p>
       </div>
-      <p style="margin:0 0 16px;font-size:14px;color:#374151">The following container images have newer versions available:</p>
-      <table style="width:100%;border-collapse:collapse;font-size:13px">
-        <thead>
-          <tr>
-            <th style="{th}">Container</th>
-            <th style="{th}">Image</th>
-            <th style="{th}">Tag</th>
-            <th style="{th}">Digest</th>
-          </tr>
-        </thead>
-        <tbody>{rows}</tbody>
-      </table>{button}
-      <p style="margin:22px 0 0;font-size:12px;color:#9ca3af">Sent by DockRadar</p>
     </div>
   </div>
 </body>
