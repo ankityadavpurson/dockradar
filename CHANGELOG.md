@@ -9,6 +9,11 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.12.0] — 2026-09-16
+
+### Added
+- add Docker Hub login and update README with image pull instructions
+
 ## [13.11.0] — 2026-09-16
 
 ### Added
@@ -179,7 +184,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.11.0...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.12.0...HEAD
+[13.12.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.11.0...v13.12.0
 [13.11.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.10.0...v13.11.0
 [13.10.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.9.0...v13.10.0
 [13.9.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.8.0...v13.9.0
