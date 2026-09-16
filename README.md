@@ -223,6 +223,18 @@ of what `.env` contains, the container always listens on port `8086` and reaches
 Docker through the mounted socket (`HOST`, `PORT`, and `DOCKER_HOST` are pinned
 in the compose file). Requires Docker Compose v2.24+.
 
+### Prebuilt image
+
+Published images are available on Docker Hub and GHCR:
+
+```bash
+docker pull ankityadavpurson/dockradar:latest
+# or
+docker pull ghcr.io/ankityadavpurson/dockradar:latest
+```
+
+Use either name in place of `dockradar:latest` below to skip the local build.
+
 ### Docker Run (single container)
 
 ```bash

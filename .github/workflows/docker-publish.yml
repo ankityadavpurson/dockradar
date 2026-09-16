@@ -38,7 +38,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#v}"
-          APP_VERSION=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' backend/app/main.py)
+          APP_VERSION=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' backend/app/version.py)
           PKG_VERSION=$(node -p "require('./frontend/package.json').version")
           echo "tag=v$TAG_VERSION  backend=$APP_VERSION  frontend=$PKG_VERSION"
           if [ "$TAG_VERSION" != "$APP_VERSION" ] || [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
@@ -53,11 +53,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Every tag below is applied to both registries.
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
+          images: |
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
+            docker.io/ankityadavpurson/dockradar
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}
