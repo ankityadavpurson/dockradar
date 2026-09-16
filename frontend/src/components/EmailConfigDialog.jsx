@@ -4,9 +4,9 @@ import Modal from './Modal'
 
 function Row({ k, v }) {
   return (
-    <div className="flex gap-3 text-[14px] font-mono">
+    <div className="flex gap-3 text-[14px] py-1.5" style={{ borderBottom: '1px solid var(--border-1)' }}>
       <span className="w-32 shrink-0" style={{ color: 'var(--text-3)' }}>{k}</span>
-      <span className="break-all" style={{ color: 'var(--text-2)' }}>{v}</span>
+      <span className="break-all font-mono text-[13px]" style={{ color: 'var(--text-1)' }}>{v}</span>
     </div>
   )
 }
@@ -28,7 +28,7 @@ export default function EmailConfigDialog({ health, onClose, onTestEmail }) {
 
   const title = (
     <div className="flex items-center gap-2">
-      <Mail size={15} style={{ color: 'var(--text-3)' }} />
+      <Mail size={20} style={{ color: 'var(--accent)' }} />
       <span className="modal-title">Email notifications</span>
     </div>
   )
@@ -49,13 +49,13 @@ export default function EmailConfigDialog({ health, onClose, onTestEmail }) {
   return (
     <Modal title={title} onClose={onClose} size="md" footer={footer} ariaLabel="Email notifications">
       {/* Status */}
-      <div className="flex items-center gap-2 text-[14px] font-medium">
+      <div className={`infobar ${configured ? 'infobar-success' : ''} items-center py-2`}>
         {configured
-          ? <><CheckCircle2 size={14} style={{ color: 'var(--accent-teal)' }} /><span style={{ color: 'var(--accent-teal)' }}>Configured</span></>
-          : <><XCircle size={14} style={{ color: 'var(--text-3)' }} /><span style={{ color: 'var(--text-3)' }}>Not configured</span></>}
+          ? <><CheckCircle2 size={16} className="infobar-icon !mt-0" /><span>Configured</span></>
+          : <><XCircle size={16} className="infobar-icon !mt-0" style={{ color: 'var(--text-3)' }} /><span>Not configured</span></>}
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col">
         <Row k="SMTP server" v={`${health?.smtp_host || '—'}:${health?.smtp_port ?? ''}`} />
         <Row k="Encryption"  v={encryption} />
         <Row k="Authentication" v={auth} />

@@ -1,5 +1,5 @@
 import {
-  Box, ChevronRight, FileCode2, Globe, HardDrive,
+  AlertCircle, Box, ChevronDown, FileCode2, Globe, HardDrive,
   Info, KeyRound, Network, Tags, Terminal, X,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -7,6 +7,7 @@ import { api } from '../api/client'
 
 const MUTED  = { color: 'var(--text-3)' }
 const VALUE  = { color: 'var(--text-2)' }
+const ICON   = { color: 'var(--text-2)' }
 const BORDER = '1px solid var(--border-1)'
 
 /**
@@ -18,32 +19,30 @@ function Disclosure({ icon, title, count, preview, defaultOpen = false, children
   return (
     // shrink-0: without it the flex column squashes cards (overflow-hidden
     // lets them shrink below content height) instead of scrolling the body.
-    <div className="rounded-lg overflow-hidden shrink-0"
-      style={{ border: BORDER, background: 'var(--surface-raised)' }}>
+    <div className="card overflow-hidden shrink-0">
       <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open}
-        className="w-full flex items-center gap-2 px-3 py-2.5 text-left cursor-pointer">
-        <ChevronRight size={12} className="shrink-0 transition-transform"
-          style={{ ...MUTED, transform: open ? 'rotate(90deg)' : 'none' }} />
+        className="expander-header">
         {icon}
-        <span className="text-[12px] font-mono uppercase tracking-wider shrink-0" style={MUTED}>
+        <span className="text-[14px] shrink-0" style={{ color: 'var(--text-1)' }}>
           {title}
         </span>
         {count !== undefined && count > 0 && (
-          <span className="text-[11px] font-mono px-1.5 rounded shrink-0"
-            style={{ background: 'var(--surface-2)', border: BORDER, color: 'var(--text-3)' }}>
+          <span className="badge badge-neutral shrink-0 tabular-nums">
             {count}
           </span>
         )}
         {!open && preview && (
-          <span className="ml-auto text-[13px] font-mono truncate text-right"
-            style={{ color: 'var(--text-4)', maxWidth: '55%' }}>
+          <span className="ml-auto text-[12px] font-mono truncate text-right"
+            style={{ color: 'var(--text-3)', maxWidth: '55%' }}>
             {preview}
           </span>
         )}
+        <ChevronDown size={14} className={`shrink-0 transition-transform ${open || !preview ? 'ml-auto' : ''}`}
+          style={{ ...MUTED, transform: open ? 'rotate(180deg)' : 'none' }} />
       </button>
       {open && (
-        <div className="px-3 pb-3 pt-2 flex flex-col gap-1.5"
-          style={{ borderTop: '1px solid var(--border-1)' }}>
+        <div className="px-4 pb-3 pt-3 flex flex-col gap-1.5"
+          style={{ borderTop: BORDER, background: 'var(--row-hover)' }}>
           {children}
         </div>
       )}
@@ -55,7 +54,7 @@ function KV({ k, v, title }) {
   if (v === null || v === undefined || v === '') return null
   return (
     <div className="flex gap-3 text-[13px] font-mono">
-      <span className="w-24 shrink-0" style={MUTED}>{k}</span>
+      <span className="w-24 shrink-0 font-sans" style={MUTED}>{k}</span>
       <span className="break-all" style={VALUE} title={title}>{String(v)}</span>
     </div>
   )
@@ -113,31 +112,25 @@ export default function ContainerDetailDrawer({ name, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[210]"
-      style={{ background: 'var(--overlay)', backdropFilter: 'blur(4px)' }}
+      style={{ background: 'var(--overlay)' }}
       onClick={e => e.target === e.currentTarget && onClose()}>
 
       <div role="dialog" aria-modal="true" aria-label={`Details for ${name}`}
-        className="absolute top-0 right-0 h-full w-full max-w-[520px] flex flex-col"
-        style={{ background: 'var(--surface-0)', borderLeft: BORDER, boxShadow: '-24px 0 60px rgba(0,0,0,0.45)' }}>
+        className="drawer absolute top-0 right-0 h-full w-full max-w-[520px] flex flex-col">
 
         {/* Header — the essentials, nothing else */}
-        <div className="flex items-start justify-between px-5 py-4 gap-3"
-          style={{ borderBottom: BORDER, background: 'var(--surface-raised)' }}>
+        <div className="flex items-start justify-between px-5 pt-5 pb-4 gap-3">
           <div className="flex flex-col gap-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-[16px] font-medium truncate" style={{ color: 'var(--text-1)' }}>{name}</span>
+              <span className="text-[20px] font-semibold truncate" style={{ color: 'var(--text-1)' }}>{name}</span>
               {data && (
-                <span className="text-[11px] font-mono px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0"
-                  style={{
-                    color: data.status === 'running' ? 'var(--accent-teal)' : 'var(--accent-amber)',
-                    background: 'var(--hover-bg)', border: '1px solid var(--border-2)',
-                  }}>
+                <span className={`badge shrink-0 capitalize ${data.status === 'running' ? 'badge-success' : 'badge-caution'}`}>
                   {data.status}
                 </span>
               )}
             </div>
             {data && (
-              <span className="text-[13px] font-mono truncate" style={MUTED}
+              <span className="text-[12px] font-mono truncate" style={MUTED}
                 title={data.local_digest || undefined}>
                 {data.image}
                 {data.local_digest && <span style={{ color: 'var(--text-4)' }}> @ {shortDigest(data.local_digest)}</span>}
@@ -145,39 +138,39 @@ export default function ContainerDetailDrawer({ name, onClose }) {
             )}
           </div>
           <button type="button" onClick={onClose} aria-label="Close details" className="btn-icon shrink-0">
-            <X size={14} />
+            <X size={16} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2">
+        <div className="flex-1 overflow-y-auto px-4 pb-4 flex flex-col gap-1">
           {error && (
-            <div className="px-3 py-2 rounded text-[14px] font-mono shrink-0"
-              style={{ background: 'rgba(255,68,68,0.07)', border: '1px solid rgba(255,68,68,0.18)', color: 'var(--accent-red)' }}>
-              {error}
+            <div role="alert" className="infobar infobar-critical shrink-0">
+              <AlertCircle size={16} className="infobar-icon" />
+              <span className="break-words">{error}</span>
             </div>
           )}
 
           {!data && !error && (
-            <div className="text-[14px] font-mono py-8 text-center" style={MUTED}>Loading…</div>
+            <div className="text-[14px] py-8 text-center" style={MUTED}>Loading…</div>
           )}
 
           {data && (<>
-            <Disclosure icon={<Globe size={12} style={MUTED} />} title="Ports"
+            <Disclosure icon={<Globe size={16} style={ICON} />} title="Ports"
               count={ports.length} preview={portPreview || 'none'} defaultOpen={ports.length > 0}>
               {ports.length === 0
                 ? <Line>none published</Line>
                 : ports.map((p, i) => <Line key={i}>{p}</Line>)}
             </Disclosure>
 
-            <Disclosure icon={<HardDrive size={12} style={MUTED} />} title="Mounts"
+            <Disclosure icon={<HardDrive size={16} style={ICON} />} title="Mounts"
               count={mounts.length} preview={mountPreview || 'none'} defaultOpen={mounts.length > 0}>
               {mounts.length === 0
                 ? <Line>none captured</Line>
                 : mounts.map((v, i) => <Line key={i}>{v}</Line>)}
             </Disclosure>
 
-            <Disclosure icon={<KeyRound size={12} style={MUTED} />} title="Environment"
+            <Disclosure icon={<KeyRound size={16} style={ICON} />} title="Environment"
               count={envKeys.length} preview={envPreview || 'none'}>
               {envKeys.length === 0
                 ? <Line>none</Line>
@@ -194,7 +187,7 @@ export default function ContainerDetailDrawer({ name, onClose }) {
               <span className="text-[12px]" style={MUTED}>Values are hidden — they may contain secrets.</span>
             </Disclosure>
 
-            <Disclosure icon={<Network size={12} style={MUTED} />} title="Network"
+            <Disclosure icon={<Network size={16} style={ICON} />} title="Network"
               preview={netPreview || '—'}>
               <KV k="mode"     v={data.network_mode} />
               <KV k="networks" v={networks.join(', ')} />
@@ -203,7 +196,7 @@ export default function ContainerDetailDrawer({ name, onClose }) {
             </Disclosure>
 
             {(data.command || data.entrypoint || data.user || data.working_dir) && (
-              <Disclosure icon={<Terminal size={12} style={MUTED} />} title="Process"
+              <Disclosure icon={<Terminal size={16} style={ICON} />} title="Process"
                 preview={procPreview || '—'}>
                 <KV k="entrypoint" v={Array.isArray(data.entrypoint) ? data.entrypoint.join(' ') : data.entrypoint} />
                 <KV k="command"    v={Array.isArray(data.command) ? data.command.join(' ') : data.command} />
@@ -213,14 +206,14 @@ export default function ContainerDetailDrawer({ name, onClose }) {
             )}
 
             {data.compose && (
-              <Disclosure icon={<FileCode2 size={12} style={MUTED} />} title="Compose"
+              <Disclosure icon={<FileCode2 size={16} style={ICON} />} title="Compose"
                 preview={`${data.compose.filename} / ${data.compose.service_name}`}>
                 <KV k="file"    v={data.compose.filename} />
                 <KV k="service" v={data.compose.service_name} />
               </Disclosure>
             )}
 
-            <Disclosure icon={<Box size={12} style={MUTED} />} title="Image"
+            <Disclosure icon={<Box size={16} style={ICON} />} title="Image"
               preview={shortDigest(data.local_digest) || data.tag}>
               <KV k="image"  v={data.image} />
               <KV k="tag"    v={data.tag} />
@@ -229,7 +222,7 @@ export default function ContainerDetailDrawer({ name, onClose }) {
               <KV k="id"     v={data.short_id} />
             </Disclosure>
 
-            <Disclosure icon={<Tags size={12} style={MUTED} />} title="Labels"
+            <Disclosure icon={<Tags size={16} style={ICON} />} title="Labels"
               count={labels.length} preview={labelPreview || 'none'}>
               {labels.length === 0
                 ? <Line>none</Line>
@@ -242,7 +235,7 @@ export default function ContainerDetailDrawer({ name, onClose }) {
             </Disclosure>
 
             {/* Update-coverage note — present but quiet */}
-            <Disclosure icon={<Info size={12} style={{ color: 'var(--accent-amber)' }} />}
+            <Disclosure icon={<Info size={16} style={{ color: 'var(--accent-amber)' }} />}
               title="Direct update coverage" preview="what survives an update?">
               <p className="text-[12px] leading-relaxed" style={{ color: 'var(--text-3)' }}>
                 Direct updates recreate this container from the configuration above.{' '}

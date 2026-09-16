@@ -12,9 +12,7 @@ const S = {
   section: { color: 'var(--text-4)' },
   label: { color: 'var(--text-3)' },
   primary: { color: 'var(--text-1)' },
-  muted: { color: 'var(--text-4)' },
   border: '1px solid var(--border-1)',
-  border2: '1px solid var(--border-2)',
 }
 
 // ── Helper components ─────────────────────────────────────────────────────────
@@ -22,14 +20,11 @@ const S = {
 function StatusMsg({ msg, isError, onDismiss }) {
   if (!msg) return null
   return (
-    <div className="flex items-start gap-2 px-3 py-2 rounded text-[14px]"
-      style={isError
-        ? { background: 'rgba(255,68,68,0.07)', border: '1px solid rgba(255,68,68,0.18)', color: 'var(--accent-red)' }
-        : { background: 'rgba(80,227,194,0.07)', border: '1px solid rgba(80,227,194,0.18)', color: 'var(--accent-teal)' }
-      }>
-      {isError ? <AlertCircle size={12} className="mt-0.5 shrink-0" /> : <CheckCircle2 size={12} className="mt-0.5 shrink-0" />}
-      <span className="flex-1 font-mono">{msg}</span>
-      <button onClick={onDismiss} style={S.muted}><X size={11} /></button>
+    <div role={isError ? 'alert' : 'status'}
+      className={`infobar ${isError ? 'infobar-critical' : 'infobar-success'} items-center py-2`}>
+      {isError ? <AlertCircle size={16} className="infobar-icon !mt-0" /> : <CheckCircle2 size={16} className="infobar-icon !mt-0" />}
+      <span className="flex-1 break-words">{msg}</span>
+      <button onClick={onDismiss} className="icon-btn-subtle shrink-0" aria-label="Dismiss message"><X size={16} /></button>
     </div>
   )
 }
@@ -49,16 +44,10 @@ function ServicePicker({ composeFiles, labels = {}, selectedFileId, selectedServ
   const file = composeFiles.find(f => f.file_id === selectedFileId)
   const services = file?.services || []
 
-  const sel = {
-    background: 'var(--surface-1)', border: S.border, color: 'var(--text-3)', borderRadius: '4px',
-    padding: '4px 24px 4px 8px', fontSize: '13px', fontFamily: 'inherit',
-    appearance: 'none', width: '100%', cursor: 'pointer',
-  }
-
   return (
     <div className="flex gap-2">
-      <div className="relative flex-1">
-        <select value={selectedFileId} onChange={e => onChange(e.target.value, '')} style={sel}
+      <div className="relative flex-1 min-w-0">
+        <select value={selectedFileId} onChange={e => onChange(e.target.value, '')} className="select"
           aria-label="Compose file">
           <option value="">— file —</option>
           {composeFiles.map(f => (
@@ -67,16 +56,16 @@ function ServicePicker({ composeFiles, labels = {}, selectedFileId, selectedServ
             </option>
           ))}
         </select>
-        <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={S.muted} />
+        <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={S.label} />
       </div>
-      <div className="relative flex-1">
+      <div className="relative flex-1 min-w-0">
         <select value={selectedService} onChange={e => onChange(selectedFileId, e.target.value)}
-          disabled={!selectedFileId} style={{ ...sel, opacity: selectedFileId ? 1 : 0.4 }}
+          disabled={!selectedFileId} className="select"
           aria-label="Compose service">
           <option value="">— service —</option>
           {services.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
-        <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={S.muted} />
+        <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={S.label} />
       </div>
     </div>
   )
@@ -109,28 +98,28 @@ function FileEditor({ file, onSave, onCancel }) {
   }
 
   return (
-    <div className="flex flex-col gap-2" style={{ background: 'var(--surface-0)', border: S.border, borderRadius: '6px', overflow: 'hidden' }}>
+    <div className="code-surface flex flex-col gap-2 overflow-hidden">
       {/* Editor toolbar */}
-      <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: S.border, background: 'var(--surface-1)' }}>
+      <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: S.border, background: 'var(--surface-raised)' }}>
         <div className="flex items-center gap-2">
-          <FileCode2 size={12} style={S.muted} />
-          <span className="font-mono text-[13px]" style={S.label}>{file.filename}</span>
+          <FileCode2 size={16} style={S.label} />
+          <span className="font-mono text-[13px]" style={S.primary}>{file.filename}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <button onClick={handleSave} disabled={saving} className="btn btn-blue btn-xs">
-            <Save size={11} />{saving ? 'Saving…' : 'Save'}
+          <button onClick={handleSave} disabled={saving} className="btn btn-primary btn-xs">
+            <Save size={12} />{saving ? 'Saving…' : 'Save'}
           </button>
           <button onClick={onCancel} className="btn-icon" aria-label="Cancel edit">
-            <XCircle size={12} />
+            <XCircle size={16} />
           </button>
         </div>
       </div>
 
       {/* Error */}
       {error && (
-        <div className="mx-3 px-2 py-1.5 rounded text-[13px] font-mono"
-          style={{ background: 'rgba(255,68,68,0.07)', color: 'var(--accent-red)', border: '1px solid rgba(255,68,68,0.18)' }}>
-          {error}
+        <div role="alert" className="infobar infobar-critical mx-3 py-2">
+          <AlertCircle size={16} className="infobar-icon" />
+          <span className="break-words">{error}</span>
         </div>
       )}
 
@@ -183,20 +172,19 @@ function DownloadPanel({ file, onClose }) {
   }
 
   return (
-    <div className="flex flex-col gap-3 p-4 rounded-lg"
-      style={{ background: 'var(--surface-0)', border: '1px solid var(--border-2)' }}>
+    <div className="card flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <CheckCircle2 size={13} style={{ color: 'var(--accent-teal)' }} />
-          <span className="text-[15px] font-medium" style={S.primary}>Update complete</span>
+          <CheckCircle2 size={16} style={{ color: 'var(--accent-teal)' }} />
+          <span className="section-label">Update complete</span>
         </div>
         <button onClick={onClose} className="btn-icon" aria-label="Dismiss">
-          <X size={14} />
+          <X size={16} />
         </button>
       </div>
 
-      <p className="text-[14px] font-mono" style={S.section}>
-        Download or copy the updated <span style={S.label}>{file.filename}</span> compose file.
+      <p className="text-[14px]" style={S.label}>
+        Download or copy the updated <span className="font-mono" style={S.primary}>{file.filename}</span> compose file.
       </p>
 
       <div className="flex gap-2">
@@ -237,16 +225,17 @@ function ContainerRow({ container, association, composeFiles, labels, onAssociat
   }
 
   return (
-    <div className="grid gap-2 px-3 py-2 rounded"
+    <div className="grid gap-2 px-3 py-2 items-center"
       style={{
         gridTemplateColumns: '1fr 2fr auto',
-        background: hasAssociation ? 'var(--hover-bg)' : 'transparent',
-        border: `1px solid ${hasAssociation ? 'var(--border-2)' : 'var(--surface-1)'}`,
+        borderRadius: 'var(--radius-control)',
+        background: hasAssociation ? 'var(--accent-subtle)' : 'var(--surface-raised)',
+        border: `1px solid ${hasAssociation ? 'var(--border-2)' : 'var(--border-1)'}`,
       }}>
       <div className="flex items-center gap-2 min-w-0">
-        <span className="w-1 h-1 rounded-full shrink-0"
-          style={{ background: container.status === 'running' ? 'var(--accent-teal)' : 'var(--border-3)' }} />
-        <span className="font-mono text-[14px] truncate" style={{ color: 'var(--text-2)' }}
+        <span className="w-2 h-2 rounded-full shrink-0"
+          style={{ background: container.status === 'running' ? 'var(--accent-teal)' : 'var(--text-4)' }} />
+        <span className="text-[14px] font-semibold truncate" style={{ color: 'var(--text-1)' }}
           title={container.name}>{container.name}</span>
       </div>
 
@@ -255,17 +244,15 @@ function ContainerRow({ container, association, composeFiles, labels, onAssociat
 
       <div className="flex items-center gap-1">
         {canSave && (
-          <button onClick={handleSave} disabled={saving}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[13px] font-mono"
-            style={{ background: 'var(--hover-bg)', color: 'var(--text-3)', border: S.border2 }}>
-            <Link size={9} />{saving ? '…' : 'Link'}
+          <button onClick={handleSave} disabled={saving} className="btn btn-primary btn-xs">
+            <Link size={12} />{saving ? '…' : 'Link'}
           </button>
         )}
         {hasAssociation && !canSave && (
           <button onClick={() => onDisassociate(container.name)}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[13px] font-mono opacity-40 hover:opacity-100 transition-opacity"
-            style={{ background: 'rgba(255,68,68,0.05)', color: 'var(--accent-red)', border: '1px solid rgba(255,68,68,0.12)' }}>
-            <Link2Off size={9} />
+            className="icon-btn-subtle is-danger"
+            title={`Unlink ${container.name}`} aria-label={`Unlink ${container.name}`}>
+            <Link2Off size={14} />
           </button>
         )}
       </div>
@@ -367,22 +354,21 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
 
         {/* Header */}
         <div className="modal-header">
-          <div className="flex items-center gap-2">
-            <FileCode2 size={14} style={{ color: 'var(--text-4)' }} />
-            <span className="modal-title">Compose Files</span>
+          <div className="flex items-center gap-2.5">
+            <FileCode2 size={20} style={{ color: 'var(--accent)' }} />
+            <span className="modal-title">Compose files</span>
             {composeFiles.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded text-[12px] font-mono"
-                style={{ background: 'var(--surface-1)', color: 'var(--text-3)', border: '1px solid var(--border-1)' }}>
+              <span className="badge badge-neutral tabular-nums">
                 {composeFiles.length}
               </span>
             )}
           </div>
           <button onClick={onClose} className="btn-icon" aria-label="Close compose manager">
-            <X size={14} />
+            <X size={16} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-4">
+        <div className="modal-body flex-1">
           <StatusMsg msg={statusMsg} isError={isError} onDismiss={() => setStatusMsg(null)} />
 
           {/* Post-update download panel */}
@@ -408,17 +394,20 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
                 onDragLeave={() => setDragging(false)}
                 onDrop={e => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files) }}
                 onClick={() => fileInputRef.current?.click()}
-                className="flex flex-col items-center justify-center gap-2 py-7 rounded-lg cursor-pointer transition-all"
+                role="button" tabIndex={0}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click() } }}
+                className="flex flex-col items-center justify-center gap-2 py-7 cursor-pointer transition-colors hover:bg-[var(--hover-bg)]"
                 style={{
-                  border: `1px dashed ${dragging ? 'var(--text-4)' : 'var(--border-1)'}`,
-                  background: dragging ? 'var(--hover-bg)' : 'transparent',
+                  borderRadius: 'var(--radius-overlay)',
+                  border: `1px dashed ${dragging ? 'var(--accent)' : 'var(--border-3)'}`,
+                  background: dragging ? 'var(--accent-subtle)' : 'var(--surface-raised)',
                 }}>
-                <Upload size={18} style={{ color: dragging ? 'var(--text-3)' : 'var(--border-3)' }} />
-                <span className="text-[14px] font-mono"
-                  style={{ color: dragging ? 'var(--text-2)' : 'var(--text-4)' }}>
-                  {uploading ? 'Uploading…' : 'Drop compose files here, or click to browse'}
+                <Upload size={24} style={{ color: dragging ? 'var(--accent)' : 'var(--text-3)' }} />
+                <span className="text-[14px]"
+                  style={{ color: 'var(--text-1)' }}>
+                  {uploading ? 'Uploading…' : 'Drop compose files here, or select to browse'}
                 </span>
-                <span className="text-[12px]" style={S.muted}>.yml / .yaml only</span>
+                <span className="caption">.yml / .yaml only</span>
               </div>
               <input ref={fileInputRef} type="file" accept=".yml,.yaml" multiple className="hidden"
                 onChange={e => { handleFiles(e.target.files); e.target.value = '' }} />
@@ -428,18 +417,18 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
                 <div className="flex flex-col gap-1">
                   <button
                     onClick={() => setShowStoredFiles(!showStoredFiles)}
-                    className="flex items-center justify-between gap-2">
-                    <span className="text-[12px] font-mono uppercase tracking-wider mb-1"
-                      style={S.primary}>Stored files</span>
-                    <ChevronDown size={16} className={showStoredFiles ? 'rotate-180' : ''} style={S.primary} />
+                    aria-expanded={showStoredFiles}
+                    className="flex items-center justify-between gap-2 px-2 -mx-2 min-h-[32px] rounded hover:bg-[var(--hover-bg)] transition-colors">
+                    <span className="section-label">Stored files</span>
+                    <ChevronDown size={16} className={`transition-transform ${showStoredFiles ? 'rotate-180' : ''}`} style={S.label} />
                   </button>
                   {showStoredFiles && composeFiles.map(f => (
-                    <div key={f.file_id} className="flex items-center justify-between px-3 py-2 rounded"
-                      style={{ background: 'var(--surface-1)', border: S.border }}>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <FileCode2 size={12} style={{ color: 'var(--text-4)', flexShrink: 0 }} />
+                    <div key={f.file_id} className="flex items-center justify-between px-3 py-2"
+                      style={{ background: 'var(--surface-raised)', border: S.border, borderRadius: 'var(--radius-control)' }}>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <FileCode2 size={16} style={{ color: 'var(--text-2)', flexShrink: 0 }} />
                         <div className="flex flex-col min-w-0">
-                          <span className="font-mono text-[14px] truncate" style={{ color: 'var(--text-2)' }}>
+                          <span className="font-mono text-[13px] truncate" style={{ color: 'var(--text-1)' }}>
                             {f.filename}
                           </span>
                           {labels[f.file_id] !== f.filename && (
@@ -448,7 +437,7 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
                             </span>
                           )}
                         </div>
-                        <span className="text-[13px] shrink-0" style={S.section}>
+                        <span className="caption shrink-0">
                           {f.services.length} service{f.services.length !== 1 ? 's' : ''}: {f.services.slice(0, 4).join(', ')}{f.services.length > 4 ? '…' : ''}
                         </span>
                       </div>
@@ -456,28 +445,19 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
                       {/* File actions: Edit · Download · Delete */}
                       <div className="flex items-center gap-1 ml-2 shrink-0">
                         <button onClick={() => setEditingFile(f)}
-                          title="Edit file content"
-                          className="p-1 rounded transition-colors"
-                          style={{ color: 'var(--text-4)' }}
-                          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-3)'}
-                          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-4)'}>
-                          <Edit2 size={12} />
+                          title="Edit file content" aria-label={`Edit ${f.filename}`}
+                          className="icon-btn-subtle">
+                          <Edit2 size={14} />
                         </button>
                         <button onClick={() => setDownloadFile(f)}
-                          title="Download file"
-                          className="p-1 rounded transition-colors"
-                          style={{ color: 'var(--text-4)' }}
-                          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-3)'}
-                          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-4)'}>
-                          <Download size={12} />
+                          title="Download file" aria-label={`Download ${f.filename}`}
+                          className="icon-btn-subtle">
+                          <Download size={14} />
                         </button>
                         <button onClick={() => handleDeleteFile(f.file_id)}
-                          title="Delete file"
-                          className="p-1 rounded transition-colors"
-                          style={{ color: 'var(--text-4)' }}
-                          onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-red)'}
-                          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-4)'}>
-                          <Trash2 size={12} />
+                          title="Delete file" aria-label={`Delete ${f.filename}`}
+                          className="icon-btn-subtle is-danger">
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </div>
@@ -487,14 +467,13 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
 
               {/* Container associations */}
               <div className="flex flex-col gap-1">
-                <span className="text-[12px] font-mono uppercase tracking-wider mb-1"
-                  style={S.primary}>Container associations</span>
+                <span className="section-label mb-1">Container associations</span>
                 {composeFiles.length === 0 ? (
-                  <p className="text-[14px] font-mono py-2" style={S.muted}>
+                  <p className="text-[14px] py-2" style={S.label}>
                     Upload a compose file above to start linking containers.
                   </p>
                 ) : containers.length === 0 ? (
-                  <p className="text-[14px] font-mono py-2" style={S.muted}>
+                  <p className="text-[14px] py-2" style={S.label}>
                     No containers found. Run a scan first.
                   </p>
                 ) : (
@@ -513,7 +492,7 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
 
         {/* Footer */}
         <div className="modal-footer justify-between">
-          <span className="text-[13px] font-mono" style={{ color: 'var(--text-4)' }}>
+          <span className="text-[13px]" style={S.label}>
             {linkedCount} container{linkedCount !== 1 ? 's' : ''} linked
           </span>
           <div className="flex items-center gap-2">

@@ -23,34 +23,34 @@ export default function InfoBar({ health, onTestEmail }) {
   const emailColor = health.email_configured ? 'var(--accent-teal)' : 'var(--text-3)'
 
   return (
-    <div className="flex items-center flex-wrap gap-x-4 gap-y-1 px-4 py-2 mb-4 text-[14px] font-mono rounded-md"
-      style={{ background: 'var(--surface-raised)', border: '1px solid var(--border-1)', color: 'var(--text-3)' }}>
+    <div className="card flex items-center flex-wrap gap-x-4 gap-y-1 px-4 py-2 mb-3 text-[13px]"
+      style={{ color: 'var(--text-3)' }}>
 
       <span className="flex items-center gap-1.5">
-        <Clock size={11} style={{ color: 'var(--text-4)' }} />
-        Scan every{' '}
-        <span style={{ color: 'var(--text-2)' }}>{health.scan_interval_hours}h</span>
+        <Clock size={14} style={{ color: 'var(--text-3)' }} />
+        Scans every{' '}
+        <span className="font-semibold" style={{ color: 'var(--text-1)' }}>{health.scan_interval_hours}h</span>
       </span>
 
-      <div className="w-px h-3" style={{ background: 'var(--border-1)' }} />
+      <div className="w-px h-4" style={{ background: 'var(--border-3)' }} />
 
       <span className="flex items-center gap-1.5"
         title={health.last_scan ? new Date(health.last_scan).toLocaleString() : undefined}>
-        <History size={11} style={{ color: 'var(--text-4)' }} />
+        <History size={14} style={{ color: 'var(--text-3)' }} />
         Last scan{' '}
-        <span style={{ color: health.last_scan ? 'var(--text-2)' : 'var(--text-3)' }}>{lastScan}</span>
+        <span className="font-semibold" style={{ color: health.last_scan ? 'var(--text-1)' : 'var(--text-3)' }}>{lastScan}</span>
       </span>
 
-      <div className="w-px h-3" style={{ background: 'var(--border-1)' }} />
+      <div className="w-px h-4" style={{ background: 'var(--border-3)' }} />
 
       <span className="flex items-center gap-1.5">
-        <Mail size={11} style={{ color: 'var(--text-4)' }} />
+        <Mail size={14} style={{ color: 'var(--text-3)' }} />
         Email
         <button type="button" onClick={() => setShowEmail(true)}
           aria-label="Email configuration details"
           title="View email configuration"
-          className="inline-flex items-center">
-          <Info size={13} style={{ color: emailColor }} />
+          className="icon-btn-subtle !h-6 !w-6">
+          <Info size={14} style={{ color: emailColor }} />
         </button>
       </span>
 

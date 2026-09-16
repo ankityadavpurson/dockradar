@@ -1,22 +1,24 @@
-import { ArrowUpCircle, ChevronDown, ChevronUp, FileCode2, Loader2, ShieldCheck, Tag } from 'lucide-react'
+import { ArrowUpCircle, Box, ChevronDown, ChevronUp, FileCode2, Loader2, ShieldCheck, Tag } from 'lucide-react'
 import { useState } from 'react'
 import CheckBox from './CheckBox'
 import RowMenu from './RowMenu'
 
 const STATUS_CFG = {
-  up_to_date:       { label: 'Up to date',       color: 'var(--accent-teal)', bg: 'rgba(80,227,194,0.07)',  border: 'rgba(80,227,194,0.18)'  },
-  update_available: { label: 'Update available', color: 'var(--accent-amber)', bg: 'rgba(245,166,35,0.07)', border: 'rgba(245,166,35,0.18)'  },
-  error:            { label: 'Error',            color: 'var(--accent-red)', bg: 'rgba(255,68,68,0.07)',   border: 'rgba(255,68,68,0.18)'   },
-  unknown:          { label: 'Unknown',          color: 'var(--text-4)',    bg: 'var(--hover-bg)', border: 'var(--border-1)'                },
+  up_to_date:       { label: 'Up to date',       cls: 'badge-success'  },
+  update_available: { label: 'Update available', cls: 'badge-caution'  },
+  error:            { label: 'Error',            cls: 'badge-critical' },
+  unknown:          { label: 'Unknown',          cls: 'badge-neutral'  },
 }
 
+const DOT_RING = '0 0 0 2px var(--hover-bg)'
 const DOCKER_DOT = {
-  running:  { bg: 'var(--accent-teal)', shadow: '0 0 5px rgba(80,227,194,0.5)' },
-  exited:   { bg: 'var(--accent-red)', shadow: 'none' },
-  paused:   { bg: 'var(--accent-amber)', shadow: 'none' },
-  created:  { bg: 'var(--text-3)',    shadow: 'none' },
-  dead:     { bg: 'var(--border-3)',    shadow: 'none' },
+  running:  { bg: 'var(--accent-teal)',  shadow: DOT_RING },
+  exited:   { bg: 'var(--accent-red)',   shadow: DOT_RING },
+  paused:   { bg: 'var(--accent-amber)', shadow: DOT_RING },
+  created:  { bg: 'var(--text-3)',       shadow: DOT_RING },
+  dead:     { bg: 'var(--text-4)',       shadow: DOT_RING },
 }
+const DEFAULT_DOT = { bg: 'var(--text-4)', shadow: DOT_RING }
 
 // One entry per body cell (after the checkbox) — keep in sync with the <td>s.
 const COLS = [
@@ -44,39 +46,38 @@ function TagLabel({ container: c }) {
 
   if (c.update_status === 'update_available') {
     return (
-      <span className="inline-block font-mono text-[14px]"
-        style={{ color: 'var(--text-4)', textDecoration: 'line-through' }}>
+      <span className="inline-block font-mono text-[13px]"
+        style={{ color: 'var(--text-3)', textDecoration: 'line-through' }}>
         {label}
       </span>
     )
   }
   if (c.tag === 'latest') {
     return (
-      <span className="inline-block font-mono text-[14px]" style={{ color: 'var(--text-3)' }}>
+      <span className="inline-block font-mono text-[13px]" style={{ color: 'var(--text-3)' }}>
         latest
       </span>
     )
   }
   return (
-    <span className="inline-block font-mono text-[14px] px-1.5 py-0.5 rounded w-fit"
-      style={{ color: 'var(--text-2)', background: 'var(--hover-bg)', border: '1px solid var(--border-1)' }}
+    <span className="badge badge-square font-mono font-normal w-fit text-[13px]"
+      style={{ color: 'var(--text-1)' }}
       title={isDigestTag ? c.tag : undefined}>
       {label}
     </span>
   )
 }
 
+// Badge variant class per check outcome.
 const CHECK_STYLES = {
-  ok:   { color: 'var(--accent-teal)', background: 'rgba(80,227,194,0.05)',  border: '1px solid rgba(80,227,194,0.15)' },
-  warn: { color: 'var(--accent-amber)', background: 'rgba(245,166,35,0.07)',  border: '1px solid rgba(245,166,35,0.18)' },
-  dim:  { color: 'var(--text-4)', background: 'var(--hover-bg)', border: '1px solid var(--border-1)' },
+  ok:   'badge-success',
+  warn: 'badge-caution',
+  dim:  'badge-neutral',
 }
 
 function CheckChip({ style, icon, label, title }) {
   return (
-    <span className="inline-flex items-center gap-2 text-[13px] font-mono px-1.5 py-0.5 rounded capitalize"
-      style={style} title={title}
-    >
+    <span className={`badge badge-square ${style}`} title={title}>
       {icon}
       {label}
     </span>
@@ -88,7 +89,7 @@ function VersionCheckCell({ container }) {
   const tagsMatch = !latest_tag || latest_tag === tag || latest_tag === 'unknown'
 
   if (update_status === 'unknown' || update_status === 'error') {
-    return <span style={{ color: 'var(--text-4)' }}>—</span>
+    return <span style={{ color: 'var(--text-3)' }}>—</span>
   }
 
   // A newer tag exists — the genuinely interesting tag-level state.
@@ -100,19 +101,19 @@ function VersionCheckCell({ container }) {
   // Same tag, but the image was rebuilt upstream.
   if (update_status === 'update_available') {
     return <CheckChip style={CHECK_STYLES.warn} icon={<ShieldCheck size={12} />}
-      label="digest changed"
+      label="Digest changed"
       title={`Same tag, but the image was rebuilt upstream\nLocal digest: ${local_digest ?? 'unknown'}`} />
   }
 
   // Fully verified: tag and digest both match upstream.
   if (local_digest) {
     return <CheckChip style={CHECK_STYLES.ok} icon={<ShieldCheck size={12} />}
-      label="verified" title={`Tag and digest match upstream\n${local_digest}`} />
+      label="Verified" title={`Tag and digest match upstream\n${local_digest}`} />
   }
 
   // Tag matches but there was no digest to verify image content with.
   return <CheckChip style={CHECK_STYLES.dim} icon={<Tag size={12} />}
-    label="tag match" title="Tag matches upstream; no digest available to verify image content" />
+    label="Tag match" title="Tag matches upstream; no digest available to verify image content" />
 }
 
 // Priority for the default sort: actionable states first.
@@ -123,15 +124,14 @@ function ContainerCard({
   c, isSel, refreshing, isUpdating, hasCompose, assoc, isBusy,
   onToggleSelect, onConfirmUpdate, onComposeUpdate, onConfirmDelete, onShowDetails,
 }) {
-  const dot = DOCKER_DOT[c.status] ?? { bg: 'var(--border-3)', shadow: 'none' }
+  const dot = DOCKER_DOT[c.status] ?? DEFAULT_DOT
   const isRunning = c.status === 'running'
 
   return (
-    <div className="px-4 py-3 flex flex-col gap-2.5"
+    <div className={`data-row px-4 py-3 flex flex-col gap-2.5 ${isSel ? 'is-selected' : ''}`}
       style={{
         borderBottom: '1px solid var(--border-1)',
-        background: isSel ? 'var(--row-hover)' : 'transparent',
-        filter: isRunning ? undefined : 'brightness(0.65)',
+        filter: isRunning ? undefined : 'saturate(0.4) opacity(0.7)',
       }}>
       <div className="flex items-center gap-2.5 min-w-0">
         <CheckBox id={`card-check-${c.id}`} ariaLabel={`Select ${c.name}`}
@@ -139,8 +139,7 @@ function ContainerCard({
         <span className="w-2 h-2 rounded-full shrink-0"
           style={{ background: dot.bg, boxShadow: dot.shadow }}
           role="img" aria-label={`Container ${c.status}`} />
-        <button type="button" className="text-[15px] font-medium truncate text-left"
-          style={{ color: 'var(--text-1)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+        <button type="button" className="link-btn text-[14px] font-semibold truncate"
           title={`View details for ${c.name}`}
           onClick={() => onShowDetails && onShowDetails(c)}>
           {c.name}
@@ -152,14 +151,14 @@ function ContainerCard({
               <button className="btn btn-ghost btn-xs" disabled={isBusy}
                 onClick={() => onComposeUpdate && onComposeUpdate(c)}
                 title={`Update via compose: ${assoc.service_name}`}>
-                <FileCode2 size={10} />
+                <FileCode2 size={12} />
                 Compose
               </button>
             ) : (
               <button className="btn btn-yellow btn-xs" disabled={isBusy}
                 onClick={() => onConfirmUpdate(c)}
                 title={`Update ${c.name}`}>
-                <ArrowUpCircle size={10} />
+                <ArrowUpCircle size={12} />
                 Update
               </button>
             )
@@ -170,7 +169,7 @@ function ContainerCard({
         </div>
       </div>
 
-      <div className="text-[14px] font-mono truncate" style={{ color: 'var(--text-3)' }}>
+      <div className="text-[12px] font-mono truncate" style={{ color: 'var(--text-3)' }}>
         {c.repository}
       </div>
 
@@ -195,14 +194,10 @@ function ContainerCard({
 function StoppedBadge({ status }) {
   if (status === 'running') return null
   return (
-    <span className="text-[11px] font-mono px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0"
-      style={{
-        color: status === 'exited' ? 'var(--accent-red)'
-             : status === 'paused' ? 'var(--accent-amber)'
-             : 'var(--text-3)',
-        background: 'var(--hover-bg)',
-        border: '1px solid var(--border-2)',
-      }}>
+    <span className={`badge badge-square shrink-0 capitalize ${
+      status === 'exited' ? 'badge-critical'
+      : status === 'paused' ? 'badge-caution'
+      : 'badge-neutral'}`}>
       {status}
     </span>
   )
@@ -211,9 +206,8 @@ function StoppedBadge({ status }) {
 function StatusPill({ status }) {
   const s = STATUS_CFG[status] ?? STATUS_CFG.unknown
   return (
-    <span className="inline-flex items-center gap-2 text-[13px] font-mono px-1.5 py-0.5 rounded"
-      style={{ color: s.color, background: s.bg, border: `1px solid ${s.border}` }}>
-      <span className="w-1 h-1 rounded-full" style={{ background: s.color }} />
+    <span className={`badge ${s.cls}`}>
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'currentColor' }} />
       {s.label}
     </span>
   )
@@ -223,8 +217,7 @@ function StatusPill({ status }) {
 function UpdatingPill() {
   const s = STATUS_CFG.update_available
   return (
-    <span className="inline-flex items-center gap-1.5 text-[13px] font-mono px-1.5 py-0.5 rounded"
-      style={{ color: s.color, background: s.bg, border: `1px solid ${s.border}` }}>
+    <span className={`badge ${s.cls}`}>
       <Loader2 size={12} className="animate-spin" />
       Updating…
     </span>
@@ -262,16 +255,16 @@ export default function ContainerTable({
   if (containers.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20" style={{ color: 'var(--text-3)' }}>
-        <span className="text-4xl mb-4 opacity-20">▲</span>
+        <Box size={40} strokeWidth={1.25} className="mb-4" style={{ color: 'var(--text-4)' }} />
         {isFiltered ? (
           <>
-            <p className="text-[16px] font-medium mb-1" style={{ color: 'var(--text-2)' }}>No matching containers</p>
-            <p className="text-[15px]">Nothing matches the current search or filter — clear them to see all containers.</p>
+            <p className="text-[16px] font-semibold mb-1" style={{ color: 'var(--text-1)' }}>No matching containers</p>
+            <p className="text-[14px]">Nothing matches the current search or filter — clear them to see all containers.</p>
           </>
         ) : (
           <>
-            <p className="text-[16px] font-medium mb-1" style={{ color: 'var(--text-2)' }}>No containers found</p>
-            <p className="text-[15px]">Click <span style={{ color: 'var(--text-1)' }}>Scan</span> to discover Docker containers.</p>
+            <p className="text-[16px] font-semibold mb-1" style={{ color: 'var(--text-1)' }}>No containers found</p>
+            <p className="text-[14px]">Select <span className="font-semibold" style={{ color: 'var(--text-1)' }}>Scan</span> to discover Docker containers.</p>
           </>
         )}
       </div>
@@ -301,10 +294,10 @@ export default function ContainerTable({
     </div>
 
     {/* Desktop: table */}
-    <div className="overflow-x-auto hidden md:block">
+    <div className="overflow-x-auto overflow-y-hidden hidden md:block">
       <table className="w-full border-collapse">
         <thead>
-          <tr style={{ borderBottom: '1px solid var(--border-1)' }}>
+          <tr style={{ borderBottom: '1px solid var(--border-2)' }}>
             <th className="w-10 pl-4 py-3 text-left">
               <CheckBox
                 id="check-all"
@@ -321,18 +314,18 @@ export default function ContainerTable({
                 aria-sort={col.sortable && sortKey === col.key
                   ? (sortDir === 'asc' ? 'ascending' : 'descending')
                   : undefined}
-                className="px-4 py-3 text-left text-[13px] font-medium uppercase tracking-wider whitespace-nowrap"
-                style={{ color: col.sortable && sortKey === col.key ? 'var(--text-2)' : 'var(--text-3)' }}>
+                className="px-4 py-2.5 text-left text-[12px] font-semibold whitespace-nowrap"
+                style={{ color: col.sortable && sortKey === col.key ? 'var(--text-1)' : 'var(--text-3)' }}>
                 {col.sortable ? (
                   <button type="button"
                     onClick={() => handleSort(col.key)}
-                    className="inline-flex items-center gap-1 uppercase tracking-wider cursor-pointer select-none"
-                    style={{ background: 'none', border: 'none', color: 'inherit', font: 'inherit', padding: 0 }}>
+                    className="inline-flex items-center gap-1 cursor-pointer select-none rounded px-1 -mx-1 bg-transparent hover:bg-[var(--hover-bg)]"
+                    style={{ border: 'none', color: 'inherit', font: 'inherit' }}>
                     {col.label}
                     {sortKey === col.key && (
                       sortDir === 'asc'
-                        ? <ChevronUp size={10} />
-                        : <ChevronDown size={10} />
+                        ? <ChevronUp size={12} />
+                        : <ChevronDown size={12} />
                     )}
                   </button>
                 ) : (
@@ -345,7 +338,7 @@ export default function ContainerTable({
 
         <tbody>
           {sorted.map((c, idx) => {
-            const dot        = DOCKER_DOT[c.status] ?? { bg: 'var(--border-3)', shadow: 'none' }
+            const dot        = DOCKER_DOT[c.status] ?? DEFAULT_DOT
             const isSel      = selected.has(c.id)
             const assoc      = associations[c.name]
             const hasCompose = !!assoc
@@ -357,13 +350,12 @@ export default function ContainerTable({
 
             return (
               <tr key={c.id}
-                className="animate-fade_in"
+                className={`data-row animate-fade_in ${isSel ? 'is-selected' : ''}`}
                 style={{
                   borderBottom: '1px solid var(--border-1)',
-                  background: isSel ? 'var(--row-hover)' : 'transparent',
                   animationDelay: `${idx * 20}ms`,
                   // fade_in's fill-mode owns `opacity`, so dim via filter
-                  filter: isRunning ? undefined : 'brightness(0.65)',
+                  filter: isRunning ? undefined : 'saturate(0.4) opacity(0.7)',
                 }}>
 
                 {/* Checkbox */}
@@ -381,16 +373,15 @@ export default function ContainerTable({
                       role="img"
                       aria-label={`Container ${c.status}`}
                     />
-                    <button type="button" className="text-[15px] font-medium text-left"
-                      style={{ color: 'var(--text-1)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                    <button type="button" className="link-btn text-[14px] font-semibold"
                       title={`View details for ${c.name}`}
                       onClick={() => onShowDetails && onShowDetails(c)}>
                       {c.name}
                     </button>
                     <StoppedBadge status={c.status} />
                   </div>
-                  <span className="text-[14px] font-mono" style={{ color: 'var(--text-3)' }}>{c.repository}</span>
-                  <div className="text-[12px] font-mono mt-0.5" style={{ color: 'var(--text-4)' }}>{c.short_id}</div>
+                  <span className="text-[12px] font-mono" style={{ color: 'var(--text-3)' }}>{c.repository}</span>
+                  <div className="text-[11px] font-mono" style={{ color: 'var(--text-4)' }}>{c.short_id}</div>
                 </td>
 
                 {/* Tag + Digest */}
@@ -398,7 +389,7 @@ export default function ContainerTable({
                   <div className="flex flex-col gap-1">
                     <TagLabel container={c} />
                     {c.local_digest && (
-                      <span className="font-mono text-[13px]" style={{ color: 'var(--text-4)' }} title={c.local_digest}>
+                      <span className="font-mono text-[12px]" style={{ color: 'var(--text-4)' }} title={c.local_digest}>
                         {shortDigest(c.local_digest)}
                       </span>
                     )}
@@ -408,7 +399,7 @@ export default function ContainerTable({
                 {/* Version check */}
                 <td className="px-4 py-3">
                   {isUpdatingRow
-                    ? <span className="text-[13px] font-mono" style={{ color: 'var(--text-4)' }}>—</span>
+                    ? <span className="text-[13px]" style={{ color: 'var(--text-3)' }}>—</span>
                     : refreshing
                       ? <div className="skeleton h-4 w-20" aria-label="Checking…" />
                       : <VersionCheckCell container={c} />}
@@ -442,14 +433,14 @@ export default function ContainerTable({
                         <button className="btn btn-ghost btn-xs" disabled={isBusy}
                           onClick={() => onComposeUpdate && onComposeUpdate(c)}
                           title={`Update via compose: ${assoc.service_name}`}>
-                          <FileCode2 size={10} />
+                          <FileCode2 size={12} />
                           Compose
                         </button>
                       ) : (
                         <button className="btn btn-yellow btn-xs" disabled={isBusy}
                           onClick={() => onConfirmUpdate(c)}
                           title={`Update ${c.name}`}>
-                          <ArrowUpCircle size={10} />
+                          <ArrowUpCircle size={12} />
                           Update
                         </button>
                       )

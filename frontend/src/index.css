@@ -2,223 +2,539 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Design tokens — single source of truth for the palette ──────────────────
+/* ── Design tokens — Windows 11 / Fluent palette ─────────────────────────────
    Dark is the default (:root). The theme hook always stamps an explicit
-   data-theme="dark" | "light" on <html>, so both selectors are defined. */
+   data-theme="dark" | "light" on <html>, so both selectors are defined.
+   Legacy token names (--surface-*, --border-*, --text-*, --accent-teal/amber/red)
+   are kept so existing inline styles keep resolving. */
 :root,
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --page-bg: #1e1e1e;
 
-  /* Surfaces (darkest → raised) */
-  --surface-0: #0a0a0a;   /* deepest: drawers, code areas */
-  --surface-1: #111111;   /* dialogs, panels */
-  --surface-2: #1a1a1a;   /* raised rows, hover */
-  --surface-raised: rgba(0, 0, 0, 0.3);  /* table header / toolbar strips */
+  --font-mono: theme('fontFamily.mono');
 
-  /* Borders (subtle → strong) */
-  --border-1: #1a1a1a;
-  --border-2: #222222;
-  --border-3: #333333;
+  /* Mica base */
+  --page-bg: #202020;
+  --mica-gradient:
+    radial-gradient(1200px 600px at 0% 0%, rgba(96, 205, 255, 0.07), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(160, 120, 255, 0.04), transparent 60%);
 
-  /* Text tiers (primary → muted) */
-  --text-1: #ededed;      /* primary / headings */
-  --text-2: #bbbbbb;      /* values */
-  --text-3: #8a8a8a;      /* secondary / labels */
-  --text-4: #6a6a6a;      /* muted / tertiary */
-  --text-strong: #ffffff; /* logotype */
+  /* Layers (deepest → raised) */
+  --surface-0: #1c1c1c;   /* code areas, editors */
+  --surface-1: #2b2b2b;   /* dialogs, layer */
+  --surface-2: #323232;   /* raised fills, dialog footer */
+  --surface-raised: rgba(255, 255, 255, 0.05);  /* card fill */
+
+  /* Strokes (subtle → strong) */
+  --border-1: rgba(255, 255, 255, 0.06);
+  --border-2: rgba(255, 255, 255, 0.09);
+  --border-3: rgba(255, 255, 255, 0.16);
+  --stroke-strong: rgba(255, 255, 255, 0.6);
+
+  /* Text tiers (primary → tertiary) */
+  --text-1: #ffffff;
+  --text-2: #d1d1d1;
+  --text-3: #ababab;
+  --text-4: #919191;
+  --text-strong: #ffffff;
 
   /* Subtle interaction fills */
-  --hover-bg:   rgba(255, 255, 255, 0.05);
+  --hover-bg:   rgba(255, 255, 255, 0.06);
+  --pressed-bg: rgba(255, 255, 255, 0.04);
   --row-hover:  rgba(255, 255, 255, 0.03);
-  --input-bg:   #111111;
+  --input-bg:   rgba(255, 255, 255, 0.06);
 
-  /* Accents */
-  --accent-teal:  #50e3c2;
-  --accent-amber: #f5a623;
-  --accent-red:   #ff4444;
+  /* Windows accent */
+  --accent:         #60cdff;
+  --accent-hover:   #5bb9e6;
+  --accent-pressed: #56a5cc;
+  --accent-fg:      #000000;
+  --accent-subtle:  rgba(96, 205, 255, 0.09);
+  --accent-stroke-bottom: rgba(0, 0, 0, 0.14);
 
-  /* Solid button (primary) */
-  --btn-solid-bg:    #ffffff;
-  --btn-solid-fg:    #000000;
-  --btn-solid-hover: #e6e6e6;
+  /* Semantic (names kept for compatibility) */
+  --accent-teal:  #6ccb5f;   /* success */
+  --accent-amber: #fce100;   /* caution */
+  --accent-red:   #ff99a4;   /* critical */
+  --success-bg:     rgba(9, 81, 0, 0.1);
+  --success-border: rgba(108, 203, 95, 0.3);
+  --caution-bg:     rgba(109, 98, 0, 0.1);
+  --caution-border: rgba(252, 225, 0, 0.28);
+  --critical-bg:    rgba(109, 0, 11, 0.1);
+  --critical-border: rgba(255, 153, 164, 0.3);
+
+  /* Controls */
+  --control-bg:         rgba(255, 255, 255, 0.06);
+  --control-bg-hover:   rgba(255, 255, 255, 0.08);
+  --control-bg-pressed: rgba(255, 255, 255, 0.03);
+  --control-stroke:        rgba(255, 255, 255, 0.07);
+  --control-stroke-bottom: rgba(255, 255, 255, 0.04);
+  --control-top-highlight: rgba(255, 255, 255, 0.09);
+  --input-stroke-bottom:   rgba(255, 255, 255, 0.54);
+  --input-bg-focus:        #1f1f1f;
+
+  /* Solid (primary) button → accent */
+  --btn-solid-bg:    var(--accent);
+  --btn-solid-fg:    var(--accent-fg);
+  --btn-solid-hover: var(--accent-hover);
+
+  /* Acrylic */
+  --acrylic-bg:      rgba(44, 44, 44, 0.94);
+  --acrylic-bar-bg:  rgba(32, 32, 32, 0.78);
+  --acrylic-blur:    blur(30px) saturate(125%);
+
+  /* Shape + depth */
+  --radius-control: 4px;
+  --radius-overlay: 8px;
+  --shadow-card:   0 1px 2px rgba(0, 0, 0, 0.22);
+  --shadow-flyout: 0 8px 16px rgba(0, 0, 0, 0.26);
+  --shadow-dialog: 0 32px 64px rgba(0, 0, 0, 0.37), 0 2px 21px rgba(0, 0, 0, 0.37);
+  --shadow-drawer: -16px 0 40px rgba(0, 0, 0, 0.35);
+
+  /* Focus */
+  --focus-outer: #ffffff;
 
   /* Overlay + scrollbar */
-  --overlay: rgba(0, 0, 0, 0.4);
-  --scrollbar-track: #000000;
-  --scrollbar-thumb: #333333;
-  --scrollbar-thumb-hover: #555555;
-  --selection: rgba(255, 255, 255, 0.15);
+  --overlay: rgba(0, 0, 0, 0.5);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.28);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.45);
+  --selection: rgba(96, 205, 255, 0.3);
 }
 
 :root[data-theme="light"] {
   color-scheme: light;
-  --page-bg: #f4f4f5;
 
-  --surface-0: #ffffff;
+  --page-bg: #f3f3f3;
+  --mica-gradient:
+    radial-gradient(1200px 600px at 0% 0%, rgba(0, 95, 184, 0.06), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(140, 90, 220, 0.04), transparent 60%);
+
+  --surface-0: #fbfbfb;
   --surface-1: #ffffff;
-  --surface-2: #f1f5f9;
-  --surface-raised: #f8fafc;
+  --surface-2: #f3f3f3;
+  --surface-raised: rgba(255, 255, 255, 0.72);
 
-  --border-1: #e8e8ea;
-  --border-2: #e2e2e6;
-  --border-3: #cfcfd4;
+  --border-1: rgba(0, 0, 0, 0.06);
+  --border-2: rgba(0, 0, 0, 0.09);
+  --border-3: rgba(0, 0, 0, 0.16);
+  --stroke-strong: rgba(0, 0, 0, 0.6);
 
-  --text-1: #18181b;
-  --text-2: #3f3f46;
-  --text-3: #6b7280;
-  --text-4: #9ca3af;
-  --text-strong: #18181b;
+  --text-1: #1a1a1a;
+  --text-2: #424242;
+  --text-3: #595959;
+  --text-4: #6e6e6e;
+  --text-strong: #1a1a1a;
 
   --hover-bg:   rgba(0, 0, 0, 0.04);
-  --row-hover:  rgba(0, 0, 0, 0.03);
-  --input-bg:   #ffffff;
+  --pressed-bg: rgba(0, 0, 0, 0.02);
+  --row-hover:  rgba(0, 0, 0, 0.025);
+  --input-bg:   rgba(255, 255, 255, 0.7);
 
-  --accent-teal:  #0d9488;
-  --accent-amber: #b45309;
-  --accent-red:   #dc2626;
+  --accent:         #005fb8;
+  --accent-hover:   #1970c2;
+  --accent-pressed: #327fca;
+  --accent-fg:      #ffffff;
+  --accent-subtle:  rgba(0, 95, 184, 0.07);
+  --accent-stroke-bottom: rgba(0, 0, 0, 0.4);
 
-  --btn-solid-bg:    #18181b;
-  --btn-solid-fg:    #ffffff;
-  --btn-solid-hover: #3f3f46;
+  --accent-teal:  #0f7b0f;
+  --accent-amber: #9d5d00;
+  --accent-red:   #c42b1c;
+  --success-bg:     #dff6dd;
+  --success-border: rgba(15, 123, 15, 0.22);
+  --caution-bg:     #fff4ce;
+  --caution-border: rgba(157, 93, 0, 0.22);
+  --critical-bg:    #fde7e9;
+  --critical-border: rgba(196, 43, 28, 0.22);
 
-  --overlay: rgba(0, 0, 0, 0.25);
-  --scrollbar-track: #e5e7eb;
-  --scrollbar-thumb: #cbd5e1;
-  --scrollbar-thumb-hover: #94a3b8;
-  --selection: rgba(13, 148, 136, 0.18);
+  --control-bg:         rgba(255, 255, 255, 0.7);
+  --control-bg-hover:   rgba(249, 249, 249, 0.5);
+  --control-bg-pressed: rgba(249, 249, 249, 0.3);
+  --control-stroke:        rgba(0, 0, 0, 0.06);
+  --control-stroke-bottom: rgba(0, 0, 0, 0.16);
+  --control-top-highlight: rgba(0, 0, 0, 0.06);
+  --input-stroke-bottom:   rgba(0, 0, 0, 0.45);
+  --input-bg-focus:        #ffffff;
+
+  --acrylic-bg:      rgba(252, 252, 252, 0.93);
+  --acrylic-bar-bg:  rgba(243, 243, 243, 0.78);
+
+  --shadow-card:   0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-flyout: 0 8px 16px rgba(0, 0, 0, 0.14);
+  --shadow-dialog: 0 32px 64px rgba(0, 0, 0, 0.19), 0 2px 21px rgba(0, 0, 0, 0.15);
+  --shadow-drawer: -16px 0 40px rgba(0, 0, 0, 0.12);
+
+  --focus-outer: rgba(0, 0, 0, 0.9);
+
+  --overlay: rgba(0, 0, 0, 0.3);
+  --scrollbar-thumb: rgba(0, 0, 0, 0.3);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.5);
+  --selection: rgba(0, 95, 184, 0.2);
 }
 
 @layer base {
   * { box-sizing: border-box; }
 
+  html {
+    background-color: var(--page-bg);
+  }
+
   html, body, #root {
     min-height: 100vh;
-    background-color: var(--page-bg);
+  }
+
+  body {
     color: var(--text-1);
-    /* System stack — no external font request (works offline / self-hosted).
-       'Inter' is used when installed locally. */
-    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--page-bg);
+    background-image: var(--mica-gradient);
+    background-attachment: fixed;
+    /* Windows 11 type ramp — Segoe UI Variable, no external font request. */
+    font-family: 'Segoe UI Variable Text', 'Segoe UI Variable', 'Segoe UI', system-ui,
+                 -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif;
+    font-size: 14px;
+    line-height: 1.43;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Scrollbar — thin, monochrome */
-  ::-webkit-scrollbar { width: 4px; height: 4px; }
-  ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
-  ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 2px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+  /* Fluent keyboard focus ring — only for keyboard navigation */
+  :focus-visible {
+    outline: 2px solid var(--focus-outer);
+    outline-offset: 1px;
+    border-radius: var(--radius-control);
+  }
+
+  /* Scrollbar — thin Fluent overlay style */
+  * { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover); }
 
   ::selection { background: var(--selection); }
+
+  code {
+    font-family: theme('fontFamily.mono');
+    font-size: 0.92em;
+  }
 }
 
 @layer components {
 
+  /* ── Surfaces ── */
+  .card {
+    background: var(--surface-raised);
+    border: 1px solid var(--border-1);
+    border-radius: var(--radius-overlay);
+    box-shadow: var(--shadow-card);
+  }
+  .acrylic {
+    background: var(--acrylic-bg);
+    -webkit-backdrop-filter: var(--acrylic-blur);
+    backdrop-filter: var(--acrylic-blur);
+  }
+  .acrylic-bar {
+    background: var(--acrylic-bar-bg);
+    -webkit-backdrop-filter: var(--acrylic-blur);
+    backdrop-filter: var(--acrylic-blur);
+  }
+  .flyout {
+    @apply acrylic;
+    border: 1px solid var(--border-2);
+    border-radius: var(--radius-overlay);
+    box-shadow: var(--shadow-flyout);
+  }
+  .drawer {
+    @apply acrylic animate-slide_in_right;
+    border-left: 1px solid var(--border-2);
+    box-shadow: var(--shadow-drawer);
+  }
+  .code-surface {
+    background: var(--surface-0);
+    border: 1px solid var(--border-1);
+    border-radius: var(--radius-overlay);
+  }
+
   /* ── Skeleton ── */
   .skeleton {
-    background: linear-gradient(90deg, var(--surface-1) 25%, var(--surface-2) 50%, var(--surface-1) 75%);
+    background: linear-gradient(90deg, var(--hover-bg) 25%, var(--border-3) 50%, var(--hover-bg) 75%);
     background-size: 400px 100%;
     @apply animate-shimmer rounded;
   }
 
-  /* ── Modal / dialog chrome — shared by all dialogs (see Modal.jsx) ── */
+  /* ── Type ── */
+  .section-label {
+    @apply text-[14px] font-semibold;
+    color: var(--text-1);
+  }
+  .caption {
+    @apply text-[12px];
+    color: var(--text-3);
+  }
+
+  /* ── Modal / ContentDialog — shared by all dialogs (see Modal.jsx) ── */
   .modal-overlay {
     @apply fixed inset-0 z-[210] flex items-center justify-center p-4;
     background: var(--overlay);
-    backdrop-filter: blur(4px);
   }
   .modal-panel {
-    @apply w-full rounded-xl flex flex-col overflow-hidden;
+    @apply w-full flex flex-col overflow-hidden animate-scale_in;
     background: var(--surface-1);
     border: 1px solid var(--border-2);
+    border-radius: var(--radius-overlay);
     max-height: 88vh;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--shadow-dialog);
   }
   .modal-header {
-    @apply flex items-center justify-between gap-3 px-5 py-4;
-    border-bottom: 1px solid var(--border-1);
-    background: var(--surface-raised);
+    @apply flex items-center justify-between gap-3 px-6 pt-5 pb-2;
   }
   .modal-title {
-    @apply text-[15px] font-medium;
+    @apply text-[20px] font-semibold leading-7;
     color: var(--text-1);
   }
   .modal-body {
-    @apply px-5 py-4 overflow-y-auto flex flex-col gap-4;
+    @apply px-6 pt-2 pb-6 overflow-y-auto flex flex-col gap-4;
   }
   .modal-footer {
-    @apply flex items-center justify-end gap-2 px-5 py-3;
+    @apply flex items-center justify-end gap-2 px-6 py-5;
+    background: var(--surface-2);
     border-top: 1px solid var(--border-1);
   }
 
-  /* Square icon button — dialog close, and any icon-only affordance */
-  .btn-icon {
-    @apply flex h-8 w-8 items-center justify-center rounded-md cursor-pointer transition-colors
-           disabled:opacity-40 disabled:cursor-not-allowed;
-    color: var(--text-3);
-    border: 1px solid var(--border-2);
-    background: transparent;
-  }
-  .btn-icon:not(:disabled):hover { color: var(--text-1); border-color: var(--border-3); }
-
-  /* ── Buttons — Next.js style ── */
+  /* ── Buttons ── */
   /*
-   * Primary: solid white bg, black text
-   * Secondary: transparent, white border
-   * Ghost: no border, subtle hover
+   * .btn-primary  — accent button
+   * .btn-blue / .btn-ghost — standard Fluent button
+   * .btn-subtle   — transparent until hovered (CommandBar / AppBarButton)
+   * .btn-green / .btn-yellow / .btn-red — semantic standard buttons
    */
   .btn {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded-md text-[15px] font-medium
-           transition-all duration-150 cursor-pointer border
-           disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none
+    @apply inline-flex items-center justify-center gap-2 px-3 min-h-[32px] text-[14px] font-normal leading-5
+           transition-colors duration-100 cursor-pointer
+           disabled:cursor-not-allowed disabled:pointer-events-none
            select-none whitespace-nowrap;
-  }
-
-  /* Primary — solid fill (white on dark, near-black on light) */
-  .btn-primary {
-    background: var(--btn-solid-bg);
-    color: var(--btn-solid-fg);
-    border-color: var(--btn-solid-bg);
-  }
-  .btn-primary:not(:disabled):hover { background: var(--btn-solid-hover); border-color: var(--btn-solid-hover); }
-
-  /* Outlined — neutral border, transparent fill */
-  .btn-blue {
-    background: transparent;
+    border-radius: var(--radius-control);
+    border: 1px solid var(--control-stroke);
+    border-bottom-color: var(--control-stroke-bottom);
+    border-top-color: var(--control-top-highlight);
+    background: var(--control-bg);
     color: var(--text-1);
-    border-color: var(--border-3);
   }
-  .btn-blue:not(:disabled):hover { background: var(--surface-2); border-color: var(--text-4); }
+  .btn:disabled { opacity: 0.45; }
+  .btn:not(:disabled):hover  { background: var(--control-bg-hover); }
+  .btn:not(:disabled):active { background: var(--control-bg-pressed); color: var(--text-3); }
 
-  .btn-ghost {
+  .btn-primary {
+    background: var(--accent);
+    color: var(--accent-fg);
+    border-color: var(--accent);
+    border-bottom-color: var(--accent-stroke-bottom);
+    @apply font-medium;
+  }
+  .btn-primary:not(:disabled):hover  { background: var(--accent-hover); border-color: var(--accent-hover); border-bottom-color: var(--accent-stroke-bottom); }
+  .btn-primary:not(:disabled):active { background: var(--accent-pressed); border-color: var(--accent-pressed); color: var(--accent-fg); opacity: 0.9; }
+
+  /* Standard buttons — the explicit classes only pin the colour */
+  .btn-blue,
+  .btn-ghost { color: var(--text-1); }
+
+  .btn-subtle {
     background: transparent;
+    border-color: transparent;
+    color: var(--text-1);
+  }
+  .btn-subtle:not(:disabled):hover  { background: var(--hover-bg); }
+  .btn-subtle:not(:disabled):active { background: var(--pressed-bg); }
+
+  /* Semantic */
+  .btn-green  { color: var(--accent-teal);  background: var(--success-bg);  border-color: var(--success-border); }
+  .btn-yellow { color: var(--accent-amber); background: var(--caution-bg);  border-color: var(--caution-border); }
+  .btn-red    { color: var(--accent-red);   background: var(--critical-bg); border-color: var(--critical-border); }
+  .btn-green:not(:disabled):hover  { background: color-mix(in srgb, var(--success-bg) 82%, var(--accent-teal)); }
+  .btn-yellow:not(:disabled):hover { background: color-mix(in srgb, var(--caution-bg) 82%, var(--accent-amber)); }
+  .btn-red:not(:disabled):hover    { background: color-mix(in srgb, var(--critical-bg) 82%, var(--accent-red)); }
+  .btn-green:not(:disabled):active,
+  .btn-yellow:not(:disabled):active,
+  .btn-red:not(:disabled):active   { opacity: 0.85; }
+  .btn-green:not(:disabled):active  { color: var(--accent-teal); }
+  .btn-yellow:not(:disabled):active { color: var(--accent-amber); }
+  .btn-red:not(:disabled):active    { color: var(--accent-red); }
+
+  .btn-sm  { @apply px-3 min-h-[30px] text-[14px]; }
+  .btn-xs  { @apply px-2 min-h-[24px] gap-1.5 text-[12px]; }
+
+  /* Square icon button — dialog close and other icon-only affordances */
+  .btn-icon {
+    @apply inline-flex h-8 w-8 items-center justify-center cursor-pointer transition-colors duration-100
+           disabled:opacity-40 disabled:cursor-not-allowed;
+    border-radius: var(--radius-control);
+    color: var(--text-2);
+    background: transparent;
+    border: 1px solid transparent;
+  }
+  .btn-icon:not(:disabled):hover  { background: var(--hover-bg); color: var(--text-1); }
+  .btn-icon:not(:disabled):active { background: var(--pressed-bg); color: var(--text-3); }
+
+  /* Small inline icon action (e.g. file list actions) */
+  .icon-btn-subtle {
+    @apply inline-flex h-7 w-7 items-center justify-center cursor-pointer transition-colors duration-100;
+    border-radius: var(--radius-control);
     color: var(--text-3);
-    border-color: var(--border-2);
   }
-  .btn-ghost:not(:disabled):hover { background: var(--hover-bg); color: var(--text-1); border-color: var(--border-3); }
+  .icon-btn-subtle:hover  { background: var(--hover-bg); color: var(--text-1); }
+  .icon-btn-subtle:active { background: var(--pressed-bg); }
+  .icon-btn-subtle.is-danger:hover { color: var(--accent-red); }
 
-  /* Semantic — keep colored but muted/subtle */
-  .btn-green {
+  /* Plain text-like button (row names) */
+  .link-btn {
+    @apply text-left cursor-pointer p-0;
+    background: none;
+    border: none;
+    color: var(--text-1);
+  }
+  .link-btn:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+  /* ── Menu flyout ── */
+  .menu-item {
+    @apply flex items-center gap-3 w-[calc(100%-8px)] mx-1 px-3 min-h-[32px] text-left text-[14px] transition-colors duration-100;
+    border-radius: var(--radius-control);
+    color: var(--text-1);
     background: transparent;
-    color: var(--accent-teal);
-    border-color: rgba(80,227,194,0.3);
   }
-  .btn-green:not(:disabled):hover { background: rgba(80,227,194,0.07); border-color: rgba(80,227,194,0.5); }
-
-  .btn-yellow {
-    background: transparent;
-    color: var(--accent-amber);
-    border-color: rgba(245,166,35,0.3);
+  .menu-item:hover  { background: var(--hover-bg); }
+  .menu-item:active { background: var(--pressed-bg); color: var(--text-3); }
+  .menu-item-danger { color: var(--accent-red); }
+  .menu-item-danger:active { color: var(--accent-red); }
+  .menu-separator {
+    height: 1px;
+    margin: 4px 0;
+    background: var(--border-2);
   }
-  .btn-yellow:not(:disabled):hover { background: rgba(245,166,35,0.07); border-color: rgba(245,166,35,0.5); }
 
-  .btn-red {
-    background: transparent;
-    color: var(--accent-red);
-    border-color: rgba(255,68,68,0.3);
+  /* ── Text input / select ── */
+  .input,
+  .select {
+    @apply min-h-[32px] px-3 text-[14px] outline-none transition-colors duration-100;
+    color: var(--text-1);
+    background: var(--input-bg);
+    border: 1px solid var(--control-stroke);
+    border-bottom-color: var(--input-stroke-bottom);
+    border-radius: var(--radius-control);
   }
-  .btn-red:not(:disabled):hover { background: rgba(255,68,68,0.07); border-color: rgba(255,68,68,0.5); }
+  .input::placeholder { color: var(--text-3); }
+  .input:hover,
+  .select:not(:disabled):hover { background: var(--control-bg-hover); }
+  .input:focus,
+  .select:focus {
+    background: var(--input-bg-focus);
+    border-bottom-color: var(--accent);
+    box-shadow: inset 0 -1px 0 var(--accent);
+  }
+  .input:focus-visible,
+  .select:focus-visible { outline: none; }
+  .select {
+    @apply w-full min-h-[30px] pr-7 text-[13px] cursor-pointer appearance-none;
+    font-family: inherit;
+  }
+  .select:disabled { opacity: 0.45; cursor: not-allowed; }
+  .select option { background: var(--surface-1); color: var(--text-1); }
 
-  .btn-sm  { @apply px-3 py-1.5 text-[14px] rounded; }
-  .btn-xs  { @apply px-2 py-1 text-[13px] rounded; }
+  /* ── Toggle switch ── */
+  .toggle { @apply relative inline-flex shrink-0; }
+  .toggle-track {
+    @apply relative block w-10 h-5 rounded-full transition-colors duration-100;
+    border: 1px solid var(--stroke-strong);
+    background: var(--control-bg);
+  }
+  .toggle-track::after {
+    content: '';
+    @apply absolute top-1/2 rounded-full transition-all duration-150;
+    left: 4px;
+    width: 12px;
+    height: 12px;
+    transform: translateY(-50%);
+    background: var(--text-2);
+  }
+  .toggle:hover .toggle-track::after { width: 14px; height: 14px; left: 3px; }
+  .toggle input:checked + .toggle-track {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .toggle input:checked + .toggle-track::after {
+    left: 23px;
+    background: var(--accent-fg);
+  }
+  .toggle:hover input:checked + .toggle-track::after { left: 22px; }
+  .toggle input:focus-visible + .toggle-track {
+    outline: 2px solid var(--focus-outer);
+    outline-offset: 2px;
+  }
+
+  /* ── Checkbox ── */
+  .checkbox {
+    @apply h-[18px] w-[18px] cursor-pointer appearance-none transition-colors duration-100 shrink-0;
+    border-radius: var(--radius-control);
+    border: 1px solid var(--stroke-strong);
+    background: var(--control-bg);
+  }
+  .checkbox:hover { background: var(--control-bg-hover); }
+  .checkbox:checked { background: var(--accent); border-color: var(--accent); }
+  .checkbox:checked:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .checkbox-mark { color: var(--accent-fg); }
+
+  /* ── Badges / pills ── */
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2 py-[1px] text-[12px] font-medium leading-5 whitespace-nowrap rounded-full;
+    color: var(--text-2);
+    background: var(--hover-bg);
+    border: 1px solid var(--border-2);
+  }
+  .badge-success  { color: var(--accent-teal);  background: var(--success-bg);  border-color: var(--success-border); }
+  .badge-caution  { color: var(--accent-amber); background: var(--caution-bg);  border-color: var(--caution-border); }
+  .badge-critical { color: var(--accent-red);   background: var(--critical-bg); border-color: var(--critical-border); }
+  .badge-neutral  { color: var(--text-3); }
+  .badge-accent   { color: var(--accent-fg); background: var(--accent); border-color: var(--accent); }
+  .badge-square   { border-radius: var(--radius-control); }
+
+  /* ── InfoBar ── */
+  .infobar {
+    @apply flex items-start gap-3 px-4 py-3 text-[14px];
+    color: var(--text-1);
+    border-radius: var(--radius-overlay);
+    border: 1px solid var(--border-2);
+    background: var(--surface-raised);
+  }
+  .infobar-icon { @apply shrink-0 mt-[2px]; }
+  .infobar-critical { background: var(--critical-bg); border-color: var(--critical-border); }
+  .infobar-critical .infobar-icon { color: var(--accent-red); }
+  .infobar-success  { background: var(--success-bg);  border-color: var(--success-border); }
+  .infobar-success .infobar-icon  { color: var(--accent-teal); }
+  .infobar-caution  { background: var(--caution-bg);  border-color: var(--caution-border); }
+  .infobar-caution .infobar-icon  { color: var(--accent-amber); }
+
+  /* ── Table rows ── */
+  .data-row { transition: background-color 100ms; }
+  .data-row:hover { background: var(--row-hover); }
+  .data-row.is-selected { background: var(--accent-subtle); }
+  .data-row.is-selected:hover { background: color-mix(in srgb, var(--accent-subtle), var(--accent) 6%); }
+
+  /* ── Expander (Disclosure) ── */
+  .expander-header {
+    @apply w-full flex items-center gap-2.5 px-4 min-h-[44px] text-left cursor-pointer transition-colors duration-100;
+  }
+  .expander-header:hover { background: var(--row-hover); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade_in,
+  .animate-scale_in,
+  .animate-slide_in_right,
+  .modal-panel,
+  .drawer,
+  .skeleton { animation: none !important; }
 }
