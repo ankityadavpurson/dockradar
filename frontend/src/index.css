@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Design tokens — Windows 11 / Fluent palette ─────────────────────────────
+/* ── Design tokens — palette ───────────────────────────────────────────────────
    Dark is the default (:root). The theme hook always stamps an explicit
    data-theme="dark" | "light" on <html>, so both selectors are defined.
    Legacy token names (--surface-*, --border-*, --text-*, --accent-teal/amber/red)
@@ -44,7 +44,7 @@
   --row-hover:  rgba(255, 255, 255, 0.03);
   --input-bg:   rgba(255, 255, 255, 0.06);
 
-  /* Windows accent */
+  /* Accent */
   --accent:         #60cdff;
   --accent-hover:   #5bb9e6;
   --accent-pressed: #56a5cc;
@@ -192,7 +192,7 @@
     background-color: var(--page-bg);
     background-image: var(--mica-gradient);
     background-attachment: fixed;
-    /* Windows 11 type ramp — Segoe UI Variable, no external font request. */
+    /* System type ramp — Segoe UI Variable, no external font request. */
     font-family: 'Segoe UI Variable Text', 'Segoe UI Variable', 'Segoe UI', system-ui,
                  -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif;
     font-size: 14px;
@@ -201,14 +201,14 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Fluent keyboard focus ring — only for keyboard navigation */
+  /* Keyboard focus ring — only for keyboard navigation */
   :focus-visible {
     outline: 2px solid var(--focus-outer);
     outline-offset: 1px;
     border-radius: var(--radius-control);
   }
 
-  /* Scrollbar — thin Fluent overlay style */
+  /* Scrollbar — thin overlay style */
   * { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent; }
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -313,7 +313,7 @@
   /* ── Buttons ── */
   /*
    * .btn-primary  — accent button
-   * .btn-blue / .btn-ghost — standard Fluent button
+   * .btn-blue / .btn-ghost — standard button
    * .btn-subtle   — transparent until hovered (CommandBar / AppBarButton)
    * .btn-green / .btn-yellow / .btn-red — semantic standard buttons
    */
@@ -403,7 +403,7 @@
   }
   .link-btn:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
 
-  /* ── Context menu (Windows 11 MenuFlyout) ── */
+  /* ── Context menu ── */
   .menu {
     @apply fixed z-[250] flex flex-col py-1;
     max-width: 240px;

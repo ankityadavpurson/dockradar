@@ -1,13 +1,13 @@
 /** @type {import('tailwindcss').Config} */
 
-// Windows 11 type stacks — resolved from the OS, no web-font request.
+// System type stacks — resolved from the OS, no web-font request.
 const segoe = [
   '"Segoe UI Variable Text"', '"Segoe UI Variable"', '"Segoe UI"', 'system-ui',
   '-apple-system', 'BlinkMacSystemFont', 'Roboto', '"Helvetica Neue"', 'sans-serif',
 ]
 
-// Fluent "decelerate" curve used for entrance motion.
-const fluentEase = 'cubic-bezier(0.1, 0.9, 0.2, 1)'
+// "Decelerate" curve used for entrance motion.
+const easeDecelerate = 'cubic-bezier(0.1, 0.9, 0.2, 1)'
 
 export default {
   content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
@@ -42,9 +42,9 @@ export default {
       },
       animation: {
         pulse_soft:     'pulse_soft 2s ease-in-out infinite',
-        fade_in:        `fade_in 0.25s ${fluentEase} both`,
-        scale_in:       `scale_in 0.25s ${fluentEase} both`,
-        slide_in_right: `slide_in_right 0.3s ${fluentEase} both`,
+        fade_in:        `fade_in 0.25s ${easeDecelerate} both`,
+        scale_in:       `scale_in 0.25s ${easeDecelerate} both`,
+        slide_in_right: `slide_in_right 0.3s ${easeDecelerate} both`,
         shimmer:        'shimmer 1.4s linear infinite',
       },
     },

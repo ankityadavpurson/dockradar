@@ -17,7 +17,7 @@ function MenuItem({ label, icon, onSelect, danger = false }) {
   )
 }
 
-/** Per-row ⋮ menu (Windows 11 MenuFlyout). Rendered position:fixed so the
+/** Per-row ⋮ context menu. Rendered position:fixed so the
  *  table's overflow-x-auto wrapper cannot clip it. Closes on outside press,
  *  Escape, Tab, scroll, or resize. Opening one menu closes any other: the
  *  trigger click is left to bubble so other menus see it as an outside press. */
@@ -66,7 +66,7 @@ const RowMenu = ({ container: c, hasCompose, isBusy, onConfirmUpdate, onComposeU
     btnRef.current?.focus()
   }
 
-  // Roving focus between items, as in native Windows menus.
+  // Roving focus between items, as in native OS menus.
   function onMenuKeyDown(e) {
     const items = [...menuRef.current.querySelectorAll('[role="menuitem"]')]
     const i = items.indexOf(document.activeElement)

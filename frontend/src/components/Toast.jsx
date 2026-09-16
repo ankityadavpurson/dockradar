@@ -23,7 +23,7 @@ export default function Toast({ toasts = [], onDismiss }) {
             title="Dismiss"
             onClick={() => onDismiss?.(t.id)}
             style={{ color: 'var(--text-1)', maxWidth: '380px' }}>
-            {/* Accent strip — Windows notification style */}
+            {/* Accent strip — notification style */}
             <span aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-1"
               style={{ background: cfg.color }} />
             <Icon size={16} className="mt-[2px]" style={{ color: cfg.color, flexShrink: 0 }} />
