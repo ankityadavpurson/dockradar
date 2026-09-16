@@ -1,10 +1,16 @@
-import { Terminal, X } from 'lucide-react'
+import { Maximize2, Minimize2, Terminal, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 const ProgressLog = ({ messages, scanning, updating }) => {
   const endRef = useRef(null)
   const [open, setOpen] = useState(false)
+  const [fullscreen, setFullscreen] = useState(false)
   const active = scanning || updating
+
+  function close() {
+    setOpen(false)
+    setFullscreen(false)
+  }
 
   useEffect(() => {
     if (active) endRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -15,6 +21,14 @@ const ProgressLog = ({ messages, scanning, updating }) => {
       setOpen(true)
     }
   }, [active, messages.length])
+
+  // Escape leaves full-screen mode (the log itself stays open).
+  useEffect(() => {
+    if (!fullscreen) return
+    const onKey = e => { if (e.key === 'Escape') setFullscreen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [fullscreen])
 
   if (!active && messages.length === 0) return null
 
@@ -39,7 +53,9 @@ const ProgressLog = ({ messages, scanning, updating }) => {
       {open && (
         <div
           role="complementary" aria-label="Progress log"
-          className="drawer fixed top-0 right-0 z-[190] h-full w-full max-w-[480px]"
+          className={`drawer fixed top-0 right-0 h-full w-full ${fullscreen
+            ? 'z-[260] max-w-none !border-l-0'
+            : 'z-[190] max-w-[480px]'}`}
         >
           <div className="flex h-full flex-col overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4">
@@ -56,7 +72,7 @@ const ProgressLog = ({ messages, scanning, updating }) => {
               <button
                 type="button"
                 className="btn-icon"
-                onClick={() => setOpen(false)}
+                onClick={close}
                 aria-label="Close progress log"
               >
                 <X size={16} />
@@ -73,6 +89,22 @@ const ProgressLog = ({ messages, scanning, updating }) => {
                 <div key={i} className="mb-1 break-words" style={{ color: getLineColor(msg) }}>{msg}</div>
               ))}
               <div ref={endRef} />
+            </div>
+
+            <div className="modal-footer !py-4">
+              <button type="button" className="btn btn-sm"
+                onClick={() => setFullscreen(f => !f)}
+                aria-pressed={fullscreen}>
+                {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                {fullscreen ? 'Exit full screen' : 'Full screen'}
+              </button>
+              {/* Wrapper carries the tooltip — disabled buttons get no pointer events */}
+              <span title={active ? 'Available when the current operation finishes' : undefined}>
+                <button type="button" className="btn btn-primary btn-sm"
+                  onClick={close} disabled={active}>
+                  Close
+                </button>
+              </span>
             </div>
           </div>
         </div>
