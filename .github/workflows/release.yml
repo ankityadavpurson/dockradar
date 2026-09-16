@@ -133,7 +133,7 @@ jobs:
           echo "Releasing v$VERSION ($SOURCE)"
 
       - name: Bump backend version
-        run: sed -i 's/^__version__ = ".*"/__version__ = "${{ steps.version.outputs.value }}"/' backend/app/main.py
+        run: sed -i 's/^__version__ = ".*"/__version__ = "${{ steps.version.outputs.value }}"/' backend/app/version.py
 
       - name: Bump frontend version
         working-directory: frontend
@@ -144,7 +144,7 @@ jobs:
       - name: Verify bumped versions match
         run: |
           VERSION="${{ steps.version.outputs.value }}"
-          APP_VERSION=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' backend/app/main.py)
+          APP_VERSION=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' backend/app/version.py)
           PKG_VERSION=$(node -p "require('./frontend/package.json').version")
           echo "release=$VERSION  backend=$APP_VERSION  frontend=$PKG_VERSION"
           if [ "$VERSION" != "$APP_VERSION" ] || [ "$VERSION" != "$PKG_VERSION" ]; then
@@ -226,7 +226,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add backend/app/main.py frontend/package.json CHANGELOG.md
+          git add backend/app/version.py frontend/package.json CHANGELOG.md
           git commit -m "chore(release): v${{ steps.version.outputs.value }}"
           git tag "v${{ steps.version.outputs.value }}"
           # --atomic: branch and tag land together or not at all — a rejected

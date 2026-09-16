@@ -32,6 +32,12 @@ def test_health_open_without_key(client):
     assert client.get("/api/health").status_code != 401
 
 
+def test_health_reports_version(client):
+    from app.version import __version__
+    body = client.get("/api/health", headers={"X-Api-Key": "s3cret"}).json()
+    assert body["version"] == __version__
+
+
 def test_no_key_configured_allows_all(monkeypatch):
     monkeypatch.setattr(config, "API_KEY", "")
     c = TestClient(app)

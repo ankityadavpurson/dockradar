@@ -24,8 +24,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api.routes import router as api_router, scheduler_svc, _scheduled_scan
 from app.core.config import config
 from app.core.logging import setup_logging
-
-__version__ = "13.7.0"
+from app.version import __version__
 
 import logging
 logger = logging.getLogger(__name__)

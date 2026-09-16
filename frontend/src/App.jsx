@@ -144,6 +144,12 @@ const App = () => {
         />
       </main>
 
+      {/* Footer */}
+      <footer className="max-w-[1400px] mx-auto px-6 py-4 text-center text-[12px] font-mono"
+        style={{ color: 'var(--text-4)' }}>
+        DockRadar{health?.version && ` v${health.version}`}
+      </footer>
+
       {/* ── Dialogs ── */}
 
       {/* Update single */}

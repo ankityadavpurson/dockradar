@@ -36,6 +36,7 @@ from app.services.update import UpdateService
 from app.services.scheduler import SchedulerService
 from app.services.compose import ComposeService
 from app.core.config import config
+from app.version import __version__
 
 logger = logging.getLogger(__name__)
 
@@ -311,6 +312,7 @@ def health():
     """Returns Docker connectivity status and scheduler info."""
     return {
         "status": "ok",
+        "version": __version__,
         "docker_connected": docker_svc.is_connected(),
         "scheduler_running": scheduler_svc.is_running(),
         "next_scan": scheduler_svc.get_next_run(),
