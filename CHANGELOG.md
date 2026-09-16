@@ -9,9 +9,12 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.9.0] — 2026-09-16
+
 ### Changed
 - Changelog is now actively maintained: every `13.x` release has been backfilled and [Keep a Changelog](https://keepachangelog.com/) compare links added.
 - Release notes are generated automatically from conventional commits when the `[Unreleased]` section is empty, so each GitHub Release leads with a grouped summary (manual notes, when present, are used as-is).
+
 
 ## [13.8.0] — 2026-09-16
 
@@ -161,7 +164,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.8.0...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.9.0...HEAD
+[13.9.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.8.0...v13.9.0
 [13.8.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.7.0...v13.8.0
 [13.7.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.6.0...v13.7.0
 [13.6.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.5.0...v13.6.0
