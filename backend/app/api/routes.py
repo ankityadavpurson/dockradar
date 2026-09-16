@@ -18,10 +18,12 @@ DELETE  /api/containers/{name}               Stop + remove a container (no recre
 GET     /api/health                            Health check — Docker connectivity + scheduler
 """
 
+import json
 import logging
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, File
@@ -218,7 +220,29 @@ def _scan_work():
 
 
 # Updates already announced by email, as "name:latest_tag" keys.
-_notified_updates: set[str] = set()
+# Persisted to disk (alongside compose state) so a backend restart does not
+# re-announce updates that were already emailed.
+_NOTIFIED_FILE: Path = config.COMPOSE_DIR / "notified_updates.json"
+
+
+def _load_notified() -> set[str]:
+    try:
+        return set(json.loads(_NOTIFIED_FILE.read_text(encoding="utf-8")))
+    except FileNotFoundError:
+        return set()
+    except Exception as exc:  # corrupt/unreadable — start clean rather than crash
+        logger.warning("Could not load notified-updates state: %s", exc)
+        return set()
+
+
+def _save_notified(keys: set[str]) -> None:
+    try:
+        _NOTIFIED_FILE.write_text(json.dumps(sorted(keys), indent=2), encoding="utf-8")
+    except Exception as exc:
+        logger.warning("Could not save notified-updates state: %s", exc)
+
+
+_notified_updates: set[str] = _load_notified()
 
 
 def _maybe_notify(outdated: list[ContainerInfo]):
@@ -227,7 +251,9 @@ def _maybe_notify(outdated: list[ContainerInfo]):
     current = {f"{c.name}:{c.latest_tag}" for c in outdated}
     new_updates = current - _notified_updates
     if not new_updates:
-        _notified_updates = current  # prune entries that were updated/removed
+        if current != _notified_updates:
+            _notified_updates = current  # prune entries that were updated/removed
+            _save_notified(_notified_updates)
         return
     if not config.email_configured():
         return
@@ -245,6 +271,7 @@ def _maybe_notify(outdated: list[ContainerInfo]):
     ]
     if email_svc.send_update_notification(payload):
         _notified_updates = current
+        _save_notified(_notified_updates)
 
 
 def _do_update(containers: list[ContainerInfo]):
