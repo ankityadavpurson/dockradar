@@ -128,6 +128,7 @@ jobs:
           fi
 
           echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
           echo "## Releasing v$VERSION" >> "$GITHUB_STEP_SUMMARY"
           echo "Version source: $SOURCE" >> "$GITHUB_STEP_SUMMARY"
           echo "Releasing v$VERSION ($SOURCE)"
@@ -199,15 +200,66 @@ jobs:
 
       - name: Rotate CHANGELOG (Unreleased → new version)
         run: |
+          VERSION="${{ steps.version.outputs.value }}"
+          LATEST="${{ steps.version.outputs.latest }}"
+          REPO="${{ github.repository }}"
           DATE=$(date -u +%F)
-          awk -v ver="${{ steps.version.outputs.value }}" -v date="$DATE" '
+
+          # Current [Unreleased] body: lines between its heading and the next "## [".
+          awk '
+            /^## \[Unreleased\]/ { grab=1; next }
+            grab && /^## \[/ { exit }
+            grab { print }
+          ' CHANGELOG.md > unreleased_body.txt
+
+          if grep -qE '\S' unreleased_body.txt; then
+            # Manual notes present — use them verbatim.
+            cp unreleased_body.txt section_body.txt
+            echo "Using manual [Unreleased] notes."
+          else
+            # Auto-generate grouped bullets from conventional commits since the last tag.
+            RANGE="v$LATEST..HEAD"
+            subj() { git log --no-merges --format='%s' "$RANGE"; }
+            ADDED=$(subj | grep -E '^feat(\([^)]*\))?:'  | sed -E 's/^feat(\([^)]*\))?: *//')
+            FIXED=$(subj | grep -E '^fix(\([^)]*\))?:'   | sed -E 's/^fix(\([^)]*\))?: *//')
+            CHANGED=$(subj | grep -viE '^(feat|fix)(\([^)]*\))?:' | grep -viE '^chore\(release\)' | sed -E 's/^[a-zA-Z]+(\([^)]*\))?: *//')
+            : > section_body.txt
+            add_group() {
+              [ -n "$2" ] || return 0
+              { printf '\n### %s\n' "$1"; printf '%s\n' "$2" | sed 's/^/- /'; } >> section_body.txt
+            }
+            add_group Added   "$ADDED"
+            add_group Fixed   "$FIXED"
+            add_group Changed "$CHANGED"
+            grep -qE '\S' section_body.txt || printf '\n- Maintenance release.\n' >> section_body.txt
+            echo "Auto-generated changelog from commits since v$LATEST:"; cat section_body.txt
+          fi
+
+          # Splice: keep [Unreleased] empty, move/insert the body under the new version heading.
+          awk -v ver="$VERSION" -v date="$DATE" -v bodyfile="section_body.txt" '
             /^## \[Unreleased\]/ && !done {
-              print; print "";
+              print "## [Unreleased]"; print "";
               print "## [" ver "] — " date;
-              done=1; next
+              while ((getline line < bodyfile) > 0) print line;
+              print "";
+              done=1; skip=1; next
+            }
+            skip && /^## \[/ { skip=0 }
+            skip { next }
+            { print }
+          ' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+
+          # Refresh compare links: repoint [Unreleased] and insert the new version link.
+          awk -v ver="$VERSION" -v latest="$LATEST" -v repo="$REPO" '
+            /^\[Unreleased\]:/ {
+              print "[Unreleased]: https://github.com/" repo "/compare/v" ver "...HEAD"
+              print "[" ver "]: https://github.com/" repo "/compare/v" latest "...v" ver
+              next
             }
             { print }
           ' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+
+          rm -f unreleased_body.txt section_body.txt
 
       - name: Extract release notes for this version
         run: |
@@ -216,10 +268,17 @@ jobs:
             index($0, "## [" ver "]") == 1 { grab=1; next }
             grab && index($0, "## [") == 1 { exit }
             grab { print }
-          ' CHANGELOG.md > RELEASE_NOTES.md
-          if [ ! -s RELEASE_NOTES.md ]; then
-            echo "_No changelog entries — see auto-generated notes below._" > RELEASE_NOTES.md
-          fi
+          ' CHANGELOG.md > notes_body.txt
+          {
+            echo "## Changes"
+            echo ""
+            if grep -qE '\S' notes_body.txt; then
+              cat notes_body.txt
+            else
+              echo "_See auto-generated notes below._"
+            fi
+          } > RELEASE_NOTES.md
+          rm -f notes_body.txt
           echo "--- release notes ---"; cat RELEASE_NOTES.md
 
       - name: Commit version bump and tag
