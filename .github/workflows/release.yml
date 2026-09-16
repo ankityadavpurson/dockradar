@@ -299,11 +299,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # GHCR must stay first — the export step below takes the first tag.
       - name: Extract image metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
+          images: |
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
+            docker.io/ankityadavpurson/dockradar
           tags: |
             type=raw,value=${{ steps.version.outputs.value }}
             type=raw,value=latest
@@ -347,6 +356,8 @@ jobs:
           ### Docker image
           \`\`\`bash
           docker pull $IMAGE
+          # or from Docker Hub
+          docker pull ankityadavpurson/dockradar:${{ steps.version.outputs.value }}
           \`\`\`
           Or download \`$ASSET\` from the assets below and load it offline:
           \`\`\`bash
