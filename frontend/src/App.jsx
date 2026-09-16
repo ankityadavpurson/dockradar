@@ -14,7 +14,7 @@ import { useContainers } from './hooks/useContainers'
 const App = () => {
   const {
     containers, scanStatus, health,
-    selected, loading, isBusy, error, toasts, dismissToast,
+    selected, loading, isBusy, error, toasts, dismissToast, updatingNames,
     triggerScan, updateOne, updateSelected, updateAll, deleteContainer, testEmail,
     toggleSelect, selectAll, clearSelection,
     associations, fetchAssociations, composeUpdateOne,
@@ -127,6 +127,7 @@ const App = () => {
             isBusy={isBusy}
             scanning={!!scanStatus?.scanning}
             updating={!!scanStatus?.updating}
+            updatingNames={updatingNames}
             onToggleSelect={toggleSelect}
             onConfirmUpdate={c => setConfirmUpdate(c)}
             onConfirmDelete={c => setConfirmDelete(c)}
