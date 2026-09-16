@@ -9,25 +9,82 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- Changelog is now actively maintained: every `13.x` release has been backfilled and [Keep a Changelog](https://keepachangelog.com/) compare links added.
+- Release notes are generated automatically from conventional commits when the `[Unreleased]` section is empty, so each GitHub Release leads with a grouped summary (manual notes, when present, are used as-is).
+
 ## [13.8.0] — 2026-09-16
+
+### Added
+- Application version is exposed via `/api/health` and shown in the UI footer; the version is sourced from a dedicated `backend/app/version.py` module, kept in sync by the release workflow.
+
+### Changed
+- `X-Api-Key` is now compared in constant time, removing a timing side-channel.
+- `SECURITY.md` reworked — accurate supported-version table, clearer vulnerability reporting, and new notes on data handling and known limitations.
+
+### Fixed
+- Email-notification dedup state now persists to disk, so restarting the backend no longer re-sends notifications for updates that were already announced.
+- Added `httpx` to `requirements-dev.txt` so Starlette's `TestClient` tests run in CI.
 
 ## [13.7.0] — 2026-09-14
 
+### Added
+- Native install for Linux (systemd service) and macOS (per-user LaunchAgent) via a single `install.sh`, with WSL guidance.
+
+### Fixed
+- HOME-directory check on macOS during install.
+
 ## [13.6.0] — 2026-09-14
+
+### Changed
+- Notification email HTML structure and styling improved for readability; the test email now uses realistic container sample data.
 
 ## [13.5.0] — 2026-09-13
 
+### Added
+- Light / dark / system **theme toggle** in the header.
+- `APP_URL` configuration adds an "Open DockRadar" link to notification emails.
+
+### Changed
+- README rewritten with a clearer project description and feature list.
+- Notification emails sent as styled multipart (HTML + text) messages with improved layout.
+
+### Fixed
+- Docker-connection error handling: the health check runs before the error banner is shown, and next-scan info is displayed conditionally (no more banner flash on load).
+
 ## [13.4.0] — 2026-09-12
+
+### Changed
+- Documentation updated for Docker Compose usage and environment-variable handling.
 
 ## [13.3.0] — 2026-07-26
 
+### Added
+- Email configuration dialog with a "Send test email" action and optional SMTP settings.
+
+### Changed
+- Introduced a shared `Modal` component for consistent dialogs (EmailConfigDialog, ConfirmDialog, ComposeUpdateDialog).
+- Improved header layout/responsiveness, CSS-variable theming groundwork, and button accessibility.
+
 ## [13.2.1] — 2026-07-19
+
+### Fixed
+- Clarified CI trigger conditions for pull requests vs the main branch.
 
 ## [13.2.0] — 2026-07-19
 
+### Added
+- CI workflow running backend tests and the frontend build.
+
 ## [13.1.0] — 2026-07-19
 
+### Changed
+- Release workflow now auto-calculates the version and handles manual dispatch inputs.
+
 ## [13.0.0] — 2026-07-19
+
+### Added
+- Docker image exported as a release asset so it can be downloaded and `docker load`-ed offline.
 
 ## [12.0.0] — 2026-07-19
 
@@ -41,6 +98,17 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **`DOCKRADAR_ENV_FILE`** environment variable to load configuration from an explicit file.
 - **`COMPOSE_DIR`** environment variable to relocate compose-file storage (default unchanged: `backend/compose_files`).
 
+### Changed
+- Registry checks during a scan run in parallel (up to 8 workers), cutting scan time significantly.
+- Scheduled scans skip email-less duplicate announcements; compose store path is now anchored to `backend/` regardless of working directory.
+- "Update Selected" badge and confirmation now count the full selection (updates recreate even up-to-date containers).
+- Update confirmation dialogs spell out which configuration is and isn't preserved.
+- Compose file picker shows filenames instead of service lists.
+- Accessibility: dialogs have proper dialog semantics with Escape-to-close and initial focus; table sort headers are keyboard-accessible buttons with `aria-sort`; checkboxes and status indicators are labeled; the progress log is a live region.
+- The UI no longer loads fonts from Google Fonts (works fully offline).
+- Removed unused `DOCKER_SOCKET` config and `PUID`/`PGID` from `.env.example`.
+- **Documentation refresh** for public-release readiness: `README.md` updated to match current startup scripts, module entrypoint, and runtime modes; `CONTRIBUTING.md` updated to reflect actual folder structure and workflow; `SECURITY.md` disclosure guidance and deployment warnings reworked; `SUPPORT.md` added with support channels and response model; GitHub issue templates (bug report, feature request) and a pull-request template added.
+
 ### Fixed
 - `docker-compose.yml` now loads `.env` via `env_file`, so SMTP/email, `API_KEY`, and all other settings actually reach the container (previously only `HOST`/`PORT`/`DOCKER_HOST`/`HIDDEN_REPOSITORY` were passed, making email impossible to configure in a Compose deployment). Container-critical values stay pinned in the compose file.
 - "Update Selected" sent container IDs where the API expects names, so it always failed with 404.
@@ -53,25 +121,6 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Toast notifications no longer disappear early when shown in quick succession.
 - Default port unified to **8086** across `.env.example`, backend config, Vite dev proxy, and docs.
 - Invalid numeric environment values fall back to defaults instead of crashing on startup.
-
-### Changed
-- Registry checks during a scan run in parallel (up to 8 workers), cutting scan time significantly.
-- Scheduled scans skip email-less duplicate announcements; compose store path is now anchored to `backend/` regardless of working directory.
-- "Update Selected" badge and confirmation now count the full selection (updates recreate even up-to-date containers).
-- Update confirmation dialogs spell out which configuration is and isn't preserved.
-- Compose file picker shows filenames instead of service lists.
-- Accessibility: dialogs have proper dialog semantics with Escape-to-close and initial focus; table sort headers are keyboard-accessible buttons with `aria-sort`; checkboxes and status indicators are labeled; the progress log is a live region.
-- The UI no longer loads fonts from Google Fonts (works fully offline).
-- Removed unused `DOCKER_SOCKET` config and `PUID`/`PGID` from `.env.example`.
-
-### Previously documented (docs refresh)
-- Refreshed repository documentation for public release readiness.
-- Updated `README.md` to match current startup scripts, module entrypoint, and runtime modes.
-- Updated `CONTRIBUTING.md` to reflect actual folder structure and workflow.
-- Reworked `SECURITY.md` disclosure guidance and deployment warnings.
-- `SUPPORT.md` with support channels and expected response model.
-- GitHub issue templates for bug reports and feature requests.
-- Pull request template for standardized review context.
 
 ## [2.0.0] — 2025
 
@@ -98,8 +147,6 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - NiceGUI dependency and all UI code in `ui/`
 - NiceGUI-specific `/docs` workaround in `app.py`
 
----
-
 ## [1.0.0] — 2024
 
 ### Added
@@ -111,3 +158,18 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - SMTP email notifications
 - Container stop / remove / recreate with preserved config
 - `.env`-based configuration via python-dotenv
+
+---
+
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.8.0...HEAD
+[13.8.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.7.0...v13.8.0
+[13.7.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.6.0...v13.7.0
+[13.6.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.5.0...v13.6.0
+[13.5.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.4.0...v13.5.0
+[13.4.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.3.0...v13.4.0
+[13.3.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.2.1...v13.3.0
+[13.2.1]: https://github.com/ankityadavpurson/dockradar/compare/v13.2.0...v13.2.1
+[13.2.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.1.0...v13.2.0
+[13.1.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.0.0...v13.1.0
+[13.0.0]: https://github.com/ankityadavpurson/dockradar/compare/v12.0.0...v13.0.0
+[12.0.0]: https://github.com/ankityadavpurson/dockradar/releases/tag/v12.0.0
