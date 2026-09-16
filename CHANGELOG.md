@@ -9,6 +9,11 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.10.0] — 2026-09-16
+
+### Added
+- add updatingNames state to manage containers with updates in flight
+
 ## [13.9.0] — 2026-09-16
 
 ### Changed
@@ -164,7 +169,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.9.0...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.10.0...HEAD
+[13.10.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.9.0...v13.10.0
 [13.9.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.8.0...v13.9.0
 [13.8.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.7.0...v13.8.0
 [13.7.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.6.0...v13.7.0
