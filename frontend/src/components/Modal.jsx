@@ -35,7 +35,7 @@ export default function Modal({
                 : title}
             </div>
             <button type="button" onClick={onClose} aria-label="Close" className="btn-icon shrink-0">
-              <X size={14} />
+              <X size={16} />
             </button>
           </div>
         )}

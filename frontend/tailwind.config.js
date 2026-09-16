@@ -1,34 +1,22 @@
 /** @type {import('tailwindcss').Config} */
+
+// System type stacks — resolved from the OS, no web-font request.
+const segoe = [
+  '"Segoe UI Variable Text"', '"Segoe UI Variable"', '"Segoe UI"', 'system-ui',
+  '-apple-system', 'BlinkMacSystemFont', 'Roboto', '"Helvetica Neue"', 'sans-serif',
+]
+
+// "Decelerate" curve used for entrance motion.
+const easeDecelerate = 'cubic-bezier(0.1, 0.9, 0.2, 1)'
+
 export default {
   content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
   theme: {
     extend: {
       fontFamily: {
-        // Geist is Vercel/Next.js's own typeface — fall back to system sans
-        sans:    ['"Geist"', '"Inter"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        mono:    ['"Geist Mono"', '"JetBrains Mono"', 'ui-monospace', 'monospace'],
-        display: ['"Geist"', '"Inter"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-      },
-      colors: {
-        bg: {
-          base:    '#000000',
-          surface: 'rgba(0,0,0,0.5)',
-          card:    '#111111',
-          hover:   '#1a1a1a',
-        },
-        border:  '#333333',
-        ink: {
-          primary:   '#ededed',
-          secondary: '#888888',
-          muted:     '#444444',
-        },
-        accent: {
-          white:  '#ffffff',
-          blue:   '#0070f3',   // Vercel blue — used sparingly
-          green:  '#50e3c2',
-          yellow: '#f5a623',
-          red:    '#e00',
-        },
+        sans:    segoe,
+        display: ['"Segoe UI Variable Display"', ...segoe],
+        mono:    ['"Cascadia Mono"', '"Cascadia Code"', 'Consolas', 'ui-monospace', 'monospace'],
       },
       keyframes: {
         pulse_soft: {
@@ -39,15 +27,25 @@ export default {
           from: { opacity: '0', transform: 'translateY(4px)' },
           to:   { opacity: '1', transform: 'translateY(0)' },
         },
+        scale_in: {
+          from: { opacity: '0', transform: 'scale(1.04)' },
+          to:   { opacity: '1', transform: 'scale(1)' },
+        },
+        slide_in_right: {
+          from: { opacity: '0', transform: 'translateX(24px)' },
+          to:   { opacity: '1', transform: 'translateX(0)' },
+        },
         shimmer: {
           '0%':   { backgroundPosition: '-400px 0' },
           '100%': { backgroundPosition: '400px 0' },
         },
       },
       animation: {
-        pulse_soft: 'pulse_soft 2s ease-in-out infinite',
-        fade_in:    'fade_in 0.2s ease-out both',
-        shimmer:    'shimmer 1.4s linear infinite',
+        pulse_soft:     'pulse_soft 2s ease-in-out infinite',
+        fade_in:        `fade_in 0.25s ${easeDecelerate} both`,
+        scale_in:       `scale_in 0.25s ${easeDecelerate} both`,
+        slide_in_right: `slide_in_right 0.3s ${easeDecelerate} both`,
+        shimmer:        'shimmer 1.4s linear infinite',
       },
     },
   },

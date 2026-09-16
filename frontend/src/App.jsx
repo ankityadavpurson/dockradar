@@ -1,3 +1,4 @@
+import { AlertCircle } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import ComposeManager from './components/ComposeManager'
 import ComposeUpdateDialog from './components/ComposeUpdateDialog'
@@ -60,9 +61,10 @@ const App = () => {
     <div className="min-h-screen">
 
       {health && !health.docker_connected && (
-        <div className="px-4 py-3 text-[14px] font-mono"
-          style={{ background: 'rgba(255,68,68,0.1)', borderBottom: '1px solid rgba(255,68,68,0.25)', color: 'var(--accent-red)' }}>
-          Can't reach the Docker daemon. DockRadar can't scan or update containers until it reconnects — check that Docker is running and the socket (or DOCKER_HOST) is accessible.
+        <div role="alert" className="infobar infobar-critical"
+          style={{ borderRadius: 0, borderWidth: '0 0 1px 0' }}>
+          <AlertCircle size={16} className="infobar-icon" />
+          <span><strong className="font-semibold">Docker unavailable.</strong>{' '}Can't reach the Docker daemon. DockRadar can't scan or update containers until it reconnects — check that Docker is running and the socket (or DOCKER_HOST) is accessible.</span>
         </div>
       )}
 
@@ -78,9 +80,9 @@ const App = () => {
 
         {/* Connection error */}
         {error && (
-          <div className="mb-4 px-4 py-3 rounded text-[15px] font-mono animate-fade_in"
-            style={{ background: 'rgba(255,68,68,0.07)', border: '1px solid rgba(255,68,68,0.18)', color: 'var(--accent-red)' }}>
-            ✗ {error}
+          <div role="alert" className="infobar infobar-critical mb-4 animate-fade_in">
+            <AlertCircle size={16} className="infobar-icon" />
+            <span className="break-words">{error}</span>
           </div>
         )}
 
@@ -108,15 +110,14 @@ const App = () => {
         <InfoBar health={health} onTestEmail={testEmail} />
 
         {/* Container table */}
-        <div className="rounded-lg overflow-hidden"
-          style={{ border: '1px solid var(--border-1)' }}>
+        <div className="card overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3"
-            style={{ borderBottom: '1px solid var(--border-1)', color: 'var(--text-3)', background: 'var(--surface-raised)' }}>
-            <span className="text-[13px] font-mono uppercase tracking-wider">
+            style={{ borderBottom: '1px solid var(--border-1)' }}>
+            <span className="section-label">
               Containers
             </span>
-            <span className="text-[13px] font-mono">
-              {visible.length} / {containers.length}
+            <span className="caption tabular-nums">
+              {visible.length} of {containers.length}
             </span>
           </div>
 
@@ -146,7 +147,7 @@ const App = () => {
       </main>
 
       {/* Footer */}
-      <footer className="max-w-[1400px] mx-auto px-6 py-4 text-center text-[12px] font-mono"
+      <footer className="max-w-[1400px] mx-auto px-6 py-4 text-center text-[12px]"
         style={{ color: 'var(--text-4)' }}>
         DockRadar{health?.version && ` v${health.version}`}
       </footer>
@@ -194,7 +195,7 @@ Not preserved: named volumes attached via --mount, extra networks, and advanced 
         title={`Update ${selectedCount} selected container(s)?`}
         message="This will stop, remove, and recreate every selected container with its latest image — including containers that are already up to date."
         confirmLabel="Update Selected"
-        confirmClass="btn-blue"
+        confirmClass="btn-primary"
         onConfirm={() => { updateSelected(); setConfirmSel(false) }}
         onCancel={() => setConfirmSel(false)}
       />

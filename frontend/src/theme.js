@@ -24,7 +24,7 @@ export function resolveTheme(theme) {
 export function applyTheme(theme) {
   const resolved = resolveTheme(theme)
   document.documentElement.setAttribute('data-theme', resolved)
-  document.documentElement.style.backgroundColor = resolved === 'light' ? '#f4f4f5' : '#1e1e1e'
+  document.documentElement.style.backgroundColor = resolved === 'light' ? '#f3f3f3' : '#202020'
 }
 
 /** Theme state: 'system' | 'light' | 'dark', persisted and applied to <html>. */

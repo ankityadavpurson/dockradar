@@ -1,3 +1,4 @@
+import { AlertCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { composeApi } from '../api/client'
 import DiffView from './DiffView'
@@ -34,11 +35,11 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
 
   const title = (
     <div className="min-w-0">
-      <div className="text-[15px] font-medium truncate" style={{ color: 'var(--text-1)' }}>
-        Compose update — <span style={{ color: 'var(--accent-amber)' }}>{container.name}</span>
+      <div className="modal-title truncate">
+        Compose update — <span style={{ color: 'var(--accent)' }}>{container.name}</span>
       </div>
       {diff && (
-        <div className="text-[13px] font-mono truncate" style={{ color: 'var(--text-4)' }}>
+        <div className="text-[12px] font-mono truncate" style={{ color: 'var(--text-3)' }}>
           {diff.filename} · service: {diff.service_name}
         </div>
       )}
@@ -47,7 +48,7 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
 
   const footer = (
     <>
-      <span className="flex-1 text-[13px] font-mono" style={{ color: 'var(--text-4)' }}>
+      <span className="flex-1 text-[13px]" style={{ color: 'var(--text-3)' }}>
         {diff?.has_change
           ? 'File will be saved, then compose pull + up -d will run.'
           : 'compose pull + up -d will run without file changes.'}
@@ -62,38 +63,38 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
   return (
     <Modal title={title} onClose={onCancel} size="lg" footer={footer} ariaLabel={`Compose update ${container.name}`}>
       {loading && (
-        <div className="text-[14px] font-mono text-center py-6" style={{ color: 'var(--text-3)' }}>
+        <div className="text-[14px] text-center py-6" style={{ color: 'var(--text-3)' }}>
           Checking for updates…
         </div>
       )}
 
       {error && (
-        <div className="px-3 py-2.5 rounded text-[14px] font-mono"
-          style={{ background: 'rgba(255,68,68,0.07)', border: '1px solid rgba(255,68,68,0.2)', color: 'var(--accent-red)' }}>
-          {error}
+        <div role="alert" className="infobar infobar-critical">
+          <AlertCircle size={16} className="infobar-icon" />
+          <span className="break-words">{error}</span>
         </div>
       )}
 
       {diff && !loading && (<>
         {/* Image change summary */}
-        <div className="rounded-lg overflow-hidden" style={{ background: 'var(--surface-0)', border: '1px solid var(--border-1)' }}>
-          <div className="px-3 py-2 text-[12px] font-mono uppercase tracking-wider"
-            style={{ borderBottom: '1px solid var(--border-1)', color: 'var(--text-4)' }}>
+        <div className="card overflow-hidden">
+          <div className="px-3 py-2 section-label"
+            style={{ borderBottom: '1px solid var(--border-1)' }}>
             Image change
           </div>
           <div className="p-3 flex flex-col gap-1.5">
             <div className="flex items-baseline gap-2">
-              <span className="text-[12px] w-14 shrink-0" style={{ color: 'var(--text-4)' }}>Current</span>
-              <code className="text-[14px] px-2 py-0.5 rounded break-all"
-                style={{ color: 'var(--accent-red)', background: 'rgba(255,68,68,0.08)' }}>{diff.current_image}</code>
+              <span className="text-[12px] w-14 shrink-0" style={{ color: 'var(--text-3)' }}>Current</span>
+              <code className="text-[13px] px-2 py-0.5 rounded break-all"
+                style={{ color: 'var(--accent-red)', background: 'var(--critical-bg)' }}>{diff.current_image}</code>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-[12px] w-14 shrink-0" style={{ color: 'var(--text-4)' }}>Latest</span>
-              <code className="text-[14px] px-2 py-0.5 rounded break-all"
-                style={{ color: 'var(--accent-teal)', background: 'rgba(80,227,194,0.08)' }}>{diff.latest_image}</code>
+              <span className="text-[12px] w-14 shrink-0" style={{ color: 'var(--text-3)' }}>Latest</span>
+              <code className="text-[13px] px-2 py-0.5 rounded break-all"
+                style={{ color: 'var(--accent-teal)', background: 'var(--success-bg)' }}>{diff.latest_image}</code>
             </div>
             {!diff.has_change && (
-              <div className="text-[13px] font-mono mt-1" style={{ color: 'var(--text-3)' }}>
+              <div className="text-[13px] mt-1" style={{ color: 'var(--text-3)' }}>
                 ✓ Image tag is already up to date — compose file will not be modified.
               </div>
             )}
@@ -101,10 +102,10 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
         </div>
 
         {/* Compose file diff / editor */}
-        <div className="rounded-lg overflow-hidden" style={{ background: 'var(--surface-0)', border: '1px solid var(--border-1)' }}>
-          <div className="px-3 py-2 flex justify-between items-center" style={{ borderBottom: '1px solid var(--border-1)' }}>
-            <span className="text-[12px] font-mono uppercase tracking-wider" style={{ color: 'var(--text-4)' }}>
-              {showFull ? 'compose file (editable)' : 'file changes'}
+        <div className="code-surface overflow-hidden">
+          <div className="px-3 py-2 flex justify-between items-center" style={{ borderBottom: '1px solid var(--border-1)', background: 'var(--surface-raised)' }}>
+            <span className="section-label">
+              {showFull ? 'Compose file (editable)' : 'File changes'}
             </span>
             <button onClick={() => setShowFull(s => !s)} className="btn btn-ghost btn-xs">
               {showFull ? 'Show diff' : 'Edit full file'}
@@ -122,7 +123,7 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
           ) : (
             diff.has_change
               ? <DiffView current={diff.current_content} proposed={content} />
-              : <div className="px-3 py-4 text-[13px] font-mono" style={{ color: 'var(--text-4)' }}>No changes to the compose file.</div>
+              : <div className="px-3 py-4 text-[13px]" style={{ color: 'var(--text-3)' }}>No changes to the compose file.</div>
           )}
         </div>
       </>)}
