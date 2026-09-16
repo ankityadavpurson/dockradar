@@ -9,6 +9,26 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.7.0] — 2026-09-14
+
+## [13.6.0] — 2026-09-14
+
+## [13.5.0] — 2026-09-13
+
+## [13.4.0] — 2026-09-12
+
+## [13.3.0] — 2026-07-26
+
+## [13.2.1] — 2026-07-19
+
+## [13.2.0] — 2026-07-19
+
+## [13.1.0] — 2026-07-19
+
+## [13.0.0] — 2026-07-19
+
+## [12.0.0] — 2026-07-19
+
 ### Added
 - **Email notifications are now wired in**: scans that find new updates send a notification (deduplicated — the same update is announced only once). HTML content is escaped.
 - Optional **API-key protection** via `API_KEY` — all `/api` routes except `/api/health` require the `X-Api-Key` header; the UI reads the key from `localStorage('dockradar_api_key')`.
