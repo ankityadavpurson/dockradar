@@ -1,4 +1,4 @@
-import { ArrowUpCircle, ChevronDown, ChevronUp, FileCode2, ShieldCheck, Tag } from 'lucide-react'
+import { ArrowUpCircle, ChevronDown, ChevronUp, FileCode2, Loader2, ShieldCheck, Tag } from 'lucide-react'
 import { useState } from 'react'
 import CheckBox from './CheckBox'
 import RowMenu from './RowMenu'
@@ -120,7 +120,7 @@ const STATUS_ORDER = { update_available: 0, error: 1, unknown: 2, up_to_date: 3 
 
 /** Compact card used below the md breakpoint instead of the table row. */
 function ContainerCard({
-  c, isSel, refreshing, hasCompose, assoc, isBusy,
+  c, isSel, refreshing, isUpdating, hasCompose, assoc, isBusy,
   onToggleSelect, onConfirmUpdate, onComposeUpdate, onConfirmDelete, onShowDetails,
 }) {
   const dot = DOCKER_DOT[c.status] ?? { bg: 'var(--border-3)', shadow: 'none' }
@@ -176,12 +176,17 @@ function ContainerCard({
 
       <div className="flex items-center gap-2 flex-wrap">
         <TagLabel container={c} />
-        {refreshing
-          ? <div className="skeleton h-4 w-20" aria-label="Checking…" />
-          : <VersionCheckCell container={c} />}
-        {refreshing
-          ? <div className="skeleton h-5 w-24" aria-label="Checking…" />
-          : <StatusPill status={c.update_status} />}
+        {isUpdating
+          ? <UpdatingPill />
+          : refreshing
+            ? (<>
+                <div className="skeleton h-4 w-20" aria-label="Checking…" />
+                <div className="skeleton h-5 w-24" aria-label="Checking…" />
+              </>)
+            : (<>
+                <VersionCheckCell container={c} />
+                <StatusPill status={c.update_status} />
+              </>)}
       </div>
     </div>
   )
@@ -214,9 +219,21 @@ function StatusPill({ status }) {
   )
 }
 
+/** Shown in a row whose image is currently being pulled + recreated. */
+function UpdatingPill() {
+  const s = STATUS_CFG.update_available
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[13px] font-mono px-1.5 py-0.5 rounded"
+      style={{ color: s.color, background: s.bg, border: `1px solid ${s.border}` }}>
+      <Loader2 size={12} className="animate-spin" />
+      Updating…
+    </span>
+  )
+}
+
 export default function ContainerTable({
   containers, isFiltered = false, selected, isBusy,
-  scanning = false, updating = false,
+  scanning = false, updating = false, updatingNames = new Set(),
   onToggleSelect, onConfirmUpdate, onConfirmDelete,
   associations = {}, onComposeUpdate, onShowDetails,
 }) {
@@ -269,7 +286,8 @@ export default function ContainerTable({
         <ContainerCard key={c.id}
           c={c}
           isSel={selected.has(c.id)}
-          refreshing={scanning || (updating && c.update_status === 'update_available')}
+          refreshing={scanning}
+          isUpdating={updatingNames.has(c.name)}
           hasCompose={!!associations[c.name]}
           assoc={associations[c.name]}
           isBusy={isBusy}
@@ -332,8 +350,10 @@ export default function ContainerTable({
             const assoc      = associations[c.name]
             const hasCompose = !!assoc
             const isRunning  = c.status === 'running'
-            // Scans refresh every row's version data; updates touch outdated rows.
-            const refreshing = scanning || (updating && c.update_status === 'update_available')
+            // Scans refresh every row's version data.
+            const refreshing = scanning
+            // This specific row has an update in flight (pull + recreate / compose).
+            const isUpdatingRow = updatingNames.has(c.name)
 
             return (
               <tr key={c.id}
@@ -387,14 +407,18 @@ export default function ContainerTable({
 
                 {/* Version check */}
                 <td className="px-4 py-3">
-                  {refreshing
-                    ? <div className="skeleton h-4 w-20" aria-label="Checking…" />
-                    : <VersionCheckCell container={c} />}
+                  {isUpdatingRow
+                    ? <span className="text-[13px] font-mono" style={{ color: 'var(--text-4)' }}>—</span>
+                    : refreshing
+                      ? <div className="skeleton h-4 w-20" aria-label="Checking…" />
+                      : <VersionCheckCell container={c} />}
                 </td>
 
                 {/* Update status */}
                 <td className="px-4 py-3">
-                  {refreshing ? (
+                  {isUpdatingRow ? (
+                    <UpdatingPill />
+                  ) : refreshing ? (
                     <div className="skeleton h-5 w-24" aria-label="Checking…" />
                   ) : (
                     <StatusPill status={c.update_status} />

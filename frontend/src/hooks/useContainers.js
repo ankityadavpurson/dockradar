@@ -13,6 +13,8 @@ export function useContainers() {
   const [loading, setLoading]         = useState(false)
   const [error, setError]             = useState(null)
   const [toasts, setToasts]           = useState([])     // [{ id, msg, type }]
+  // Names of containers with an update in flight — drives the per-row loader.
+  const [updatingNames, setUpdatingNames] = useState(new Set())
   // compose associations: { container_name -> { file_id, service_name, filename } }
   const [associations, setAssociations]   = useState({})
   const pollRef                        = useRef(null)
@@ -75,6 +77,7 @@ export function useContainers() {
           pollRef.current = null
           await fetchContainers()
           await fetchHealth()
+          setUpdatingNames(new Set())
         }
       } catch { /* ignore */ }
     }, 1500)
@@ -113,6 +116,7 @@ export function useContainers() {
 
   const updateOne = useCallback(async (name) => {
     setLoading(true)
+    setUpdatingNames(new Set([name]))
     try {
       notify(`Updating ${name}…`, 'info')
       const result = await api.updateOne(name)
@@ -126,6 +130,7 @@ export function useContainers() {
       notify(e.message, 'error')
     } finally {
       setLoading(false)
+      setUpdatingNames(new Set())
     }
   }, [notify, fetchContainers])
 
@@ -136,10 +141,12 @@ export function useContainers() {
     try {
       await api.updateSelected(names)
       notify(`Updating ${names.length} container(s)…`, 'info')
+      setUpdatingNames(new Set(names))
       setSelected(new Set())
       startPolling()
     } catch (e) {
       notify(e.message, 'error')
+      setUpdatingNames(new Set())
     }
   }, [containers, selected, notify, startPolling])
 
@@ -151,19 +158,23 @@ export function useContainers() {
         return
       }
       notify(`Updating ${res.containers.length} container(s)…`, 'info')
+      setUpdatingNames(new Set(res.containers))
       startPolling()
     } catch (e) {
       notify(e.message, 'error')
+      setUpdatingNames(new Set())
     }
   }, [notify, startPolling])
 
   const composeUpdateOne = useCallback(async (name) => {
     try {
       notify(`Starting compose update for ${name}…`, 'info')
+      setUpdatingNames(new Set([name]))
       await composeApi.updateViaCompose(name)
       startPolling()
     } catch (e) {
       notify(e.message, 'error')
+      setUpdatingNames(new Set())
     }
   }, [notify, startPolling])
 
@@ -214,6 +225,7 @@ export function useContainers() {
     error,
     toasts,
     dismissToast,
+    updatingNames,
     // actions
     triggerScan,
     updateOne,
