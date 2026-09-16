@@ -11,6 +11,7 @@ Frontend: http://localhost:5173  (Vite dev server)
           http://localhost:8086  (production build served from frontend/dist)
 """
 
+import secrets
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -86,7 +87,11 @@ async def api_key_guard(request: Request, call_next):
         and request.method != "OPTIONS"
         and request.url.path.startswith("/api/")
         and request.url.path != "/api/health"
-        and request.headers.get("X-Api-Key") != config.API_KEY
+        # Constant-time compare so a wrong key can't be recovered via timing.
+        and not secrets.compare_digest(
+            request.headers.get("X-Api-Key", "").encode(),
+            config.API_KEY.encode(),
+        )
     ):
         return JSONResponse(
             status_code=401,

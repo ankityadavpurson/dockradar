@@ -80,7 +80,7 @@ DockRadar can control Docker containers on the host. Treat it as a privileged se
 
 7. Known limitations
 
-- The `X-Api-Key` check is a direct string comparison, not a constant-time one; treat `API_KEY` as a deployment gate behind TLS, not a hardened auth boundary.
+- The `X-Api-Key` header is compared in constant time, but it remains a single shared secret with no per-user identity — treat `API_KEY` as a deployment gate behind TLS, not a hardened auth boundary.
 - There is no rate limiting, account lockout, or audit log. Put DockRadar behind a proxy that provides these for any exposed deployment.
 
 ## Disclosure and Credit
