@@ -9,6 +9,11 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.14.0] — 2026-09-17
+
+### Added
+- rework compose updates to run against the real project and upgrade pinned tags
+
 ## [13.13.0] — 2026-09-16
 
 ### Added
@@ -189,7 +194,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.13.0...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.14.0...HEAD
+[13.14.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.13.0...v13.14.0
 [13.13.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.12.0...v13.13.0
 [13.12.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.11.0...v13.12.0
 [13.11.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.10.0...v13.11.0
