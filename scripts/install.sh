@@ -14,7 +14,7 @@
 #    --version X.Y.Z     install a specific release instead of the latest
 #    --tarball PATH      install from a local dockradar-X.Y.Z.tar.gz
 #    --non-interactive   never prompt (email settings come from env vars)
-#    --uninstall         remove the service and application files
+#    --uninstall         remove DockRadar (runs uninstall.sh — prefer that script)
 #    --purge             with --uninstall: also delete config, data and logs
 #
 #  Unattended email setup (on Linux, put the variables after sudo):
@@ -41,7 +41,7 @@ set -euo pipefail
 umask 022
 
 REPO="${DOCKRADAR_REPO:-ankityadavpurson/dockradar}"
-INSTALLER_URL="https://github.com/$REPO/releases/latest/download/install.sh"
+UNINSTALLER_URL="https://github.com/$REPO/releases/latest/download/uninstall.sh"
 MIN_PY_MAJOR=3
 MIN_PY_MINOR=10
 
@@ -57,6 +57,17 @@ info()    { echo -e "${CYAN}[DockRadar]${NC} $1"; }
 success() { echo -e "${GREEN}[DockRadar]${NC} $1"; }
 warn()    { echo -e "${YELLOW}[DockRadar]${NC} $1"; }
 error()   { echo -e "${RED}[DockRadar]${NC} $1" >&2; exit 1; }
+
+# Live progress (download bar, package names, startup wait) only when
+# stderr is a terminal — `curl … | sudo bash` still has one.
+if [ -t 2 ]; then SHOW_PROGRESS=true; else SHOW_PROGRESS=false; fi
+STEP=0
+STEPS=6
+step() {
+    STEP=$((STEP + 1))
+    echo "" >&2
+    echo -e "${GREEN}[${STEP}/${STEPS}]${NC} $1" >&2
+}
 
 usage() {
     if [ -f "$0" ]; then
@@ -85,6 +96,25 @@ while [ $# -gt 0 ]; do
         *)                 error "Unknown option: $1 (see --help)" ;;
     esac
 done
+
+# ── Uninstall (handled by uninstall.sh) ───────────────────────
+# Kept for compatibility: hands off to uninstall.sh — the copy next to
+# this script, the installed copy, or the latest release's. --yes keeps
+# the old no-prompt behaviour of --uninstall --purge.
+if [ "$UNINSTALL" = true ]; then
+    UNINSTALL_ARGS=(--yes)
+    [ "$PURGE" = false ] || UNINSTALL_ARGS+=(--purge)
+    candidates=()
+    [ ! -f "$0" ] || candidates+=("$(dirname "$0")/uninstall.sh")
+    candidates+=("/opt/dockradar/current/uninstall.sh" "${HOME:-/nonexistent}/Library/Application Support/DockRadar/current/uninstall.sh")
+    for f in "${candidates[@]}"; do
+        if [ -f "$f" ]; then exec bash "$f" "${UNINSTALL_ARGS[@]}"; fi
+    done
+    info "Fetching uninstall.sh from the latest release..."
+    UNINSTALLER="$(curl -fsSL "https://github.com/$REPO/releases/latest/download/uninstall.sh")" \
+        || error "Could not download uninstall.sh — get it from https://github.com/$REPO/releases/latest"
+    exec bash -c "$UNINSTALLER" uninstall.sh "${UNINSTALL_ARGS[@]}"
+fi
 
 # ── Operating system ──────────────────────────────────────────
 case "$(uname -s)" in
@@ -133,17 +163,6 @@ macos_stop_agent() {
         launchctl print "$DOMAIN/$LABEL" </dev/null &>/dev/null || return 0
         sleep 0.5
     done
-}
-
-service_remove() {
-    if [ "$OS" = "linux" ]; then
-        systemctl disable --now "$SVC_NAME" </dev/null 2>/dev/null || true
-        rm -f "$UNIT_PATH"
-        systemctl daemon-reload
-    else
-        macos_stop_agent
-        rm -f "$PLIST"
-    fi
 }
 
 xml_escape() { printf '%s' "$1" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g'; }
@@ -222,32 +241,8 @@ service_start() {
     fi
 }
 
-# ── Uninstall ─────────────────────────────────────────────────
-if [ "$UNINSTALL" = true ]; then
-    info "Stopping and removing the DockRadar service..."
-    service_remove
-    if [ "$OS" = "linux" ]; then
-        rm -rf "$APP_ROOT"
-    else
-        # On macOS the app folder also holds config and compose files.
-        rm -rf "$APP_ROOT"/app-* "$APP_ROOT/current" "$APP_ROOT/venv"
-    fi
-    if [ "$PURGE" = true ]; then
-        if [ "$OS" = "linux" ]; then
-            rm -rf "$CONF_DIR" "$STATE_DIR" "$LOG_DIR"
-            if id -u "$SVC_USER" &>/dev/null; then userdel "$SVC_USER" 2>/dev/null || true; fi
-        else
-            rm -rf "$APP_ROOT" "$LOG_DIR"
-        fi
-        success "DockRadar removed, including config, compose files and logs."
-    else
-        success "DockRadar removed."
-        info "Kept: $ENV_FILE (config), $DATA_DIR (compose files), $LOG_DIR (logs). Use --uninstall --purge to delete them."
-    fi
-    exit 0
-fi
-
 # ── Prerequisites ─────────────────────────────────────────────
+step "Checking prerequisites"
 for cmd in tar curl awk; do
     command -v "$cmd" &>/dev/null || error "'$cmd' is required but not installed."
 done
@@ -332,6 +327,7 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 if [ -n "$TARBALL" ]; then
+    step "Using local release archive"
     [ -f "$TARBALL" ] || error "Tarball not found: $TARBALL"
     if [ -f "$TARBALL.sha256" ]; then
         info "Verifying checksum..."
@@ -340,6 +336,7 @@ if [ -n "$TARBALL" ]; then
     fi
     ARCHIVE="$TARBALL"
 else
+    step "Downloading DockRadar"
     if [ -z "$VERSION" ]; then
         info "Looking up the latest release of $REPO..."
         # Fetch fully before parsing: an early-exiting reader in a pipe makes
@@ -354,8 +351,13 @@ else
     ASSET="dockradar-$VERSION.tar.gz"
     BASE_URL="https://github.com/$REPO/releases/download/v$VERSION"
     info "Downloading DockRadar v$VERSION..."
-    curl -fsSL -o "$TMP/$ASSET" "$BASE_URL/$ASSET" \
-        || error "Download failed: $BASE_URL/$ASSET"
+    if [ "$SHOW_PROGRESS" = true ]; then
+        curl -fL --progress-bar -o "$TMP/$ASSET" "$BASE_URL/$ASSET" \
+            || error "Download failed: $BASE_URL/$ASSET"
+    else
+        curl -fsSL -o "$TMP/$ASSET" "$BASE_URL/$ASSET" \
+            || error "Download failed: $BASE_URL/$ASSET"
+    fi
     curl -fsSL -o "$TMP/$ASSET.sha256" "$BASE_URL/$ASSET.sha256" \
         || error "Checksum download failed: $BASE_URL/$ASSET.sha256"
     verify_checksum "$TMP" "$ASSET.sha256" \
@@ -364,6 +366,8 @@ else
     ARCHIVE="$TMP/$ASSET"
 fi
 
+step "Installing application files"
+info "Extracting archive..."
 mkdir -p "$TMP/extract"
 tar -xzf "$ARCHIVE" -C "$TMP/extract" --strip-components=1 --no-same-owner
 [ -f "$TMP/extract/backend/app/main.py" ] || error "Archive does not look like a DockRadar release."
@@ -395,15 +399,45 @@ if [ "$OS" = "linux" ]; then
     chmod 755 "$APP_DIR"
 fi
 
-info "Setting up Python environment..."
+# pip_install ARGS… — quiet when there is no terminal; otherwise shows the
+# package pip is working on as a single, updating line. The full output
+# is kept and printed if pip fails.
+pip_install() {
+    local log="$TMP/pip.log" rc=0 line
+    if [ "$SHOW_PROGRESS" = true ]; then
+        "$VENV_PY" -m pip install --disable-pip-version-check --progress-bar off "$@" </dev/null 2>&1 \
+            | tee "$log" \
+            | while read -r line; do
+                case "$line" in
+                    Collecting*|Downloading*|Installing*|Requirement*)
+                        printf '\r\033[K      %s' "${line:0:72}" >&2 ;;
+                esac
+            done || rc=$?
+        printf '\r\033[K' >&2
+    else
+        "$VENV_PY" -m pip install --quiet --disable-pip-version-check "$@" </dev/null >"$log" 2>&1 || rc=$?
+    fi
+    if [ "$rc" -ne 0 ]; then
+        tail -n 30 "$log" >&2
+        error "pip install failed (see output above)."
+    fi
+}
+
+step "Setting up Python environment"
 if [ -e "$APP_ROOT/venv" ] && ! "$VENV_PY" -c "import sys" &>/dev/null; then
     rm -rf "$APP_ROOT/venv"   # stale venv (the system Python was upgraded)
 fi
-[ -d "$APP_ROOT/venv" ] || "$PYTHON" -m venv "$APP_ROOT/venv"
+if [ ! -d "$APP_ROOT/venv" ]; then
+    info "Creating virtual environment..."
+    "$PYTHON" -m venv "$APP_ROOT/venv"
+fi
 # "python -m pip" rather than bin/pip: on macOS the venv path contains a
 # space ("Application Support"), which breaks console-script shebangs.
-"$VENV_PY" -m pip install --quiet --disable-pip-version-check --upgrade pip </dev/null
-"$VENV_PY" -m pip install --quiet --disable-pip-version-check -r "$APP_DIR/backend/requirements.txt" </dev/null
+info "Upgrading pip..."
+pip_install --upgrade pip
+info "Installing Python dependencies (this can take a minute)..."
+pip_install -r "$APP_DIR/backend/requirements.txt"
+success "Python dependencies installed."
 
 ln -sfn "app-$VERSION" "$APP_ROOT/current"
 
@@ -533,6 +567,7 @@ configure_email_from_env() {
     [ "$any" = false ] || success "Email settings applied from environment variables."
 }
 
+step "Configuring DockRadar"
 mkdir -p "$(dirname "$ENV_FILE")"
 FIRST_INSTALL=false
 if [ ! -f "$ENV_FILE" ]; then
@@ -576,15 +611,18 @@ if [ "$FIRST_INSTALL" = true ] && [ "$INTERACTIVE" = true ]; then
 fi
 
 # ── Start the service ─────────────────────────────────────────
+step "Starting DockRadar"
 service_start
 
 PORT="$(get_env PORT)"
 PORT="${PORT:-8086}"
 healthy=false
-for _ in $(seq 1 20); do
+for i in $(seq 1 20); do
+    [ "$SHOW_PROGRESS" = false ] || printf '\r\033[K      Waiting for DockRadar to respond on port %s... %ss' "$PORT" "$i" >&2
     curl -fsS "http://127.0.0.1:$PORT/api/health" &>/dev/null && { healthy=true; break; }
     sleep 1
 done
+[ "$SHOW_PROGRESS" = false ] || printf '\r\033[K' >&2
 
 echo ""
 if [ "$healthy" = true ]; then
@@ -600,8 +638,8 @@ echo -e "  ${CYAN}Restart ${NC} → $RESTART_CMD"
 echo -e "  ${CYAN}Logs    ${NC} → $LOGS_CMD"
 echo -e "  ${CYAN}Email   ${NC} → change SMTP_* / EMAIL_TO in the config, restart, then use \"Send test\" in the UI"
 echo -e "  ${CYAN}Upgrade ${NC} → re-run this installer"
-echo -e "  ${CYAN}Remove  ${NC} → curl -fsSL $INSTALLER_URL | ${SUDO}bash -s -- --uninstall [--purge]"
-echo -e "            (or offline: ${SUDO}bash \"$APP_ROOT/current/install.sh\" --uninstall)"
+echo -e "  ${CYAN}Remove  ${NC} → curl -fsSL $UNINSTALLER_URL | ${SUDO}bash"
+echo -e "            (add \"-s -- --purge\" to also delete config and data; offline: ${SUDO}bash \"$APP_ROOT/current/uninstall.sh\")"
 echo ""
 case "$(get_env HOST)" in
     127.0.0.1|localhost|::1)

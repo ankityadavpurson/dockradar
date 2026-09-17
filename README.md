@@ -135,9 +135,10 @@ Requirements: systemd, Python 3.10+ with `venv` (Debian/Ubuntu:
 curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install.sh | sudo bash
 ```
 
-On first install the script offers to set up email notifications (SMTP host,
-port, user, app password, recipient) and then starts the service on port
-`8086`. Running natively also enables compose-based updates, since the host's
+The installer works through six numbered steps (`[1/6]` … `[6/6]`), showing a
+download progress bar and the Python packages as they install. On first install
+it offers to set up email notifications (SMTP host, port, user, app password,
+recipient) and then starts the service on port `8086`. Running natively also enables compose-based updates, since the host's
 `docker compose` is available.
 
 | What | Where |
@@ -160,12 +161,12 @@ port, user, app password, recipient) and then starts the service on port
 - **Uninstall** (keeps config, data and logs):
 
   ```bash
-  curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install.sh | sudo bash -s -- --uninstall
+  curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/uninstall.sh | sudo bash
   ```
 
-  Use `--uninstall --purge` to also delete `/etc/dockradar`, `/var/lib/dockradar`,
-  `/var/log/dockradar` and the `dockradar` user. Offline, the installer is also on
-  disk: `sudo bash /opt/dockradar/current/install.sh --uninstall`.
+  Use `bash -s -- --purge` to also delete `/etc/dockradar`, `/var/lib/dockradar`,
+  `/var/log/dockradar` and the `dockradar` user (it asks first; add `--yes` to skip).
+  Offline, the uninstaller is also on disk: `sudo bash /opt/dockradar/current/uninstall.sh`.
 
 > The `dockradar` service user is added to the `docker` group, which is
 > root-equivalent on the host. Set `API_KEY` if port 8086 is reachable from
@@ -202,10 +203,10 @@ DockRadar listens on `127.0.0.1:8086` (this Mac only) — set `HOST=0.0.0.0` and
 - **Uninstall**:
 
   ```bash
-  curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install.sh | bash -s -- --uninstall
+  curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/uninstall.sh | bash
   ```
 
-  Add `--purge` to also delete the config, compose files and logs.
+  Use `bash -s -- --purge` to also delete the config, compose files and logs.
 
 ## Docker
 

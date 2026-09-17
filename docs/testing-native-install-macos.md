@@ -66,7 +66,7 @@ What each variable holds:
 | --- | --- | --- |
 | `$VERSION` | The app version, read from `__version__` in `backend/app/main.py`. Used in the folder and tarball names, and shown by the installer (`DockRadar v<version> is running`). | `2.0.0` |
 | `$BUILD` | Scratch folder in your home where the package is assembled. Safe to delete after testing (step 8). | `/Users/you/dr-build` |
-| `$STAGE` | The unpacked package folder inside `$BUILD` — the same layout as the release tarball (`backend/`, `frontend/dist/`, `packaging/`, `install.sh`, `VERSION`). Steps 2–8 run the installer from here: `$STAGE/install.sh`. | `/Users/you/dr-build/dockradar-2.0.0` |
+| `$STAGE` | The unpacked package folder inside `$BUILD` — the same layout as the release tarball (`backend/`, `frontend/dist/`, `packaging/`, `install.sh`, `uninstall.sh`, `VERSION`). Steps 2–8 run the installer from here: `$STAGE/install.sh`. | `/Users/you/dr-build/dockradar-2.0.0` |
 | `$TARBALL` | The packaged release file built from `$STAGE` — the same file CI attaches to a GitHub Release (one file for both Linux and macOS). Passed to the installer with `--tarball`; a matching `$TARBALL.sha256` checksum sits next to it and is verified during install. | `/Users/you/dr-build/dockradar-2.0.0.tar.gz` |
 | `$DR_HOME` | Where the installer puts DockRadar for your user: app, venv, config and compose files. Used in the checks below. Quoted everywhere because the path contains a space. | `/Users/you/Library/Application Support/DockRadar` |
 
@@ -102,14 +102,14 @@ tar -C backend --exclude=tests --exclude=compose_files --exclude=__pycache__ --e
 Copy the built frontend, packaging, and installers:
 
 ```bash
-cp -R frontend/dist "$STAGE/frontend/" && cp -R packaging .env.example LICENSE README.md scripts/install.sh "$STAGE/" && echo "$VERSION" > "$STAGE/VERSION"
+cp -R frontend/dist "$STAGE/frontend/" && cp -R packaging .env.example LICENSE README.md scripts/install.sh scripts/uninstall.sh "$STAGE/" && echo "$VERSION" > "$STAGE/VERSION"
 ```
 
 Strip Windows line endings (only matters for clones made on Windows — note
 macOS `sed -i` needs the empty `''`):
 
 ```bash
-sed -i '' 's/\r$//' "$STAGE/install.sh" "$STAGE/.env.example"
+sed -i '' 's/\r$//' "$STAGE/install.sh" "$STAGE/uninstall.sh" "$STAGE/.env.example"
 ```
 
 Create the tarball and its checksum (macOS uses `shasum -a 256`):
@@ -144,7 +144,12 @@ When prompted:
 | From address / Send notifications to | your addresses |
 | DockRadar URL for email links | `http://localhost:8086` (press Enter) |
 
-**Expected:** ends with `DockRadar v<version> is running.` macOS may also show a
+**Expected:** the output is split into six numbered steps, from
+`[1/6] Checking prerequisites` to `[6/6] Starting DockRadar`; the email prompts
+come in `[5/6] Configuring DockRadar`. During `[4/6] Setting up Python
+environment`, one line keeps updating with the package pip is installing. With
+a real release (no `--tarball`), step 2 is `Downloading DockRadar` with a
+progress bar. It ends with `DockRadar v<version> is running.` macOS may also show a
 **"Background Items Added"** notification — that is the LaunchAgent, and is
 expected.
 
@@ -252,8 +257,12 @@ bash -s -- --tarball "$TARBALL" < "$STAGE/install.sh"
 ## 7. Uninstall (keeps config, data, logs)
 
 ```bash
-bash -s -- --uninstall < "$STAGE/install.sh"
+bash < "$STAGE/uninstall.sh"
 ```
+
+**Expected:** `[1/2] Stopping the DockRadar service` (unloads the LaunchAgent),
+`[2/2] Removing application files`, then `DockRadar removed.` and a `Kept: …`
+line.
 
 The LaunchAgent and application are gone (should print
 `Could not find service` and `No such file or directory`):
@@ -269,15 +278,25 @@ ls "$DR_HOME"
 ```
 
 > **Optional — offline uninstall:** reinstall with step 2, then run
-> `bash "$DR_HOME/current/install.sh" --uninstall`.
+> `bash "$DR_HOME/current/uninstall.sh"`.
+
+> **Optional — old command:** `install.sh --uninstall [--purge]` still works; it
+> hands off to `uninstall.sh` (without the purge question).
 
 ---
 
 ## 8. Purge (full cleanup)
 
 ```bash
-bash -s -- --uninstall --purge < "$STAGE/install.sh"
+bash -s -- --purge < "$STAGE/uninstall.sh"
 ```
+
+It lists what it will delete and asks `Continue? [y/N]` — answer `y`.
+Unattended, add `--yes` to skip the question (`bash -s -- --purge --yes < …`);
+without a terminal and without `--yes` it stops and deletes nothing.
+
+**Expected:** three steps, ending with `DockRadar removed, including config,
+compose files and logs.`
 
 Nothing should be left (both paths missing):
 
@@ -330,5 +349,5 @@ curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/downloa
 ```
 
 ```bash
-curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install.sh | bash -s -- --uninstall
+curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/uninstall.sh | bash
 ```
