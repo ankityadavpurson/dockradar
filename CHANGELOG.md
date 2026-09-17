@@ -9,12 +9,15 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.15.0] — 2026-09-17
+
 ### Added
 - Separate `uninstall.sh` for native installs, published with each release and included in the install folder (`/opt/dockradar/current/uninstall.sh`). `--purge` now asks before deleting config and compose files (`--yes` skips the question). `install.sh --uninstall [--purge]` still works and hands off to it.
 - The native installer and uninstaller show numbered steps (`[1/6]` …). The installer also shows a download progress bar, the Python package being installed, and a startup wait counter when run in a terminal. If `pip install` fails, its output is now printed.
 
 ### Fixed
 - `install.sh` no longer exits silently after "Looking up the latest release…". The GitHub API lookup failed with a curl write error under `set -o pipefail`. API failures now show an error suggesting `--version X.Y.Z`.
+
 
 ## [13.14.0] — 2026-09-17
 
@@ -201,7 +204,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.14.1...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.15.0...HEAD
+[13.15.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.14.1...v13.15.0
 [13.14.1]: https://github.com/ankityadavpurson/dockradar/compare/v13.14.0...v13.14.1
 [13.14.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.13.0...v13.14.0
 [13.13.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.12.0...v13.13.0
