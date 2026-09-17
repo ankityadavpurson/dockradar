@@ -96,6 +96,10 @@ class Config:
     # Registry cache TTL in seconds
     REGISTRY_CACHE_TTL: int = _int_env("REGISTRY_CACHE_TTL", 300)
 
+    # Max seconds a single `docker compose` command (pull / up) may run before
+    # it is killed. Raise it for very large images on slow links.
+    COMPOSE_TIMEOUT: int = _int_env("COMPOSE_TIMEOUT", 300)
+
     @classmethod
     def email_configured(cls) -> bool:
         """Email is usable when we have a host and a recipient. Auth

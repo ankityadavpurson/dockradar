@@ -150,7 +150,7 @@ function ContainerCard({
             hasCompose ? (
               <button className="btn btn-ghost btn-xs" disabled={isBusy}
                 onClick={() => onComposeUpdate && onComposeUpdate(c)}
-                title={`Update via compose: ${assoc.service_name}`}>
+                title={`Update via compose: ${assoc?.service_name || c.compose?.service}`}>
                 <FileCode2 size={12} />
                 Compose
               </button>
@@ -281,7 +281,7 @@ export default function ContainerTable({
           isSel={selected.has(c.id)}
           refreshing={scanning}
           isUpdating={updatingNames.has(c.name)}
-          hasCompose={!!associations[c.name]}
+          hasCompose={!!associations[c.name] || !!c.compose}
           assoc={associations[c.name]}
           isBusy={isBusy}
           onToggleSelect={onToggleSelect}
@@ -341,7 +341,10 @@ export default function ContainerTable({
             const dot        = DOCKER_DOT[c.status] ?? DEFAULT_DOT
             const isSel      = selected.has(c.id)
             const assoc      = associations[c.name]
-            const hasCompose = !!assoc
+            // Compose update is offered for an uploaded association OR any
+            // compose-managed container (detected from its labels).
+            const hasCompose = !!assoc || !!c.compose
+            const composeSvc = assoc?.service_name || c.compose?.service
             const isRunning  = c.status === 'running'
             // Scans refresh every row's version data.
             const refreshing = scanning
@@ -432,7 +435,7 @@ export default function ContainerTable({
                       hasCompose ? (
                         <button className="btn btn-ghost btn-xs" disabled={isBusy}
                           onClick={() => onComposeUpdate && onComposeUpdate(c)}
-                          title={`Update via compose: ${assoc.service_name}`}>
+                          title={`Update via compose: ${composeSvc}`}>
                           <FileCode2 size={12} />
                           Compose
                         </button>

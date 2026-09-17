@@ -36,6 +36,39 @@ class ContainerInfo:
     raw_config: dict = field(default_factory=dict)
 
 
+# Labels Docker Compose stamps on every container it creates. They let DockRadar
+# update a service against its *real* compose file/project instead of an uploaded
+# copy — no manual association needed.
+_CL_PROJECT      = "com.docker.compose.project"
+_CL_SERVICE      = "com.docker.compose.service"
+_CL_CONFIG_FILES = "com.docker.compose.project.config_files"
+_CL_WORKING_DIR  = "com.docker.compose.project.working_dir"
+
+
+def compose_labels(info: "ContainerInfo") -> Optional[dict]:
+    """Extract compose project info from a container's labels, or None if it was
+    not created by Docker Compose.
+
+    Returns ``{project, service, config_files: [paths], working_dir}``.
+    ``config_files`` may list several files (compose allows multiple ``-f``).
+    """
+    labels = (info.raw_config or {}).get("labels") or {}
+    project = labels.get(_CL_PROJECT)
+    service = labels.get(_CL_SERVICE)
+    config_files = labels.get(_CL_CONFIG_FILES)
+    if not (project and service and config_files):
+        return None
+    files = [f.strip() for f in config_files.split(",") if f.strip()]
+    if not files:
+        return None
+    return {
+        "project": project,
+        "service": service,
+        "config_files": files,
+        "working_dir": labels.get(_CL_WORKING_DIR) or "",
+    }
+
+
 class DockerService:
     """Service for communicating with the Docker daemon."""
 
