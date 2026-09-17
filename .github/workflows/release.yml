@@ -411,13 +411,21 @@ jobs:
           # partially-succeeded upload replaces rather than duplicates.
           upload() {
             for attempt in 1 2 3 4 5; do
+              # Quiet on the first try. Every retry dumps the full HTTP
+              # request/response, so a recurring upload failure is diagnosable
+              # from the log alone — in particular the status code and the
+              # x-github-request-id header, which is what GitHub Support needs.
+              # secrets.GITHUB_TOKEN is masked by Actions in all log output.
+              [ "$attempt" -gt 1 ] && export GH_DEBUG=api
               if gh release upload "$TAG" "$1" --clobber; then
                 echo "attached $1 (attempt $attempt)"
+                unset GH_DEBUG
                 return 0
               fi
               echo "attempt $attempt failed for $1"
               [ "$attempt" -lt 5 ] && sleep $((attempt * 15))
             done
+            unset GH_DEBUG
             return 1
           }
 
