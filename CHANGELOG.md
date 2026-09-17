@@ -9,6 +9,11 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.14.1] — 2026-09-17
+
+### Fixed
+- stop silent exit when looking up the latest release
+
 ## [13.14.0] — 2026-09-17
 
 ### Added
@@ -194,7 +199,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.14.0...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.14.1...HEAD
+[13.14.1]: https://github.com/ankityadavpurson/dockradar/compare/v13.14.0...v13.14.1
 [13.14.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.13.0...v13.14.0
 [13.13.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.12.0...v13.13.0
 [13.12.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.11.0...v13.12.0
