@@ -9,6 +9,11 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.16.1] — 2026-09-17
+
+### Fixed
+- preserve sequence indentation in compose YAML processing and enhance UI hover effects
+
 ## [13.16.0] — 2026-09-17
 
 ### Added
@@ -209,7 +214,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.16.0...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.16.1...HEAD
+[13.16.1]: https://github.com/ankityadavpurson/dockradar/compare/v13.16.0...v13.16.1
 [13.16.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.15.0...v13.16.0
 [13.15.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.14.1...v13.15.0
 [13.14.1]: https://github.com/ankityadavpurson/dockradar/compare/v13.14.0...v13.14.1
