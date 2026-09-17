@@ -5,8 +5,25 @@ import subprocess
 import sys
 from pathlib import Path
 
-from app.core.config import _path_env, config
+from app.core.config import _path_env, _int_env, config
 from app.services.docker import ContainerInfo, DockerService
+
+
+class TestIntEnv:
+    def test_default_when_unset(self, monkeypatch):
+        monkeypatch.delenv("COMPOSE_TIMEOUT", raising=False)
+        assert _int_env("COMPOSE_TIMEOUT", 300) == 300
+
+    def test_reads_value(self, monkeypatch):
+        monkeypatch.setenv("COMPOSE_TIMEOUT", "600")
+        assert _int_env("COMPOSE_TIMEOUT", 300) == 600
+
+    def test_bad_value_falls_back(self, monkeypatch):
+        monkeypatch.setenv("COMPOSE_TIMEOUT", "notanint")
+        assert _int_env("COMPOSE_TIMEOUT", 300) == 300
+
+    def test_config_exposes_compose_timeout(self):
+        assert isinstance(config.COMPOSE_TIMEOUT, int)
 
 
 def _parse_hidden(raw: str) -> frozenset:

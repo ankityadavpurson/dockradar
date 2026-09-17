@@ -8,6 +8,7 @@ import json
 import logging
 import shutil
 import subprocess
+import threading
 import time
 from pathlib import Path
 from typing import Optional
@@ -309,14 +310,65 @@ class ComposeService:
 
     # ── Update via compose ────────────────────────────────────────────────────
 
+    def resolve_target(self, container_name: str, labels: Optional[dict] = None) -> Optional[dict]:
+        """Decide how to run compose for a container.
+
+        Prefers the container's **own** compose project (from Docker Compose
+        labels) when its config file(s) are readable by this process — that runs
+        against the real file and project name, avoiding the drift and
+        network/volume-namespacing problems of an uploaded copy. Falls back to a
+        stored (uploaded + associated) file otherwise.
+
+        Returns ``{mode, service, flags, label}`` or None when neither is usable.
+        ``flags`` is the compose flag list (``-p/--project-directory/-f`` …).
+        """
+        # 1) Label mode — real file, real project, no upload needed.
+        if labels and all(Path(f).is_file() for f in labels["config_files"]):
+            flags = ["-p", labels["project"]]
+            if labels.get("working_dir"):
+                flags += ["--project-directory", labels["working_dir"]]
+            for f in labels["config_files"]:
+                flags += ["-f", f]
+            return {
+                "mode": "labels",
+                "service": labels["service"],
+                "flags": flags,
+                "files": list(labels["config_files"]),
+                "label": f"{Path(labels['config_files'][0]).name} (project {labels['project']})",
+            }
+        # 2) Stored-copy mode — uploaded file + association.
+        assoc = self._associations.get(container_name)
+        if assoc is not None:
+            file_id, service_name = assoc
+            cf = self._files.get(file_id)
+            if cf is not None:
+                return {
+                    "mode": "stored",
+                    "service": service_name,
+                    "flags": ["-f", str(cf.path.resolve())],
+                    "files": [str(cf.path.resolve())],
+                    "label": cf.filename,
+                    "file_id": file_id,
+                }
+        return None
+
     def update_via_compose(
         self,
         container_name: str,
         progress_cb=None,
+        labels: Optional[dict] = None,
+        target_image: Optional[str] = None,
     ) -> tuple[bool, str]:
         """
         Run `docker compose pull <service>` then `docker compose up -d <service>`
-        for the compose service associated with container_name.
+        for the container's compose service — using its own project labels when
+        available, else a stored/associated file.
+
+        In **label mode**, when ``target_image`` is given and the compose file
+        still points the service at a different image, the file's ``image:`` line
+        is rewritten to ``target_image`` first (a ``.bak`` backup is kept), so a
+        pinned-tag service actually moves to the new tag. Stored mode is left to
+        the dialog's explicit file edit.
 
         Returns (success: bool, message: str).
         """
@@ -325,14 +377,14 @@ class ComposeService:
             if progress_cb:
                 progress_cb(msg)
 
-        assoc = self._associations.get(container_name)
-        if assoc is None:
-            return False, f"No compose file associated with '{container_name}'."
-
-        file_id, service_name = assoc
-        cf = self._files.get(file_id)
-        if cf is None:
-            return False, f"Compose file '{file_id}' no longer exists."
+        target = self.resolve_target(container_name, labels)
+        if target is None:
+            return False, (
+                f"No compose project found for '{container_name}'. Its compose "
+                "file could not be located from container labels, and no compose "
+                "file is associated. Upload + associate one, or ensure the "
+                "compose file is readable by DockRadar."
+            )
 
         compose_bin = self._find_compose_binary()
         if compose_bin is None:
@@ -341,52 +393,182 @@ class ComposeService:
                 "was found. Install Docker Compose to use this feature."
             )
 
-        compose_path = str(cf.path.resolve())
-        report(f"Using compose file: {cf.filename}")
-        report(f"Service: {service_name}")
+        report(f"Update mode: {target['mode']} — {target['label']}")
+        report(f"Service: {target['service']}")
 
+        # ── P4: move a pinned tag by editing the real file (label mode only) ──
+        if target_image and target["mode"] == "labels":
+            try:
+                self._apply_image_edit(target["files"], target["service"], target_image, report)
+            except Exception as exc:
+                return False, f"Could not update the compose file's image tag: {exc}"
+
+        ok = self._pull_and_recreate(
+            compose_bin, target["flags"], target["service"], container_name, report
+        )
+        if not ok[0]:
+            return ok
+
+        # ── P5: report the image the container is now actually running ──
+        new_image, new_digest = self._docker_current_image(container_name)
+        if new_image:
+            short = new_digest.replace("sha256:", "")[:12] if new_digest else ""
+            report(f"Now running: {new_image}" + (f" @ {short}" if short else ""))
+        return True, f"Updated via compose ({target['mode']}): {target['label']} / {target['service']}"
+
+    def _pull_and_recreate(self, compose_bin, flags, service_name, container_name, report) -> tuple[bool, str]:
+        """Shared pull + safe-recreate used by both label and stored-copy modes."""
         # ── Step 1: pull ──────────────────────────────────────────────────────
         report(f"Pulling latest image for service '{service_name}'...")
         pull_ok, pull_out = self._run_compose(
-            compose_bin, compose_path, ["pull", service_name]
+            compose_bin, flags, ["pull", service_name], line_cb=report
         )
-        report(pull_out)
         if not pull_ok:
+            # Pull doesn't touch the running container, so nothing to recover.
             return False, f"compose pull failed:\n{pull_out}"
 
-        # ── Step 2: stop + remove existing container via Docker CLI ─────────────
-        # `docker compose rm` only removes containers it originally created.
-        # If the container was started outside of compose, it refuses to touch it
-        # and `docker compose up` then fails with a name conflict.
-        # The fix is to stop and remove the container directly using `docker`
-        # before compose tries to recreate it.
-        report(f"Stopping existing container '{container_name}'...")
-        try:
-            subprocess.run(
-                ["docker", "stop", container_name],
-                capture_output=True, timeout=30,
-            )
-            subprocess.run(
-                ["docker", "rm", container_name],
-                capture_output=True, timeout=15,
-            )
-        except Exception as exc:
-            # Non-fatal — container may not exist (first-time deploy)
-            logger.debug("docker stop/rm for %s: %s", container_name, exc)
-
-        # ── Step 3: up -d ─────────────────────────────────────────────────────
+        # ── Step 2: recreate ──────────────────────────────────────────────────
+        # Prefer an in-place `up -d`: compose stops/recreates the container it
+        # manages, so the old one keeps running if this fails for a config
+        # reason. Only when compose refuses because the name is already taken by
+        # a container it did NOT create do we stop+remove and retry — that
+        # name-conflict is the sole reason the manual removal ever existed (it
+        # cannot happen in label mode, where the project owns the container).
+        up_args = ["up", "-d", "--no-deps", service_name]
         report(f"Recreating service '{service_name}'...")
-        up_ok, up_out = self._run_compose(
-            compose_bin, compose_path, ["up", "-d", "--no-deps", service_name]
-        )
-        report(up_out)
+        up_ok, up_out = self._run_compose(compose_bin, flags, up_args, line_cb=report)
+
+        if not up_ok and self._is_name_conflict(up_out):
+            report("Container was created outside this compose project — replacing it...")
+            self._docker_stop_rm(container_name)
+            up_ok, up_out = self._run_compose(compose_bin, flags, up_args, line_cb=report)
+
         if not up_ok:
-            return False, f"compose up failed:\n{up_out}"
+            # The service may now be down. Try to bring the previous container
+            # back (it survives a failed in-place up, or a stopped state).
+            report("✗ compose up failed — attempting to restore the previous container...")
+            if self._docker_start(container_name):
+                report(f"Restored '{container_name}' on its previous image.")
+                return False, (
+                    "compose up failed; the previous container was restarted "
+                    f"(still on the old image).\n{up_out}"
+                )
+            return False, (
+                "compose up failed and the service is DOWN — manual intervention "
+                f"needed.\n{up_out}"
+            )
 
         report(f"✓ Service '{service_name}' updated via compose.")
-        return True, f"Updated via compose: {cf.filename} / {service_name}"
+        return True, "recreated"
 
     # ── Helpers ───────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _is_name_conflict(output: str) -> bool:
+        """True if `up` failed only because the container name is already taken
+        by a container compose did not create (the case the stop+remove fallback
+        exists for)."""
+        low = (output or "").lower()
+        return (
+            "is already in use by container" in low
+            or ("conflict" in low and "container name" in low)
+            or "already in use" in low
+        )
+
+    @staticmethod
+    def _docker_stop_rm(container_name: str) -> None:
+        """Stop and remove a container directly via the Docker CLI. Best-effort:
+        the container may not exist (first-time deploy)."""
+        try:
+            subprocess.run(["docker", "stop", container_name], capture_output=True, timeout=30)
+            subprocess.run(["docker", "rm", container_name], capture_output=True, timeout=15)
+        except Exception as exc:
+            logger.debug("docker stop/rm for %s: %s", container_name, exc)
+
+    @staticmethod
+    def _docker_start(container_name: str) -> bool:
+        """Attempt to (re)start an existing container. Returns True on success —
+        used to restore the previous container after a failed update."""
+        try:
+            result = subprocess.run(
+                ["docker", "start", container_name], capture_output=True, timeout=30
+            )
+            return result.returncode == 0
+        except Exception as exc:
+            logger.debug("docker start for %s: %s", container_name, exc)
+            return False
+
+    @staticmethod
+    def _docker_current_image(container_name: str) -> tuple[Optional[str], Optional[str]]:
+        """Return (image_ref, digest) the container is currently running, via
+        `docker inspect`. ``digest`` is the image's registry RepoDigest when
+        available, else the local image id. Best-effort (post-update check)."""
+        def _inspect(ref, fmt):
+            try:
+                r = subprocess.run(
+                    ["docker", "inspect", ref, "--format", fmt],
+                    capture_output=True, text=True, timeout=15,
+                )
+                return r.stdout.strip() if r.returncode == 0 else ""
+            except Exception as exc:
+                logger.debug("docker inspect %s: %s", ref, exc)
+                return ""
+
+        out = _inspect(container_name, "{{.Config.Image}}|{{.Image}}")
+        if not out:
+            return None, None
+        image_ref, _, image_id = out.partition("|")
+        # Prefer the registry digest (from the image), else fall back to image id.
+        repo_digests = _inspect(image_id or image_ref, "{{if .RepoDigests}}{{index .RepoDigests 0}}{{end}}")
+        digest = repo_digests.split("@")[-1] if "@" in repo_digests else (image_id or None)
+        return (image_ref or None), (digest or None)
+
+    @staticmethod
+    def _set_service_image(content: str, service: str, image: str) -> tuple[str, bool]:
+        """Set ``services.<service>.image`` to ``image`` in compose YAML text,
+        preserving comments/formatting/quoting (ruamel round-trip). Returns
+        (new_content, changed). Only the one image key is touched."""
+        from ruamel.yaml import YAML
+        import io as _io
+
+        yaml_rt = YAML()
+        yaml_rt.preserve_quotes = True
+        try:
+            data = yaml_rt.load(content)
+        except Exception:
+            return content, False
+        services = (data or {}).get("services") if hasattr(data, "get") else None
+        if not services or service not in services:
+            return content, False
+        svc = services[service]
+        if not hasattr(svc, "get") or "image" not in svc:
+            return content, False
+        if str(svc["image"]) == image:
+            return content, False
+        svc["image"] = image
+        buf = _io.StringIO()
+        yaml_rt.dump(data, buf)
+        return buf.getvalue(), True
+
+    def _apply_image_edit(self, files: list[str], service: str, image: str, report) -> bool:
+        """Rewrite the ``image:`` line for ``service`` to ``image`` in whichever
+        of ``files`` defines it, keeping a ``.bak`` backup. Returns True if a file
+        was changed. Raises on write failure."""
+        for f in files:
+            path = Path(f)
+            try:
+                content = path.read_text(encoding="utf-8")
+            except Exception:
+                continue
+            new_content, changed = self._set_service_image(content, service, image)
+            if not changed:
+                continue
+            backup = path.with_suffix(path.suffix + ".bak")
+            backup.write_text(content, encoding="utf-8")
+            path.write_text(new_content, encoding="utf-8")
+            report(f"Updated image for '{service}' → {image} in {path.name} (backup: {backup.name})")
+            return True
+        return False
 
     @staticmethod
     def _find_compose_binary() -> Optional[list[str]]:
@@ -414,22 +596,59 @@ class ComposeService:
     @staticmethod
     def _run_compose(
         compose_bin: list[str],
-        compose_file: str,
+        compose_flags: list[str],
         args: list[str],
+        line_cb=None,
+        timeout: Optional[int] = None,
     ) -> tuple[bool, str]:
-        """Run a compose command and return (success, combined output)."""
-        cmd = compose_bin + ["-f", compose_file] + args
+        """Run a compose command, streaming its output.
+
+        ``compose_flags`` is the file/project flag list (e.g. ``["-f", path]`` or
+        ``["-p", project, "--project-directory", dir, "-f", file]``). Output is
+        read on a background thread and each non-blank line is forwarded to
+        ``line_cb`` as it arrives (so the UI's progress log fills live instead of
+        in one lump). ``timeout`` defaults to ``COMPOSE_TIMEOUT``. Returns
+        (success, combined output).
+        """
+        if timeout is None:
+            timeout = config.COMPOSE_TIMEOUT
+        cmd = compose_bin + compose_flags + args
         logger.debug("Running: %s", " ".join(cmd))
         try:
-            result = subprocess.run(
+            proc = subprocess.Popen(
                 cmd,
-                capture_output=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
                 text=True,
-                timeout=300,  # 5 min max for a pull
+                bufsize=1,
             )
-            output = (result.stdout + result.stderr).strip()
-            return result.returncode == 0, output or "(no output)"
-        except subprocess.TimeoutExpired:
-            return False, "Command timed out after 5 minutes."
         except Exception as exc:
             return False, str(exc)
+
+        lines: list[str] = []
+
+        def _reader():
+            # proc.stdout is line-buffered text; iterate until EOF (process exit).
+            for raw in proc.stdout:
+                line = raw.rstrip("\n")
+                lines.append(line)
+                if line_cb and line.strip():
+                    try:
+                        line_cb(line)
+                    except Exception:  # a bad callback must not kill the reader
+                        pass
+
+        reader = threading.Thread(target=_reader, daemon=True)
+        reader.start()
+        try:
+            proc.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            reader.join(timeout=2)
+            msg = f"Command timed out after {timeout}s."
+            lines.append(msg)
+            return False, "\n".join(lines).strip() or msg
+
+        reader.join(timeout=5)
+        output = "\n".join(lines).strip()
+        return proc.returncode == 0, output or "(no output)"

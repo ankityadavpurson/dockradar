@@ -29,7 +29,7 @@ from typing import Optional
 from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, File
 from pydantic import BaseModel
 
-from app.services.docker import DockerService, ContainerInfo
+from app.services.docker import DockerService, ContainerInfo, compose_labels
 from app.services.email import EmailService
 from app.services.registry import RegistryService
 from app.services.update import UpdateService
@@ -103,9 +103,22 @@ class ContainerOut(BaseModel):
     latest_tag: Optional[str] = None
     update_status: str
     local_digest: Optional[str] = None
+    # Present when the container was created by Docker Compose — lets the UI offer
+    # a compose update without a manual file upload/association.
+    compose: Optional[dict] = None
 
     @classmethod
     def from_info(cls, c: ContainerInfo) -> "ContainerOut":
+        cl = compose_labels(c)
+        compose = None
+        if cl:
+            compose = {
+                "project": cl["project"],
+                "service": cl["service"],
+                # Whether DockRadar can read the real compose file (label mode).
+                # False under remote Docker or when the path isn't mounted.
+                "reachable": all(Path(f).is_file() for f in cl["config_files"]),
+            }
         return cls(
             id=c.id,
             short_id=c.short_id,
@@ -117,6 +130,7 @@ class ContainerOut(BaseModel):
             latest_tag=c.latest_tag,
             update_status=c.update_status,
             local_digest=c.local_digest,
+            compose=compose,
         )
 
 
@@ -760,43 +774,68 @@ def compose_diff(name: str):
     if container is None:
         raise HTTPException(status_code=404, detail=f"Container '{name}' not found. Run a scan first.")
 
-    assoc = compose_svc.get_association(name)
-    if assoc is None:
-        raise HTTPException(status_code=400, detail=f"No compose file associated with '{name}'.")
+    labels = compose_labels(container)
+    target = compose_svc.resolve_target(name, labels)
+    if target is None:
+        raise HTTPException(
+            status_code=400,
+            detail=f"No compose project found for '{name}' (no readable compose file, no association).",
+        )
 
-    file_id, service_name = assoc
-    cf = compose_svc.get_file(file_id)
-    if cf is None:
-        raise HTTPException(status_code=404, detail=f"Compose file '{file_id}' not found.")
+    service_name = target["service"]
+    mode = target["mode"]
 
-    current_content = cf.content
-    current_image   = cf.service_image(service_name) or container.image_name
+    if mode == "stored":
+        # Uploaded copy — editable: the UI may hand-edit and save it before update.
+        cf = compose_svc.get_file(target["file_id"])
+        current_content = cf.content
+        filename = cf.filename
+        file_id = cf.file_id
+        editable = True
+        current_image = cf.service_image(service_name) or container.image_name
+    else:
+        # Label mode — read the container's real compose file (read-only preview).
+        from pathlib import Path as _Path
+        path = _Path(labels["config_files"][0])
+        try:
+            current_content = path.read_text(encoding="utf-8")
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Could not read compose file {path}: {exc}")
+        filename = path.name
+        file_id = None
+        editable = False
+        try:
+            import yaml as _yaml
+            parsed = _yaml.safe_load(current_content) or {}
+            current_image = (parsed.get("services", {}).get(service_name, {}) or {}).get("image") or container.image_name
+        except Exception:
+            current_image = container.image_name
 
     # Determine the latest image string
     latest_tag    = container.latest_tag or container.tag
     latest_image  = f"{container.repository}:{latest_tag}"
 
-    # Build the proposed compose content — replace the image line for this service
-    # only if there is actually a change to make.
+    # Build the proposed content by rewriting only this service's image line
+    # (comment/format-preserving). Stored mode saves it via the dialog; label
+    # mode applies it to the real file (with a backup) on confirm.
+    has_change = bool(current_image and current_image != latest_image)
     proposed_content = current_content
-    if current_image and current_image != latest_image:
-        import re as _re
-        # Replace `image: <anything>` under the specific service block.
-        # We do a targeted replacement: find the service name, then replace its image line.
-        proposed_content = _re.sub(
-            '(image:\\s+)' + _re.escape(current_image),
-            r'\g<1>' + latest_image,
-            current_content,
-        )
+    if has_change:
+        proposed_content, _ = ComposeService._set_service_image(current_content, service_name, latest_image)
 
     return {
         "container_name":    name,
         "service_name":      service_name,
-        "filename":          cf.filename,
-        "file_id":           file_id,
+        "mode":              mode,          # "labels" | "stored"
+        "editable":          editable,      # can the UI hand-edit the file?
+        # Confirming will rewrite the compose file's image tag (both modes).
+        "will_update_file":  has_change,
+        "project":           target.get("label"),
+        "filename":          filename,
+        "file_id":           file_id,       # null in label mode
         "current_image":     current_image,
         "latest_image":      latest_image,
-        "has_change":        current_image != latest_image,
+        "has_change":        has_change,
         "current_content":   current_content,
         "proposed_content":  proposed_content,
         "update_status":     container.update_status,
@@ -818,12 +857,25 @@ def compose_update_container(name: str, background_tasks: BackgroundTasks):
     if not api_state.try_begin("updating"):
         raise HTTPException(status_code=409, detail="A scan or update is already running.")
 
-    if compose_svc.get_association(name) is None:
+    # Prefer the container's own compose project (labels); fall back to a stored
+    # association. Reject only when neither is available.
+    container = next((c for c in api_state.containers if c.name == name), None)
+    labels = compose_labels(container) if container else None
+    if compose_svc.resolve_target(name, labels) is None:
         api_state.end("updating")
         raise HTTPException(
             status_code=400,
-            detail=f"No compose file associated with '{name}'. Use /api/compose/associate first.",
+            detail=(
+                f"No compose project found for '{name}'. Associate a compose file "
+                "(/api/compose/associate), or ensure its compose file is readable "
+                "by DockRadar."
+            ),
         )
+
+    # Target image to move a pinned tag to (label mode rewrites the file to it).
+    target_image = None
+    if container and container.latest_tag and container.latest_tag != container.tag:
+        target_image = f"{container.repository}:{container.latest_tag}"
 
     def _run():
         try:
@@ -833,7 +885,9 @@ def compose_update_container(name: str, background_tasks: BackgroundTasks):
                 api_state.progress.append(f"[{name}] {msg}")
                 logger.info("[API] [%s] %s", name, msg)
 
-            success, message = compose_svc.update_via_compose(name, progress_cb=cb)
+            success, message = compose_svc.update_via_compose(
+                name, progress_cb=cb, labels=labels, target_image=target_image
+            )
 
             if success:
                 api_state.progress.append(f"[{name}] \u2713 Compose update complete.")

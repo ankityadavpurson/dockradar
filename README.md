@@ -296,6 +296,7 @@ Most important values:
 - `API_KEY` — optional; when set, every `/api` route except `/api/health` requires the `X-Api-Key` header. Give the key to the UI once via the browser console: `localStorage.setItem('dockradar_api_key', '<key>')`
 - `HIDDEN_REPOSITORY` — comma-separated container or repository names (case-insensitive, exact match) to hide from DockRadar entirely: not listed, not scanned, not auto-updated
 - `REGISTRY_CACHE_TTL`
+- `COMPOSE_TIMEOUT` — max seconds a single `docker compose` pull/up may run (default 300)
 
 ### Email notifications (Gmail)
 

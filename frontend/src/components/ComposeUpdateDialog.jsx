@@ -25,7 +25,12 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
     setSaving(true)
     setError(null)
     try {
-      await composeApi.updateContent(diff.file_id, content)
+      // Only stored (uploaded) files are editable/savable, and only when the
+      // content actually changed — otherwise skip the write. In label mode the
+      // backend runs compose against the real file (and rewrites the tag itself).
+      if (diff.editable && diff.file_id && content !== diff.current_content) {
+        await composeApi.updateContent(diff.file_id, content)
+      }
       onConfirm(container.name)
     } catch (e) {
       setError(e.message)
@@ -41,6 +46,7 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
       {diff && (
         <div className="text-[12px] font-mono truncate" style={{ color: 'var(--text-3)' }}>
           {diff.filename} · service: {diff.service_name}
+          {diff.mode === 'labels' && ' · via its own compose project'}
         </div>
       )}
     </div>
@@ -50,7 +56,9 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
     <>
       <span className="flex-1 text-[13px]" style={{ color: 'var(--text-3)' }}>
         {diff?.has_change
-          ? 'File will be saved, then compose pull + up -d will run.'
+          ? (diff.editable === false
+              ? 'The tag in the container’s own compose file will be updated (backup kept), then pull + up -d.'
+              : 'File will be saved, then compose pull + up -d will run.')
           : 'compose pull + up -d will run without file changes.'}
       </span>
       <button className="btn btn-primary btn-sm" onClick={handleUpdate} disabled={loading || saving || !!error}>
@@ -95,24 +103,44 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
             </div>
             {!diff.has_change && (
               <div className="text-[13px] mt-1" style={{ color: 'var(--text-3)' }}>
-                ✓ Image tag is already up to date — compose file will not be modified.
+                ✓ Image tag is already up to date — <code>pull + up -d</code> will refresh the image without file changes.
+              </div>
+            )}
+            {diff.has_change && diff.editable === false && (
+              <div className="text-[13px] mt-1" style={{ color: 'var(--text-3)' }}>
+                DockRadar will update the <code>image:</code> tag to <code>{diff.latest_image}</code> in
+                the container’s own compose file (<code>{diff.filename}</code>), keeping a{' '}
+                <code>.bak</code> backup, then run <code>pull + up -d</code>.
               </div>
             )}
           </div>
         </div>
 
-        {/* Compose file diff / editor */}
+        {/* Compose file diff / editor (editable = uploaded copy) or read-only view (label mode) */}
         <div className="code-surface overflow-hidden">
           <div className="px-3 py-2 flex justify-between items-center" style={{ borderBottom: '1px solid var(--border-1)', background: 'var(--surface-raised)' }}>
             <span className="section-label">
-              {showFull ? 'Compose file (editable)' : 'File changes'}
+              {diff.editable === false
+                ? (diff.has_change ? 'File change (applied on confirm)' : 'Compose file (read-only)')
+                : showFull ? 'Compose file (editable)' : 'File changes'}
             </span>
-            <button onClick={() => setShowFull(s => !s)} className="btn btn-ghost btn-xs">
-              {showFull ? 'Show diff' : 'Edit full file'}
-            </button>
+            {diff.editable !== false && (
+              <button onClick={() => setShowFull(s => !s)} className="btn btn-ghost btn-xs">
+                {showFull ? 'Show diff' : 'Edit full file'}
+              </button>
+            )}
           </div>
 
-          {showFull ? (
+          {diff.editable === false ? (
+            diff.has_change ? (
+              <DiffView current={diff.current_content} proposed={diff.proposed_content} />
+            ) : (
+              <pre className="w-full font-mono text-[13px] leading-relaxed overflow-auto p-3"
+                style={{ maxHeight: '260px', margin: 0, background: 'var(--surface-0)', color: 'var(--text-2)' }}>
+                {diff.current_content}
+              </pre>
+            )
+          ) : showFull ? (
             <textarea
               value={content}
               onChange={e => setContent(e.target.value)}
