@@ -225,13 +225,8 @@ function ContainerRow({ container, association, composeFiles, labels, onAssociat
   }
 
   return (
-    <div className="grid gap-2 px-3 py-2 items-center"
-      style={{
-        gridTemplateColumns: '1fr 2fr auto',
-        borderRadius: 'var(--radius-control)',
-        background: hasAssociation ? 'var(--accent-subtle)' : 'var(--surface-raised)',
-        border: `1px solid ${hasAssociation ? 'var(--border-2)' : 'var(--border-1)'}`,
-      }}>
+    <div className="grid gap-2 px-3 py-2 items-center hover:bg-[var(--hover-bg)]"
+      style={{ gridTemplateColumns: '1fr 2fr auto' }}>
       <div className="flex items-center gap-2 min-w-0">
         <span className="w-2 h-2 rounded-full shrink-0"
           style={{ background: container.status === 'running' ? 'var(--accent-teal)' : 'var(--text-4)' }} />
@@ -423,8 +418,7 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
                     <ChevronDown size={16} className={`transition-transform ${showStoredFiles ? 'rotate-180' : ''}`} style={S.label} />
                   </button>
                   {showStoredFiles && composeFiles.map(f => (
-                    <div key={f.file_id} className="flex items-center justify-between px-3 py-2"
-                      style={{ background: 'var(--surface-raised)', border: S.border, borderRadius: 'var(--radius-control)' }}>
+                    <div key={f.file_id} className="flex items-center justify-between px-3 py-2 hover:bg-[var(--hover-bg)]">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <FileCode2 size={16} style={{ color: 'var(--text-2)', flexShrink: 0 }} />
                         <div className="flex flex-col min-w-0">
