@@ -535,6 +535,10 @@ class ComposeService:
 
         yaml_rt = YAML()
         yaml_rt.preserve_quotes = True
+        # Match the standard compose indentation (2-space nesting, list dash
+        # offset 2) so round-tripping doesn't re-indent sequences (ports,
+        # volumes, …) and produce spurious diffs — only the image line changes.
+        yaml_rt.indent(mapping=2, sequence=4, offset=2)
         try:
             data = yaml_rt.load(content)
         except Exception:

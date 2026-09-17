@@ -334,6 +334,24 @@ class TestSetServiceImage:
         out, changed = ComposeService._set_service_image(COMMENTED_COMPOSE, "nope", "x:1")
         assert changed is False
 
+    def test_preserves_sequence_indentation(self):
+        # Standard 2-space compose with an indented list — only the image line
+        # may change; sequences must keep their original indentation.
+        src = (
+            "services:\n"
+            "  it-tools:\n"
+            "    image: corentinth/it-tools:2023.8.21-6f93cba\n"
+            "    ports:\n"
+            "      - 8080:80\n"
+            "    networks:\n"
+            "      - web\n"
+            "    restart: unless-stopped\n"
+        )
+        out, changed = ComposeService._set_service_image(src, "it-tools", "corentinth/it-tools:latest")
+        assert changed is True
+        assert out == src.replace("2023.8.21-6f93cba", "latest")   # nothing else moved
+        assert "      - 8080:80" in out and "      - web" in out
+
 
 class TestApplyImageEdit:
     def test_edits_file_and_writes_backup(self, svc, tmp_path):
