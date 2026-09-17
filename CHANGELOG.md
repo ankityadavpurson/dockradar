@@ -9,10 +9,12 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [13.14.1] — 2026-09-17
+### Added
+- Separate `uninstall.sh` for native installs, published with each release and included in the install folder (`/opt/dockradar/current/uninstall.sh`). `--purge` now asks before deleting config and compose files (`--yes` skips the question). `install.sh --uninstall [--purge]` still works and hands off to it.
+- The native installer and uninstaller show numbered steps (`[1/6]` …). The installer also shows a download progress bar, the Python package being installed, and a startup wait counter when run in a terminal. If `pip install` fails, its output is now printed.
 
 ### Fixed
-- stop silent exit when looking up the latest release
+- `install.sh` no longer exits silently after "Looking up the latest release…". The GitHub API lookup failed with a curl write error under `set -o pipefail`. API failures now show an error suggesting `--version X.Y.Z`.
 
 ## [13.14.0] — 2026-09-17
 

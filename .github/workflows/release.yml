@@ -183,7 +183,7 @@ jobs:
             backend/ "dist-native/$STAGE/backend/"
           cp -r frontend/dist "dist-native/$STAGE/frontend/dist"
           cp -r packaging .env.example LICENSE README.md "dist-native/$STAGE/"
-          cp scripts/install.sh "dist-native/$STAGE/"
+          cp scripts/install.sh scripts/uninstall.sh "dist-native/$STAGE/"
           echo "$VERSION" > "dist-native/$STAGE/VERSION"
 
           # Smoke test: the packaged backend installs, imports, and finds the
@@ -373,6 +373,9 @@ jobs:
 
           # macOS — run WITHOUT sudo; requires Python 3.10+ and Docker Desktop, OrbStack or Colima
           curl -fsSL https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.value }}/install.sh | bash -s -- --version ${{ steps.version.outputs.value }}
+
+          # Uninstall — Linux (use "bash" without sudo on macOS); add "-s -- --purge" to also delete config and data
+          curl -fsSL https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.value }}/uninstall.sh | sudo bash
           \`\`\`
           Uses \`${{ steps.tarball.outputs.asset }}\` from the assets below.
           EOF
@@ -389,3 +392,4 @@ jobs:
             ${{ steps.tarball.outputs.asset }}
             ${{ steps.tarball.outputs.asset }}.sha256
             scripts/install.sh
+            scripts/uninstall.sh
