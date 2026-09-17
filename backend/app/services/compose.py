@@ -386,11 +386,13 @@ class ComposeService:
                 "compose file is readable by DockRadar."
             )
 
-        compose_bin = self._find_compose_binary()
+        compose_bin = self._compose_bin()
         if compose_bin is None:
             return False, (
                 "Neither 'docker compose' (plugin) nor 'docker-compose' (standalone) "
-                "was found. Install Docker Compose to use this feature."
+                "was found. If DockRadar runs in a container, the image must include "
+                "the Docker CLI + compose plugin; on a native install, install "
+                "Docker Compose on the host."
             )
 
         report(f"Update mode: {target['mode']} — {target['label']}")
@@ -592,6 +594,22 @@ class ComposeService:
             return ["docker-compose"]
 
         return None
+
+    # Cache the (relatively expensive) compose-binary probe for the process
+    # lifetime — a restart re-checks, which is enough to pick up an install.
+    _compose_bin_cache: "list[str] | bool" = False  # False = not yet probed
+
+    @classmethod
+    def _compose_bin(cls) -> Optional[list[str]]:
+        if cls._compose_bin_cache is False:
+            cls._compose_bin_cache = cls._find_compose_binary()
+        return cls._compose_bin_cache
+
+    @classmethod
+    def compose_cli_available(cls) -> bool:
+        """True if a `docker compose` (or `docker-compose`) CLI is callable —
+        e.g. false inside a container image that doesn't ship it."""
+        return cls._compose_bin() is not None
 
     @staticmethod
     def _run_compose(

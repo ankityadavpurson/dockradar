@@ -385,6 +385,11 @@ if [ "$OS" = "linux" ]; then
     else
         warn "No 'docker' group found — $SVC_USER may not be able to reach the Docker socket."
     fi
+    # "Update via compose" edits each stack's real compose file, so the service
+    # user needs read/write on those directories:
+    #   sudo chgrp -R $SVC_USER /path/to/stacks && sudo chmod -R g+rwX /path/to/stacks
+    #   sudo find /path/to/stacks -type d -exec chmod g+s {} +   # .bak inherits group
+    info "Note: to update other compose stacks from the UI, grant '$SVC_USER' read/write on their directories (see README → Compose updates)."
 fi
 
 # ── Install application ───────────────────────────────────────

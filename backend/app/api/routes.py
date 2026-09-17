@@ -20,6 +20,7 @@ GET     /api/health                            Health check — Docker connectiv
 
 import json
 import logging
+import os
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
@@ -112,12 +113,22 @@ class ContainerOut(BaseModel):
         cl = compose_labels(c)
         compose = None
         if cl:
+            files = cl["config_files"]
+            reachable = all(Path(f).is_file() for f in files)
+            # Writable = the file AND its directory (needed to create the .bak
+            # backup) can be written by DockRadar's user. False → pinned-tag
+            # upgrade can't rewrite the file (permission or read-only mount).
+            writable = reachable and all(
+                os.access(f, os.W_OK) and os.access(str(Path(f).parent), os.W_OK)
+                for f in files
+            )
             compose = {
                 "project": cl["project"],
                 "service": cl["service"],
                 # Whether DockRadar can read the real compose file (label mode).
                 # False under remote Docker or when the path isn't mounted.
-                "reachable": all(Path(f).is_file() for f in cl["config_files"]),
+                "reachable": reachable,
+                "writable": writable,
             }
         return cls(
             id=c.id,
@@ -328,6 +339,10 @@ def health():
         "status": "ok",
         "version": __version__,
         "docker_connected": docker_svc.is_connected(),
+        # False when no `docker compose` CLI is callable (e.g. a container image
+        # without the plugin) — the UI uses this to explain why compose updates
+        # are unavailable instead of failing on click.
+        "compose_cli": compose_svc.compose_cli_available(),
         "scheduler_running": scheduler_svc.is_running(),
         "next_scan": scheduler_svc.get_next_run(),
         "last_scan": api_state.last_scan,

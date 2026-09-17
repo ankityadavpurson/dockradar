@@ -6,6 +6,12 @@ services:
     volumes:
       - ./backend/compose_files:/app/backend/compose_files
       - /var/run/docker.sock:/var/run/docker.sock
+      # To update OTHER compose stacks from the UI, mount each stack's directory
+      # at the SAME path it has on the host, so the paths in each container's
+      # com.docker.compose.* labels resolve inside this container. Example:
+      #   - /srv/stacks:/srv/stacks
+      # The path must be read-write for the "pinned tag" upgrade to rewrite the
+      # file (a .bak backup is kept). Add one line per stack root you manage.
     env_file:
       - path: .env
         required: false

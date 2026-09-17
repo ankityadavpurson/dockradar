@@ -77,6 +77,7 @@ DockRadar can control Docker containers on the host. Treat it as a privileged se
 
 - The container-details API returns only environment-variable **names**, never their values, so secrets baked into a container's environment are not exposed through the UI or API.
 - Uploaded compose files are stored **unencrypted** on disk in `backend/compose_files/` (the persisted volume) and may contain secrets or credentials. They are excluded from git (`.gitignore`) and the image (`.dockerignore`); restrict permissions on the host volume accordingly.
+- "Update via compose" **reads and writes the real compose files** of managed stacks (rewriting a pinned `image:` tag, keeping a `.bak`). Grant DockRadar write access only to the stack directories you intend it to manage — on a container install this is scoped by which host paths you bind-mount read-write. Anyone with API access can trigger these edits and container recreations.
 
 7. Known limitations
 
