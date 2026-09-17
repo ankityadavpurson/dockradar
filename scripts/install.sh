@@ -342,8 +342,12 @@ if [ -n "$TARBALL" ]; then
 else
     if [ -z "$VERSION" ]; then
         info "Looking up the latest release of $REPO..."
-        VERSION="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" \
-            | awk -F'"' '/"tag_name"/ {print $4; exit}')"
+        # Fetch fully before parsing: an early-exiting reader in a pipe makes
+        # curl fail with a write error, which pipefail + set -e turn into a
+        # silent exit.
+        RELEASE_JSON="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" 2>&1)" \
+            || error "Could not query the GitHub API (${RELEASE_JSON:-no response}). Try --version X.Y.Z."
+        VERSION="$(printf '%s\n' "$RELEASE_JSON" | awk -F'"' '/"tag_name"/ && !found {print $4; found=1}')"
         VERSION="${VERSION#v}"
         [ -n "$VERSION" ] || error "Could not determine the latest release. Try --version X.Y.Z."
     fi
