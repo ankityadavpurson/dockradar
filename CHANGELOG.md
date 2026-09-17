@@ -9,6 +9,14 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.16.3] — 2026-09-17
+
+### Fixed
+- create release before uploading assets so uploads can't strand it
+
+### Changed
+- dump full HTTP detail on release asset upload retries
+
 ## [13.16.2] — 2026-09-17
 
 ### Changed
@@ -219,7 +227,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.16.2...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.16.3...HEAD
+[13.16.3]: https://github.com/ankityadavpurson/dockradar/compare/v13.16.2...v13.16.3
 [13.16.2]: https://github.com/ankityadavpurson/dockradar/compare/v13.16.1...v13.16.2
 [13.16.1]: https://github.com/ankityadavpurson/dockradar/compare/v13.16.0...v13.16.1
 [13.16.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.15.0...v13.16.0
