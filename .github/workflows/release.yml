@@ -380,8 +380,17 @@ jobs:
           Uses \`${{ steps.tarball.outputs.asset }}\` from the assets below.
           EOF
 
-      # Only the small assets (~200 KB total) gate the release — they upload
-      # reliably, so the release is always created and published.
+      # action-gh-release creates the release as a DRAFT, uploads the assets,
+      # then unmarks draft ("finalize"). An asset upload that throws kills the
+      # job before finalize, stranding the release as a permanent draft — which
+      # is how v13.16.0, v13.16.1 and v13.16.2 all ended up invisible after
+      # their tags and images had already been pushed.
+      #
+      # GitHub's upload endpoint returns sporadic server-side errors ("Error
+      # saving asset", "Error creating asset temp dir") that hit assets of any
+      # size — v13.16.2 failed on install.sh, a few KB. So create the release
+      # with no assets at all, which cannot fail and therefore always
+      # publishes, and upload everything afterwards with retries.
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
@@ -389,44 +398,51 @@ jobs:
           name: v${{ steps.version.outputs.value }}
           body_path: RELEASE_NOTES.md
           generate_release_notes: true
-          files: |
-            ${{ steps.tarball.outputs.asset }}
-            ${{ steps.tarball.outputs.asset }}.sha256
-            scripts/install.sh
-            scripts/uninstall.sh
 
-      # The docker-save tarball is ~66 MB — an order of magnitude larger than
-      # every other asset, and the only one big enough to hit GitHub's
-      # asset-upload flakiness. Uploaded inline it took down the v13.16.0 and
-      # v13.16.1 releases *after* the tag and images had already been pushed,
-      # leaving a draft with no clean retry path (re-running the workflow
-      # aborts on the "tag already exists" guard). It is a convenience for
-      # offline installs — the image is already on GHCR and Docker Hub — so it
-      # is attached separately and is never allowed to fail the release.
-      - name: Attach Docker image tarball (best effort)
-        continue-on-error: true
+      - name: Upload release assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: v${{ steps.version.outputs.value }}
-          ASSET: ${{ steps.export.outputs.asset }}
+          NATIVE: ${{ steps.tarball.outputs.asset }}
+          IMAGE_TARBALL: ${{ steps.export.outputs.asset }}
           IMAGE: ${{ steps.export.outputs.image }}
         run: |
-          for attempt in 1 2 3; do
-            if gh release upload "$TAG" "$ASSET" --clobber; then
-              echo "Attached $ASSET on attempt $attempt"
-              exit 0
-            fi
-            echo "Upload attempt $attempt failed"
-            [ "$attempt" -lt 3 ] && sleep $((attempt * 30))
+          # --clobber makes each attempt idempotent, so a retry after a
+          # partially-succeeded upload replaces rather than duplicates.
+          upload() {
+            for attempt in 1 2 3 4 5; do
+              if gh release upload "$TAG" "$1" --clobber; then
+                echo "attached $1 (attempt $attempt)"
+                return 0
+              fi
+              echo "attempt $attempt failed for $1"
+              [ "$attempt" -lt 5 ] && sleep $((attempt * 15))
+            done
+            return 1
+          }
+
+          # Required: the install instructions in the release notes curl these
+          # by URL, so a release missing them is broken.
+          failed=()
+          for f in "$NATIVE" "$NATIVE.sha256" scripts/install.sh scripts/uninstall.sh; do
+            upload "$f" || failed+=("$f")
           done
 
-          echo "::warning::Could not attach $ASSET after 3 attempts. $TAG is published and the image is on GHCR and Docker Hub."
-          {
-            echo "### Docker image tarball not attached"
-            echo "\`$ASSET\` failed to upload after 3 attempts. **$TAG is published** and the image is available from both registries; only the offline tarball is missing. To attach it by hand:"
-            echo '```bash'
-            echo "docker pull $IMAGE && docker save $IMAGE | gzip > $ASSET"
-            echo "gh release upload $TAG $ASSET --clobber"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          exit 1
+          # Best effort: the image is already on GHCR and Docker Hub, so a
+          # missing offline tarball must not fail an otherwise-complete release.
+          if ! upload "$IMAGE_TARBALL"; then
+            echo "::warning::Could not attach $IMAGE_TARBALL. $TAG is published and the image is on GHCR and Docker Hub."
+            {
+              echo "### Offline image tarball not attached"
+              echo "\`$IMAGE_TARBALL\` failed to upload. **$TAG is published** and the image is on both registries; only the offline tarball is missing. To attach it by hand:"
+              echo '```bash'
+              echo "docker pull $IMAGE && docker save $IMAGE | gzip > $IMAGE_TARBALL"
+              echo "gh release upload $TAG $IMAGE_TARBALL --clobber"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [ ${#failed[@]} -gt 0 ]; then
+            echo "::error::Required assets failed to upload after 5 attempts: ${failed[*]}"
+            exit 1
+          fi
