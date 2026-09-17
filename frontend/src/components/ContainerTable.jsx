@@ -121,7 +121,7 @@ const STATUS_ORDER = { update_available: 0, error: 1, unknown: 2, up_to_date: 3 
 
 /** Compact card used below the md breakpoint instead of the table row. */
 function ContainerCard({
-  c, isSel, refreshing, isUpdating, hasCompose, assoc, isBusy,
+  c, isSel, refreshing, isUpdating, hasCompose, assoc, composeUnavailable, isBusy,
   onToggleSelect, onConfirmUpdate, onComposeUpdate, onConfirmDelete, onShowDetails,
 }) {
   const dot = DOCKER_DOT[c.status] ?? DEFAULT_DOT
@@ -148,9 +148,11 @@ function ContainerCard({
         <div className="ml-auto flex items-center gap-1.5 shrink-0">
           {c.update_status === 'update_available' && (
             hasCompose ? (
-              <button className="btn btn-ghost btn-xs" disabled={isBusy}
+              <button className="btn btn-ghost btn-xs" disabled={isBusy || composeUnavailable}
                 onClick={() => onComposeUpdate && onComposeUpdate(c)}
-                title={`Update via compose: ${assoc?.service_name || c.compose?.service}`}>
+                title={composeUnavailable
+                  ? 'Compose CLI not available in this deployment'
+                  : `Update via compose: ${assoc?.service_name || c.compose?.service}`}>
                 <FileCode2 size={12} />
                 Compose
               </button>
@@ -227,9 +229,13 @@ function UpdatingPill() {
 export default function ContainerTable({
   containers, isFiltered = false, selected, isBusy,
   scanning = false, updating = false, updatingNames = new Set(),
+  composeCli = true,
   onToggleSelect, onConfirmUpdate, onConfirmDelete,
   associations = {}, onComposeUpdate, onShowDetails,
 }) {
+  // compose_cli is false when the deployment has no `docker compose` CLI
+  // (e.g. an older container image). Treat undefined as available.
+  const composeUnavailable = composeCli === false
   const [sortKey, setSortKey] = useState('update_status')
   const [sortDir, setSortDir] = useState('asc')
 
@@ -283,6 +289,7 @@ export default function ContainerTable({
           isUpdating={updatingNames.has(c.name)}
           hasCompose={!!associations[c.name] || !!c.compose}
           assoc={associations[c.name]}
+          composeUnavailable={composeUnavailable}
           isBusy={isBusy}
           onToggleSelect={onToggleSelect}
           onConfirmUpdate={onConfirmUpdate}
@@ -433,9 +440,11 @@ export default function ContainerTable({
                     />
                     {c.update_status === 'update_available' && (
                       hasCompose ? (
-                        <button className="btn btn-ghost btn-xs" disabled={isBusy}
+                        <button className="btn btn-ghost btn-xs" disabled={isBusy || composeUnavailable}
                           onClick={() => onComposeUpdate && onComposeUpdate(c)}
-                          title={`Update via compose: ${composeSvc}`}>
+                          title={composeUnavailable
+                            ? 'Compose CLI not available in this deployment'
+                            : `Update via compose: ${composeSvc}`}>
                           <FileCode2 size={12} />
                           Compose
                         </button>

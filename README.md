@@ -326,6 +326,60 @@ The direct (non-compose) update flow recreates containers from a captured subset
 
 For containers that rely on those, associate them with a compose file and use the compose update flow instead — `docker compose` recreates the container from its full definition.
 
+## Compose updates: native vs container
+
+"Update via compose" runs `docker compose pull` + `up -d` against a service's own
+compose file (discovered from its `com.docker.compose.*` labels — no upload
+needed), and for a **pinned tag** it rewrites that file's `image:` line to the
+newer tag (keeping a `.bak` backup) so the container actually moves to it. For
+that to work, DockRadar's process needs three things:
+
+1. **A `docker compose` CLI** it can call. `/api/health` reports `compose_cli`;
+   the UI disables the Compose button when it's missing.
+2. **The real compose file reachable at its labelled path**, and **read-write**
+   (write is needed to update the tag and create the `.bak`). Each container's
+   `compose.reachable` / `compose.writable` flags drive the UI's warnings.
+3. **Access to the Docker socket.**
+
+### Native install (systemd)
+
+The service runs as the system user **`dockradar`**, which doesn't own your
+stacks. Grant it read/write on the directories that hold your compose files:
+
+```bash
+sudo chgrp -R dockradar /path/to/stacks
+sudo chmod -R g+rwX /path/to/stacks
+sudo find /path/to/stacks -type d -exec chmod g+s {} +   # new .bak files inherit the group
+```
+
+You may want to add your own user to the `dockradar` group so your manual edits
+still work. Docker-socket access is granted automatically (the installer adds
+`dockradar` to the `docker` group). If a stack lives under `/etc`, also add
+`ReadWritePaths=/that/dir` to the unit (`ProtectSystem=full` makes `/etc`
+read-only). The simplest alternative is to set `User=`/`Group=` in
+`/etc/systemd/system/dockradar.service` to an account that already owns the
+stacks.
+
+### Docker container
+
+The published image includes the Docker CLI + compose plugin. To update **other**
+stacks, bind-mount each stack directory **at its exact host path** (so the
+labelled paths — and any relative `./` volumes/build contexts — resolve inside
+the container), read-write:
+
+```yaml
+services:
+  app:
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /srv/stacks:/srv/stacks          # one line per stack root, same path both sides
+```
+
+The container runs as root, so the mounted files are writable. Without the mount,
+those stacks show as "not reachable" and only the direct (pull + recreate) update
+applies. For the widest compose support, a **native** install is the simplest —
+it sees the host filesystem directly.
+
 ## Security Notice
 
 DockRadar controls Docker on its host — treat it as a privileged service. It has no user accounts or RBAC. Do not expose the API directly to the public internet.

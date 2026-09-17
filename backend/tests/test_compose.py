@@ -20,6 +20,10 @@ def svc(tmp_path, monkeypatch):
     monkeypatch.setattr(compose_mod, "COMPOSE_STORE_DIR", tmp_path)
     monkeypatch.setattr(compose_mod, "ASSOCIATIONS_FILE", tmp_path / "associations.json")
     monkeypatch.setattr(compose_mod, "METADATA_FILE", tmp_path / "metadata.json")
+    # Reset the process-wide compose-CLI probe cache so each test's
+    # _find_compose_binary mock is honored (health checks elsewhere may have
+    # cached a real result).
+    monkeypatch.setattr(ComposeService, "_compose_bin_cache", False, raising=False)
     return ComposeService()
 
 
@@ -376,3 +380,41 @@ class TestApplyImageEdit:
         assert ok is True
         # stored file untouched by the backend (no auto-edit in stored mode)
         assert "image: nginx:1.25" in cf.path.read_text(encoding="utf-8")
+
+
+class TestComposeCliCache:
+    def test_true_when_binary_found(self, svc, monkeypatch):
+        monkeypatch.setattr(ComposeService, "_find_compose_binary", staticmethod(lambda: ["docker", "compose"]))
+        assert ComposeService.compose_cli_available() is True
+
+    def test_false_when_absent(self, svc, monkeypatch):
+        monkeypatch.setattr(ComposeService, "_find_compose_binary", staticmethod(lambda: None))
+        assert ComposeService.compose_cli_available() is False
+
+
+class TestContainerOutCompose:
+    def _labels(self, config_files, working_dir=""):
+        return {
+            "com.docker.compose.project": "proj",
+            "com.docker.compose.service": "web",
+            "com.docker.compose.project.config_files": config_files,
+            "com.docker.compose.project.working_dir": working_dir,
+        }
+
+    def test_reachable_and_writable(self, tmp_path):
+        from app.api.routes import ContainerOut
+        f = tmp_path / "docker-compose.yml"
+        f.write_text(VALID_COMPOSE, encoding="utf-8")
+        out = ContainerOut.from_info(_info(self._labels(str(f), str(tmp_path))))
+        assert out.compose["reachable"] is True
+        assert out.compose["writable"] is True
+
+    def test_unreachable_is_not_writable(self):
+        from app.api.routes import ContainerOut
+        out = ContainerOut.from_info(_info(self._labels("/no/such/file.yml")))
+        assert out.compose["reachable"] is False
+        assert out.compose["writable"] is False
+
+    def test_none_for_non_compose_container(self):
+        from app.api.routes import ContainerOut
+        assert ContainerOut.from_info(_info({"foo": "bar"})).compose is None

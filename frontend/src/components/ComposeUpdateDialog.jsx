@@ -38,6 +38,11 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
     }
   }
 
+  // Label mode needs to rewrite the real file to move a pinned tag; if DockRadar
+  // can't write it (permissions / read-only mount), block that upgrade.
+  const cannotWrite = !!diff && diff.editable === false && diff.has_change
+    && container.compose?.writable === false
+
   const title = (
     <div className="min-w-0">
       <div className="modal-title truncate">
@@ -54,14 +59,16 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
 
   const footer = (
     <>
-      <span className="flex-1 text-[13px]" style={{ color: 'var(--text-3)' }}>
-        {diff?.has_change
-          ? (diff.editable === false
-              ? 'The tag in the container’s own compose file will be updated (backup kept), then pull + up -d.'
-              : 'File will be saved, then compose pull + up -d will run.')
-          : 'compose pull + up -d will run without file changes.'}
+      <span className="flex-1 text-[13px]" style={{ color: cannotWrite ? 'var(--accent-red)' : 'var(--text-3)' }}>
+        {cannotWrite
+          ? 'DockRadar can’t write this compose file — grant its user write access, or mount it read-write.'
+          : diff?.has_change
+            ? (diff.editable === false
+                ? 'The tag in the container’s own compose file will be updated (backup kept), then pull + up -d.'
+                : 'File will be saved, then compose pull + up -d will run.')
+            : 'compose pull + up -d will run without file changes.'}
       </span>
-      <button className="btn btn-primary btn-sm" onClick={handleUpdate} disabled={loading || saving || !!error}>
+      <button className="btn btn-primary btn-sm" onClick={handleUpdate} disabled={loading || saving || !!error || cannotWrite}>
         {saving ? 'Updating…' : 'Confirm & Update'}
       </button>
       <button className="btn btn-ghost btn-sm" onClick={onCancel}>Cancel</button>

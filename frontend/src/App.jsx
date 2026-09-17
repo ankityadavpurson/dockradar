@@ -129,6 +129,7 @@ const App = () => {
             scanning={!!scanStatus?.scanning}
             updating={!!scanStatus?.updating}
             updatingNames={updatingNames}
+            composeCli={health?.compose_cli}
             onToggleSelect={toggleSelect}
             onConfirmUpdate={c => setConfirmUpdate(c)}
             onConfirmDelete={c => setConfirmDelete(c)}
