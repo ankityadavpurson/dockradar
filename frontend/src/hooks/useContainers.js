@@ -11,10 +11,16 @@ export function useContainers() {
   const [health, setHealth]           = useState(null)
   const [selected, setSelected]       = useState(new Set())
   const [loading, setLoading]         = useState(false)
+  // True until the first health + containers fetch resolves — drives the
+  // full-page loader so the UI isn't blank (or a misleading "no containers").
+  const [initialLoading, setInitialLoading] = useState(true)
   const [error, setError]             = useState(null)
   const [toasts, setToasts]           = useState([])     // [{ id, msg, type }]
   // Names of containers with an update in flight — drives the per-row loader.
   const [updatingNames, setUpdatingNames] = useState(new Set())
+  // Whether the Progress Log should be shown. Only user-initiated scans/updates
+  // open it — a scan detected on page load (e.g. the startup scan) does not.
+  const [logVisible, setLogVisible] = useState(false)
   // compose associations: { container_name -> { file_id, service_name, filename } }
   const [associations, setAssociations]   = useState({})
   const pollRef                        = useRef(null)
@@ -85,9 +91,17 @@ export function useContainers() {
 
   // ── Initial load ──────────────────────────────────────────────────────────
   useEffect(() => {
-    fetchHealth()
-    fetchContainers()
-    fetchAssociations()
+    ;(async () => {
+      await Promise.all([fetchHealth(), fetchContainers(), fetchAssociations()])
+      // Reflect an already-running backend scan (e.g. the scan DockRadar kicks
+      // off on startup) so the UI shows it as busy instead of idle.
+      try {
+        const s = await api.scanStatus()
+        setScanStatus(s)
+        if (s.scanning || s.updating) startPolling()
+      } catch { /* ignore */ }
+      setInitialLoading(false)
+    })()
     // Refresh health every 30s
     const hInterval = setInterval(fetchHealth, 30_000)
     const timers = toastTimersRef.current
@@ -97,12 +111,13 @@ export function useContainers() {
       timers.forEach(clearTimeout)
       timers.clear()
     }
-  }, [fetchHealth, fetchContainers, fetchAssociations])
+  }, [fetchHealth, fetchContainers, fetchAssociations, startPolling])
 
   // ── Actions ───────────────────────────────────────────────────────────────
   const triggerScan = useCallback(async () => {
     try {
       setLoading(true)
+      setLogVisible(true)
       await api.triggerScan()
       notify('Scan started…', 'info')
       setScanStatus(({ scanning: true }))
@@ -116,6 +131,7 @@ export function useContainers() {
 
   const updateOne = useCallback(async (name) => {
     setLoading(true)
+    setLogVisible(true)
     setUpdatingNames(new Set([name]))
     try {
       notify(`Updating ${name}…`, 'info')
@@ -141,6 +157,7 @@ export function useContainers() {
     try {
       await api.updateSelected(names)
       notify(`Updating ${names.length} container(s)…`, 'info')
+      setLogVisible(true)
       setUpdatingNames(new Set(names))
       setSelected(new Set())
       startPolling()
@@ -158,6 +175,7 @@ export function useContainers() {
         return
       }
       notify(`Updating ${res.containers.length} container(s)…`, 'info')
+      setLogVisible(true)
       setUpdatingNames(new Set(res.containers))
       startPolling()
     } catch (e) {
@@ -169,6 +187,7 @@ export function useContainers() {
   const composeUpdateOne = useCallback(async (name) => {
     try {
       notify(`Starting compose update for ${name}…`, 'info')
+      setLogVisible(true)
       setUpdatingNames(new Set([name]))
       await composeApi.updateViaCompose(name)
       startPolling()
@@ -221,7 +240,10 @@ export function useContainers() {
     health,
     selected,
     loading,
+    initialLoading,
     isBusy,
+    logVisible,
+    dismissLog: () => setLogVisible(false),
     error,
     toasts,
     dismissToast,

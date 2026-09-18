@@ -21,7 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routes import router as api_router, scheduler_svc, _scheduled_scan
+from app.api.routes import router as api_router, scheduler_svc, _scheduled_scan, run_startup_scan
 from app.core.config import config
 from app.core.logging import setup_logging
 from app.version import __version__
@@ -45,6 +45,10 @@ async def lifespan(app: FastAPI):
     logger.info("  UI   : http://%s:%d", config.HOST, config.PORT)
     logger.info("=" * 60)
     scheduler_svc.start(_scheduled_scan)
+    # Restore last-known statuses immediately and run a fresh scan in the
+    # background, so containers aren't stuck on "unknown" after a restart until
+    # the interval scheduler fires hours later.
+    run_startup_scan()
     yield
     scheduler_svc.stop()
 

@@ -1,7 +1,7 @@
 import { Maximize2, Minimize2, Terminal, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
-const ProgressLog = ({ messages, scanning, updating }) => {
+const ProgressLog = ({ messages, scanning, updating, visible = false, onDismiss }) => {
   const endRef = useRef(null)
   const [open, setOpen] = useState(false)
   const [fullscreen, setFullscreen] = useState(false)
@@ -30,7 +30,9 @@ const ProgressLog = ({ messages, scanning, updating }) => {
     return () => window.removeEventListener('keydown', onKey)
   }, [fullscreen])
 
-  if (!active && messages.length === 0) return null
+  // Only shown when the user started a scan/update (visible) — never on a
+  // scan merely detected on page load.
+  if (!visible || (!active && messages.length === 0)) return null
 
   return (
     <>
@@ -101,7 +103,7 @@ const ProgressLog = ({ messages, scanning, updating }) => {
               {/* Wrapper carries the tooltip — disabled buttons get no pointer events */}
               <span title={active ? 'Available when the current operation finishes' : undefined}>
                 <button type="button" className="btn btn-primary btn-sm"
-                  onClick={close} disabled={active}>
+                  onClick={() => { close(); onDismiss && onDismiss() }} disabled={active}>
                   Close
                 </button>
               </span>
