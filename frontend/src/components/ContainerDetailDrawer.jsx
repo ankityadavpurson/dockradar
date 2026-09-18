@@ -1,13 +1,13 @@
 import {
-  AlertCircle, Box, ChevronDown, FileCode2, Globe, HardDrive,
-  Info, KeyRound, Network, Tags, Terminal, X,
+  AlertCircle, ArrowUpCircle, Box, ChevronDown, Edit2, FileCode2, Globe, HardDrive,
+  Info, KeyRound, Link, Network, Tags, Terminal, X,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
 
-const MUTED  = { color: 'var(--text-3)' }
-const VALUE  = { color: 'var(--text-2)' }
-const ICON   = { color: 'var(--text-2)' }
+const MUTED = { color: 'var(--text-3)' }
+const VALUE = { color: 'var(--text-2)' }
+const ICON = { color: 'var(--text-2)' }
 const BORDER = '1px solid var(--border-1)'
 
 /**
@@ -55,7 +55,7 @@ function KV({ k, v, title }) {
   return (
     <div className="flex gap-3 text-[13px] font-mono">
       <span className="w-24 shrink-0 font-sans" style={MUTED}>{k}</span>
-      <span className="break-all" style={VALUE} title={title}>{String(v)}</span>
+      <span className="break-all" style={VALUE} title={title}>{v}</span>
     </div>
   )
 }
@@ -80,9 +80,19 @@ function formatPorts(ports) {
 
 const shortDigest = d => (d ? d.replace('sha256:', '').slice(0, 12) : null)
 
-export default function ContainerDetailDrawer({ name, onClose }) {
-  const [data, setData]   = useState(null)
+export default function ContainerDetailDrawer({
+  name, onClose, container, association, composeCli, isBusy,
+  onDirectUpdate, onComposeUpdate, onLinkCompose, onEditCompose,
+}) {
+  const [data, setData] = useState(null)
   const [error, setError] = useState(null)
+
+  // Action availability — driven by the list container (label compose +
+  // update_status) and the stored association, not the details fetch.
+  const updateAvailable = container?.update_status === 'update_available'
+  const hasCompose = !!association || !!container?.compose
+  const composeUnavailable = composeCli === false
+  const isLinked = !!association
 
   useEffect(() => {
     setData(null); setError(null)
@@ -95,18 +105,18 @@ export default function ContainerDetailDrawer({ name, onClose }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  const ports    = data ? formatPorts(data.ports) : []
-  const mounts   = data?.volumes || []
-  const envKeys  = data?.environment_keys || []
-  const labels   = data ? Object.entries(data.labels || {}) : []
+  const ports = data ? formatPorts(data.ports) : []
+  const mounts = data?.volumes || []
+  const envKeys = data?.environment_keys || []
+  const labels = data ? Object.entries(data.labels || {}) : []
   const networks = data?.networks || []
 
   // Collapsed-state previews — one glance still tells the story.
-  const portPreview  = ports.map(p => p.split(' → ')[0]?.split(':').pop()).filter(Boolean).join(' · ')
+  const portPreview = ports.map(p => p.split(' → ')[0]?.split(':').pop()).filter(Boolean).join(' · ')
   const mountPreview = mounts.map(m => m.split(':')[1] || m.split(':')[0]).join(' · ')
-  const envPreview   = envKeys.slice(0, 3).join(' · ') + (envKeys.length > 3 ? ' …' : '')
-  const netPreview   = [data?.network_mode, data?.restart_policy?.Name].filter(Boolean).join(' · ')
-  const procPreview  = [data?.entrypoint, data?.command]
+  const envPreview = envKeys.slice(0, 3).join(' · ') + (envKeys.length > 3 ? ' …' : '')
+  const netPreview = [data?.network_mode, data?.restart_policy?.Name].filter(Boolean).join(' · ')
+  const procPreview = [data?.entrypoint, data?.command]
     .map(v => (Array.isArray(v) ? v.join(' ') : v)).filter(Boolean).join(' ')
   const labelPreview = labels.length ? `${labels[0][0]} …` : ''
 
@@ -144,6 +154,32 @@ export default function ContainerDetailDrawer({ name, onClose }) {
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-4 pb-4 flex flex-col gap-1">
+          {/* Actions — update (direct / compose) and compose file link/edit */}
+          {container && (onDirectUpdate || onLinkCompose) && (
+            <div className="shrink-0 flex flex-wrap items-center gap-2 mb-2">
+              {updateAvailable && hasCompose && onComposeUpdate && (
+                <button type="button" className="btn btn-ghost btn-sm"
+                  disabled={isBusy || composeUnavailable}
+                  onClick={() => onComposeUpdate(container)}
+                  title={composeUnavailable
+                    ? 'Compose CLI not available in this deployment'
+                    : 'Preview and update via docker compose'}>
+                  <FileCode2 size={14} />
+                  Update via compose
+                </button>
+              )}
+              {updateAvailable && onDirectUpdate && (
+                <button type="button" className="btn btn-yellow btn-sm"
+                  disabled={isBusy}
+                  onClick={() => onDirectUpdate(container)}
+                  title="Stop, remove, and recreate with the latest image">
+                  <ArrowUpCircle size={14} />
+                  Update (pull + recreate)
+                </button>
+              )}
+            </div>
+          )}
+
           {error && (
             <div role="alert" className="infobar infobar-critical shrink-0">
               <AlertCircle size={16} className="infobar-icon" />
@@ -189,37 +225,61 @@ export default function ContainerDetailDrawer({ name, onClose }) {
 
             <Disclosure icon={<Network size={16} style={ICON} />} title="Network"
               preview={netPreview || '—'}>
-              <KV k="mode"     v={data.network_mode} />
+              <KV k="mode" v={data.network_mode} />
               <KV k="networks" v={networks.join(', ')} />
               <KV k="hostname" v={data.hostname} />
-              <KV k="restart"  v={data.restart_policy?.Name} />
+              <KV k="restart" v={data.restart_policy?.Name} />
             </Disclosure>
 
             {(data.command || data.entrypoint || data.user || data.working_dir) && (
               <Disclosure icon={<Terminal size={16} style={ICON} />} title="Process"
                 preview={procPreview || '—'}>
                 <KV k="entrypoint" v={Array.isArray(data.entrypoint) ? data.entrypoint.join(' ') : data.entrypoint} />
-                <KV k="command"    v={Array.isArray(data.command) ? data.command.join(' ') : data.command} />
-                <KV k="user"       v={data.user} />
-                <KV k="workdir"    v={data.working_dir} />
+                <KV k="command" v={Array.isArray(data.command) ? data.command.join(' ') : data.command} />
+                <KV k="user" v={data.user} />
+                <KV k="workdir" v={data.working_dir} />
               </Disclosure>
             )}
 
-            {data.compose && (
+            {data.compose ? (
               <Disclosure icon={<FileCode2 size={16} style={ICON} />} title="Compose"
                 preview={`${data.compose.filename} / ${data.compose.service_name}`}>
-                <KV k="file"    v={data.compose.filename} />
+                <KV k="file" v={data.compose.filename} />
                 <KV k="service" v={data.compose.service_name} />
+                {isLinked && onEditCompose && (
+                  <div className="mt-2">
+                    <button type="button" className="btn btn-ghost btn-sm"
+                      onClick={onEditCompose}
+                      title="Edit the linked compose file">
+                      <Edit2 size={14} />
+                      Edit compose file
+                    </button>
+                  </div>
+                )}
+              </Disclosure>
+            ) : (
+              <Disclosure icon={<FileCode2 size={16} style={ICON} />} title="Compose"
+                preview={'no compose file linked'}>
+                {onLinkCompose && (
+                  <div>
+                    <button type="button" className="btn btn-ghost btn-sm"
+                      onClick={onLinkCompose}
+                      title="Link this container to a compose file">
+                      <Link size={14} />
+                      Link compose file
+                    </button>
+                  </div>
+                )}
               </Disclosure>
             )}
 
             <Disclosure icon={<Box size={16} style={ICON} />} title="Image"
               preview={shortDigest(data.local_digest) || data.tag}>
-              <KV k="image"  v={data.image} />
-              <KV k="tag"    v={data.tag} />
+              <KV k="image" v={data.image} />
+              <KV k="tag" v={data.tag} />
               {data.latest_tag && data.latest_tag !== data.tag && <KV k="latest" v={data.latest_tag} />}
               <KV k="digest" v={data.local_digest} />
-              <KV k="id"     v={data.short_id} />
+              <KV k="id" v={data.short_id} />
             </Disclosure>
 
             <Disclosure icon={<Tags size={16} style={ICON} />} title="Labels"
