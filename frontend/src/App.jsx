@@ -1,4 +1,4 @@
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Loader2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import ComposeManager from './components/ComposeManager'
 import ComposeUpdateDialog from './components/ComposeUpdateDialog'
@@ -15,10 +15,11 @@ import { useContainers } from './hooks/useContainers'
 const App = () => {
   const {
     containers, scanStatus, health,
-    selected, loading, isBusy, error, toasts, dismissToast, updatingNames,
+    selected, loading, initialLoading, isBusy, error, toasts, dismissToast, updatingNames,
     triggerScan, updateOne, updateSelected, updateAll, deleteContainer, testEmail,
     toggleSelect, selectAll, clearSelection,
     associations, fetchAssociations, composeUpdateOne,
+    logVisible, dismissLog,
   } = useContainers()
 
   const [search, setSearch] = useState('')
@@ -56,6 +57,18 @@ const App = () => {
   // First-run hint: containers discovered but the server has never scanned.
   const lastScan = scanStatus?.last_scan ?? health?.last_scan
   const showFirstRunHint = !!health && !lastScan && containers.length > 0 && !isBusy
+
+  // Full-page loader until the first health + containers fetch resolves, so the
+  // UI is never blank (or a misleading "no containers found") on load.
+  if (initialLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3"
+        style={{ color: 'var(--text-3)' }}>
+        <Loader2 size={28} className="animate-spin" />
+        <div className="text-[14px]">Connecting to DockRadar…</div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen">
@@ -139,11 +152,13 @@ const App = () => {
           />
         </div>
 
-        {/* Progress log */}
+        {/* Progress log — only for user-initiated scans/updates, not on load */}
         <ProgressLog
           messages={scanStatus?.progress ?? []}
           scanning={scanStatus?.scanning}
           updating={scanStatus?.updating}
+          visible={logVisible}
+          onDismiss={dismissLog}
         />
       </main>
 
