@@ -242,6 +242,7 @@ def _scan_work():
         f"✅ Scan complete — {len(containers)} containers, {len(outdated_infos)} update(s) available."
     )
     logger.info("[API] Scan complete: %d containers, %d updates.", len(containers), len(outdated_infos))
+    _save_scan_results()
     _maybe_notify(outdated_infos)
 
 
@@ -269,6 +270,69 @@ def _save_notified(keys: set[str]) -> None:
 
 
 _notified_updates: set[str] = _load_notified()
+
+
+# ---------------------------------------------------------------------------
+# Scan-result persistence + startup scan
+# ---------------------------------------------------------------------------
+# api_state is in-memory, so a restart (of the process, container, or host)
+# loses every scan result and containers show as "unknown" until the next scan
+# — which the interval scheduler only fires SCAN_INTERVAL_HOURS later. We (A)
+# run a scan on startup and (B) persist the last results so the UI shows the
+# last-known statuses immediately after a restart while the fresh scan runs.
+_SCAN_FILE: Path = config.COMPOSE_DIR / "scan_results.json"
+
+
+def _save_scan_results() -> None:
+    """Persist scan-derived fields per container (keyed by container id, which is
+    stable across restarts unless a container is recreated)."""
+    try:
+        data = {
+            "last_scan": api_state.last_scan,
+            "results": {
+                c.id: {"latest_tag": c.latest_tag, "update_status": c.update_status}
+                for c in api_state.containers
+            },
+        }
+        _SCAN_FILE.write_text(json.dumps(data), encoding="utf-8")
+    except Exception as exc:
+        logger.warning("Could not save scan results: %s", exc)
+
+
+def _load_scan_results() -> dict:
+    try:
+        return json.loads(_SCAN_FILE.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+    except Exception as exc:
+        logger.warning("Could not load scan results: %s", exc)
+        return {}
+
+
+def _restore_scan_state() -> None:
+    """Fill api_state from a live discovery merged with persisted scan results,
+    so the UI shows last-known statuses immediately (a fresh scan then refreshes
+    them). Recreated containers (new id) simply stay 'unknown' until rescanned."""
+    saved = _load_scan_results()
+    results = saved.get("results", {})
+    containers = docker_svc.get_all_containers()
+    for c in containers:
+        r = results.get(c.id)
+        if r:
+            c.latest_tag = r.get("latest_tag")
+            c.update_status = r.get("update_status", "unknown")
+    api_state.containers = containers
+    api_state.last_scan = saved.get("last_scan")
+
+
+def run_startup_scan() -> None:
+    """Called from the app lifespan: restore last-known statuses instantly, then
+    kick off a fresh scan in the background so startup isn't blocked."""
+    try:
+        _restore_scan_state()
+    except Exception as exc:
+        logger.warning("Could not restore scan state on startup: %s", exc)
+    threading.Thread(target=_scheduled_scan, name="startup-scan", daemon=True).start()
 
 
 def _maybe_notify(outdated: list[ContainerInfo]):
@@ -373,10 +437,11 @@ def send_test_email():
 def list_containers():
     """
     Return all known containers with their current scan results.
-    If no scan has been run yet, discovers containers live (without registry check).
+    If api_state is empty (e.g. just after a restart), discover live and merge
+    the last persisted scan results so statuses aren't all "unknown".
     """
     if not api_state.containers:
-        api_state.containers = docker_svc.get_all_containers()
+        _restore_scan_state()
     return [ContainerOut.from_info(c) for c in api_state.containers]
 
 
