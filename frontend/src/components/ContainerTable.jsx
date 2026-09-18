@@ -122,7 +122,7 @@ const STATUS_ORDER = { update_available: 0, error: 1, unknown: 2, up_to_date: 3 
 /** Compact card used below the md breakpoint instead of the table row. */
 function ContainerCard({
   c, isSel, refreshing, isUpdating, hasCompose, assoc, composeUnavailable, isBusy,
-  onToggleSelect, onConfirmUpdate, onComposeUpdate, onConfirmDelete, onShowDetails,
+  onToggleSelect, onConfirmUpdate, onComposeUpdate, onConfirmDelete, onShowDetails, onShowError,
 }) {
   const dot = DOCKER_DOT[c.status] ?? DEFAULT_DOT
   const isRunning = c.status === 'running'
@@ -186,7 +186,8 @@ function ContainerCard({
               </>)
             : (<>
                 <VersionCheckCell container={c} />
-                <StatusPill status={c.update_status} />
+                <StatusPill status={c.update_status} errorMessage={c.error_message}
+                  onShowError={() => onShowError && onShowError(c)} />
               </>)}
       </div>
     </div>
@@ -205,10 +206,21 @@ function StoppedBadge({ status }) {
   )
 }
 
-function StatusPill({ status }) {
+function StatusPill({ status, errorMessage, onShowError }) {
   const s = STATUS_CFG[status] ?? STATUS_CFG.unknown
+  // On error, the pill becomes a button that opens a dialog with the scan
+  // reason (keeps the badge styling; adds click + keyboard activation).
+  const clickable = status === 'error' && !!errorMessage && !!onShowError
   return (
-    <span className={`badge ${s.cls}`}>
+    <span
+      className={`badge ${s.cls}${clickable ? ' cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      aria-label={clickable ? 'View error details' : undefined}
+      onClick={clickable ? onShowError : undefined}
+      onKeyDown={clickable
+        ? (e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onShowError() } })
+        : undefined}>
       <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'currentColor' }} />
       {s.label}
     </span>
@@ -231,7 +243,7 @@ export default function ContainerTable({
   scanning = false, updating = false, updatingNames = new Set(),
   composeCli = true,
   onToggleSelect, onConfirmUpdate, onConfirmDelete,
-  associations = {}, onComposeUpdate, onShowDetails,
+  associations = {}, onComposeUpdate, onShowDetails, onShowError,
 }) {
   // compose_cli is false when the deployment has no `docker compose` CLI
   // (e.g. an older container image). Treat undefined as available.
@@ -296,6 +308,7 @@ export default function ContainerTable({
           onComposeUpdate={onComposeUpdate}
           onConfirmDelete={onConfirmDelete}
           onShowDetails={onShowDetails}
+          onShowError={onShowError}
         />
       ))}
     </div>
@@ -422,7 +435,8 @@ export default function ContainerTable({
                   ) : refreshing ? (
                     <div className="skeleton h-5 w-24" aria-label="Checking…" />
                   ) : (
-                    <StatusPill status={c.update_status} />
+                    <StatusPill status={c.update_status} errorMessage={c.error_message}
+                      onShowError={() => onShowError && onShowError(c)} />
                   )}
                 </td>
 

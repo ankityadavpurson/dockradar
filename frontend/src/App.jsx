@@ -7,6 +7,7 @@ import ComposeUpdateDialog from './components/ComposeUpdateDialog'
 import ConfirmDialog from './components/ConfirmDialog'
 import ContainerDetailDrawer from './components/ContainerDetailDrawer'
 import ContainerTable from './components/ContainerTable'
+import ErrorDetailDialog from './components/ErrorDetailDialog'
 import Header from './components/Header'
 import InfoBar from './components/InfoBar'
 import Modal from './components/Modal'
@@ -36,6 +37,7 @@ const App = () => {
   const [detailName, setDetailName] = useState(null)         // container name | null
   const [linkContainer, setLinkContainer] = useState(null)   // ContainerInfo | null
   const [editFile, setEditFile] = useState(null)             // { file_id, filename } | null
+  const [errorDetail, setErrorDetail] = useState(null)       // ContainerInfo | null
 
   // ── Filtered containers ───────────────────────────────────────────────────
   const visible = useMemo(() => {
@@ -158,6 +160,7 @@ const App = () => {
             associations={associations}
             onComposeUpdate={c => setConfirmCompose(c)}
             onShowDetails={c => setDetailName(c.name)}
+            onShowError={c => setErrorDetail(c)}
           />
         </div>
 
@@ -231,6 +234,14 @@ Not preserved: named volumes attached via --mount, extra networks, and advanced 
           container={confirmCompose}
           onConfirm={(name) => { composeUpdateOne(name); setConfirmCompose(null) }}
           onCancel={() => setConfirmCompose(null)}
+        />
+      )}
+
+      {/* Scan error details */}
+      {errorDetail && (
+        <ErrorDetailDialog
+          container={errorDetail}
+          onClose={() => setErrorDetail(null)}
         />
       )}
 

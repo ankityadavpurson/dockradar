@@ -1,8 +1,9 @@
 """Unit tests for RegistryService parsing/comparison helpers."""
 
 import pytest
+import requests
 
-from app.services.registry import RegistryCache, RegistryService
+from app.services.registry import RegistryCache, RegistryError, RegistryService
 
 
 class TestFindLatestSemver:
@@ -86,3 +87,30 @@ class TestRegistryCache:
         assert cache.get("nginx:latest") is None
         assert cache.get("nginx:1.25") is None
         assert cache.get("nginx-exporter:latest") == "c"
+
+
+class TestGetLatestTagErrors:
+    """get_latest_tag surfaces a human reason as the 3rd tuple element."""
+
+    def test_success_has_no_error(self, monkeypatch):
+        svc = RegistryService()
+        monkeypatch.setattr(svc, "_check_dockerhub", lambda *a, **k: ("1.2", "update_available"))
+        assert svc.get_latest_tag("nginx", "1.1") == ("1.2", "update_available", None)
+
+    def test_registry_error_message_is_surfaced(self, monkeypatch):
+        svc = RegistryService()
+        def boom(*a, **k):
+            raise RegistryError("Repository not found on Docker Hub")
+        monkeypatch.setattr(svc, "_check_dockerhub", boom)
+        latest, status, err = svc.get_latest_tag("ghost/missing", "latest")
+        assert (latest, status) == ("unknown", "error")
+        assert err == "Repository not found on Docker Hub"
+
+    def test_network_error_maps_to_friendly_message(self, monkeypatch):
+        svc = RegistryService()
+        def boom(*a, **k):
+            raise requests.RequestException("connection refused")
+        monkeypatch.setattr(svc, "_check_dockerhub", boom)
+        latest, status, err = svc.get_latest_tag("nginx", "latest")
+        assert (latest, status) == ("unknown", "error")
+        assert err == "Network error reaching registry"
