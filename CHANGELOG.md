@@ -9,6 +9,11 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.18.0] — 2026-09-18
+
+### Added
+- add compose actions and editing support to container details
+
 ## [13.17.0] — 2026-09-18
 
 ### Added
@@ -233,7 +238,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.17.0...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.18.0...HEAD
+[13.18.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.17.0...v13.18.0
 [13.17.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.16.3...v13.17.0
 [13.16.3]: https://github.com/ankityadavpurson/dockradar/compare/v13.16.2...v13.16.3
 [13.16.2]: https://github.com/ankityadavpurson/dockradar/compare/v13.16.1...v13.16.2
