@@ -1,5 +1,7 @@
 import { AlertCircle, Loader2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import ComposeFileEditor from './components/ComposeFileEditor'
+import ComposeLinkDialog from './components/ComposeLinkDialog'
 import ComposeManager from './components/ComposeManager'
 import ComposeUpdateDialog from './components/ComposeUpdateDialog'
 import ConfirmDialog from './components/ConfirmDialog'
@@ -7,6 +9,7 @@ import ContainerDetailDrawer from './components/ContainerDetailDrawer'
 import ContainerTable from './components/ContainerTable'
 import Header from './components/Header'
 import InfoBar from './components/InfoBar'
+import Modal from './components/Modal'
 import ProgressLog from './components/ProgressLog'
 import Toast from './components/Toast'
 import Toolbar from './components/Toolbar'
@@ -31,6 +34,8 @@ const App = () => {
   const [showCompose, setShowCompose] = useState(false)
   const [confirmCompose, setConfirmCompose] = useState(null) // ContainerInfo | null
   const [detailName, setDetailName] = useState(null)         // container name | null
+  const [linkContainer, setLinkContainer] = useState(null)   // ContainerInfo | null
+  const [editFile, setEditFile] = useState(null)             // { file_id, filename } | null
 
   // ── Filtered containers ───────────────────────────────────────────────────
   const visible = useMemo(() => {
@@ -48,6 +53,10 @@ const App = () => {
     }
     return list
   }, [containers, search, filterOutdated])
+
+  // Container + association backing the details drawer (drives its action buttons).
+  const detailContainer = detailName ? containers.find(c => c.name === detailName) : null
+  const detailAssoc     = detailName ? associations[detailName] : undefined
 
   const outdatedCount = containers.filter(c => c.update_status === 'update_available').length
   // "Update Selected" recreates every selected container (even up-to-date
@@ -229,8 +238,44 @@ Not preserved: named volumes attached via --mount, extra networks, and advanced 
       {detailName && (
         <ContainerDetailDrawer
           name={detailName}
+          container={detailContainer}
+          association={detailAssoc}
+          composeCli={health?.compose_cli}
+          isBusy={isBusy}
           onClose={() => setDetailName(null)}
+          onDirectUpdate={c => { setDetailName(null); setConfirmUpdate(c) }}
+          onComposeUpdate={c => { setDetailName(null); setConfirmCompose(c) }}
+          onLinkCompose={() => { setLinkContainer(detailContainer); setDetailName(null) }}
+          onEditCompose={() => {
+            if (detailAssoc) setEditFile({ file_id: detailAssoc.file_id, filename: detailAssoc.filename })
+            setDetailName(null)
+          }}
         />
+      )}
+
+      {/* Link a container to a compose file (focused) */}
+      {linkContainer && (
+        <ComposeLinkDialog
+          container={linkContainer}
+          onClose={() => setLinkContainer(null)}
+          onLinked={() => { fetchAssociations(); setLinkContainer(null) }}
+          onOpenManager={() => { setLinkContainer(null); setShowCompose(true) }}
+        />
+      )}
+
+      {/* Edit a linked compose file (focused) */}
+      {editFile && (
+        <Modal
+          title={`Edit ${editFile.filename}`}
+          size="xl"
+          onClose={() => setEditFile(null)}
+          ariaLabel={`Edit ${editFile.filename}`}
+        >
+          <ComposeFileEditor
+            file={editFile}
+            onSave={() => { fetchAssociations(); setEditFile(null) }}
+          />
+        </Modal>
       )}
 
       {/* Compose Manager */}

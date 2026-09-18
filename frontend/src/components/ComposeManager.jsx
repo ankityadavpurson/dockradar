@@ -1,10 +1,12 @@
 import {
   AlertCircle, CheckCircle2, ChevronDown, ClipboardCopy,
   Download, Edit2, FileCode2, Link, Link2Off,
-  Save, Trash2, Upload, X, XCircle,
+  Trash2, Upload, X,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { composeApi } from '../api/client'
+import ComposeFileEditor from './ComposeFileEditor'
+import ServicePicker from './ServicePicker'
 
 // ── Shared styles ─────────────────────────────────────────────────────────────
 
@@ -12,7 +14,6 @@ const S = {
   section: { color: 'var(--text-4)' },
   label: { color: 'var(--text-3)' },
   primary: { color: 'var(--text-1)' },
-  border: '1px solid var(--border-1)',
 }
 
 // ── Helper components ─────────────────────────────────────────────────────────
@@ -38,102 +39,6 @@ function buildFileLabels(composeFiles) {
       : f.filename
     return acc
   }, {})
-}
-
-function ServicePicker({ composeFiles, labels = {}, selectedFileId, selectedService, onChange }) {
-  const file = composeFiles.find(f => f.file_id === selectedFileId)
-  const services = file?.services || []
-
-  return (
-    <div className="flex gap-2">
-      <div className="relative flex-1 min-w-0">
-        <select value={selectedFileId} onChange={e => onChange(e.target.value, '')} className="select"
-          aria-label="Compose file">
-          <option value="">— file —</option>
-          {composeFiles.map(f => (
-            <option key={f.file_id} value={f.file_id}>
-              {labels[f.file_id] ?? f.filename}
-            </option>
-          ))}
-        </select>
-        <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={S.label} />
-      </div>
-      <div className="relative flex-1 min-w-0">
-        <select value={selectedService} onChange={e => onChange(selectedFileId, e.target.value)}
-          disabled={!selectedFileId} className="select"
-          aria-label="Compose service">
-          <option value="">— service —</option>
-          {services.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={S.label} />
-      </div>
-    </div>
-  )
-}
-
-// ── Inline YAML editor ────────────────────────────────────────────────────────
-
-function FileEditor({ file, onSave, onCancel }) {
-  const [content, setContent] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    composeApi.getContent(file.file_id)
-      .then(d => setContent(d.content))
-      .catch(e => setError(e.message))
-  }, [file.file_id])
-
-  async function handleSave() {
-    setSaving(true)
-    setError(null)
-    try {
-      await composeApi.updateContent(file.file_id, content)
-      onSave()
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div className="code-surface flex flex-col gap-2 overflow-hidden">
-      {/* Editor toolbar */}
-      <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: S.border, background: 'var(--surface-raised)' }}>
-        <div className="flex items-center gap-2">
-          <FileCode2 size={16} style={S.label} />
-          <span className="font-mono text-[13px]" style={S.primary}>{file.filename}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <button onClick={handleSave} disabled={saving} className="btn btn-primary btn-xs">
-            <Save size={12} />{saving ? 'Saving…' : 'Save'}
-          </button>
-          <button onClick={onCancel} className="btn-icon" aria-label="Cancel edit">
-            <XCircle size={16} />
-          </button>
-        </div>
-      </div>
-
-      {/* Error */}
-      {error && (
-        <div role="alert" className="infobar infobar-critical mx-3 py-2">
-          <AlertCircle size={16} className="infobar-icon" />
-          <span className="break-words">{error}</span>
-        </div>
-      )}
-
-      {/* Textarea */}
-      <textarea
-        value={content}
-        onChange={e => setContent(e.target.value)}
-        spellCheck={false}
-        rows={16}
-        className="w-full font-mono text-[13px] leading-relaxed resize-none outline-none px-3 py-2"
-        style={{ background: 'var(--surface-0)', color: 'var(--text-2)', border: 'none', tabSize: 2 }}
-      />
-    </div>
-  )
 }
 
 // ── Post-update download panel ────────────────────────────────────────────────
@@ -376,7 +281,7 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
 
           {/* Inline editor — shown when editing a file */}
           {editingFile ? (
-            <FileEditor
+            <ComposeFileEditor
               file={editingFile}
               onSave={handleEditorSave}
               onCancel={() => setEditingFile(null)}
