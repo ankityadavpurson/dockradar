@@ -28,6 +28,14 @@ MANIFEST_ACCEPT = (
 )
 
 
+class RegistryError(Exception):
+    """A registry lookup failed for a known, human-explainable reason.
+
+    The message is surfaced to the UI (shown on hover over the Error status
+    pill), so keep it short and free of stack noise.
+    """
+
+
 class RegistryCache:
     """Simple TTL cache for registry results."""
 
@@ -63,10 +71,11 @@ class RegistryService:
         self._session = requests.Session()
         self._session.headers.update({"User-Agent": "DockRadar/1.0"})
 
-    def get_latest_tag(self, repository: str, current_tag: str, local_digest: Optional[str] = None) -> tuple[str, str]:
+    def get_latest_tag(self, repository: str, current_tag: str, local_digest: Optional[str] = None) -> tuple[str, str, Optional[str]]:
         """
-        Return (latest_tag, status) where status is:
+        Return (latest_tag, status, error) where status is:
         'up_to_date' | 'update_available' | 'error'
+        and error is a short human reason when status == 'error', else None.
 
         When current_tag is 'latest', local_digest is used to detect real
         upstream changes even when the tag name itself hasn't changed.
@@ -81,23 +90,32 @@ class RegistryService:
         self._cache.set(cache_key, result)
         return result
 
-    def _fetch_latest_tag(self, repository: str, current_tag: str, local_digest: Optional[str] = None) -> tuple[str, str]:
-        """Determine the latest available tag for a repository."""
+    def _fetch_latest_tag(self, repository: str, current_tag: str, local_digest: Optional[str] = None) -> tuple[str, str, Optional[str]]:
+        """Determine the latest available tag for a repository.
+
+        The inner checks raise RegistryError with a human reason on known
+        failures; anything else is turned into a short message here so the UI
+        can explain why a container shows as 'error'.
+        """
         try:
             repo = self._normalize_repo(repository)
             is_official = "/" not in repo
 
             if self._is_dockerhub(repository):
-                return self._check_dockerhub(repo, current_tag, is_official, local_digest)
+                latest_tag, status = self._check_dockerhub(repo, current_tag, is_official, local_digest)
             else:
-                return self._check_registry_v2(repository, current_tag, local_digest)
+                latest_tag, status = self._check_registry_v2(repository, current_tag, local_digest)
+            return latest_tag, status, None
 
+        except RegistryError as exc:
+            logger.warning("Registry check failed for %s: %s", repository, exc)
+            return "unknown", "error", str(exc)[:300]
         except requests.RequestException as exc:
             logger.warning("Network error checking registry for %s: %s", repository, exc)
-            return "unknown", "error"
+            return "unknown", "error", "Network error reaching registry"
         except Exception as exc:
             logger.warning("Unexpected error checking registry for %s: %s", repository, exc)
-            return "unknown", "error"
+            return "unknown", "error", f"Check failed: {exc}"[:300]
 
     def _check_dockerhub(self, repo: str, current_tag: str, is_official: bool, local_digest: Optional[str] = None) -> tuple[str, str]:
         """Check Docker Hub for updates.
@@ -123,13 +141,13 @@ class RegistryService:
         resp = self._session.get(url, params=params, timeout=10)
         if resp.status_code == 404:
             logger.warning("Repository not found on Docker Hub: %s", repo)
-            return "unknown", "error"
+            raise RegistryError("Repository not found on Docker Hub")
         resp.raise_for_status()
 
         data = resp.json()
         results = data.get("results", [])
         if not results:
-            return "unknown", "error"
+            raise RegistryError("No tags found in registry")
 
         tag_map = {t["name"]: t for t in results}
 
@@ -139,7 +157,7 @@ class RegistryService:
             latest_tag = self._find_latest_semver(list(tag_map.keys()), current_tag)
 
         if latest_tag == "unknown":
-            return "unknown", "error"
+            raise RegistryError(f"No tag comparable to '{current_tag}' found in registry")
 
         if latest_tag != current_tag:
             if latest_tag == "latest" and local_digest:
@@ -294,9 +312,10 @@ class RegistryService:
                 return current_tag, "up_to_date"
 
         # ── Step 4: Nothing worked ────────────────────────────────────────────
-        if resp.status_code not in (200, 401, 403):
-            logger.warning("Unexpected status %d from %s for %s", resp.status_code, registry, name)
-        return "unknown", "error"
+        if resp.status_code in (401, 403):
+            raise RegistryError("Registry requires authentication to read tags")
+        logger.warning("Unexpected status %d from %s for %s", resp.status_code, registry, name)
+        raise RegistryError(f"Registry returned HTTP {resp.status_code}")
 
     def _get_remote_digest_v2(self, registry: str, name: str, tag: str) -> Optional[str]:
         """Fetch manifest digest from a generic v2 registry, handling Bearer auth."""

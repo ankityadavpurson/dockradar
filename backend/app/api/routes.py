@@ -104,6 +104,9 @@ class ContainerOut(BaseModel):
     latest_tag: Optional[str] = None
     update_status: str
     local_digest: Optional[str] = None
+    # Why the last scan couldn't determine status (only set when update_status is
+    # 'error') — shown on hover over the Error pill in the UI.
+    error_message: Optional[str] = None
     # Present when the container was created by Docker Compose — lets the UI offer
     # a compose update without a manual file upload/association.
     compose: Optional[dict] = None
@@ -141,6 +144,7 @@ class ContainerOut(BaseModel):
             latest_tag=c.latest_tag,
             update_status=c.update_status,
             local_digest=c.local_digest,
+            error_message=c.error_message,
             compose=compose,
         )
 
@@ -211,9 +215,9 @@ def _scan_work():
     def check(c: ContainerInfo):
         if c.tag.startswith("sha256:"):
             # Digest-pinned container — there is no tag to compare against.
-            c.latest_tag, c.update_status = None, "unknown"
+            c.latest_tag, c.update_status, c.error_message = None, "unknown", None
             return
-        c.latest_tag, c.update_status = registry_svc.get_latest_tag(
+        c.latest_tag, c.update_status, c.error_message = registry_svc.get_latest_tag(
             c.repository, c.tag, c.local_digest
         )
 
@@ -231,6 +235,7 @@ def _scan_work():
                     )
                 except Exception as exc:
                     c.update_status = "error"
+                    c.error_message = f"Check failed: {exc}"[:300]
                     api_state.progress.append(
                         f"  [{done}/{len(containers)}] {c.name}: check failed ({exc})"
                     )
@@ -290,7 +295,11 @@ def _save_scan_results() -> None:
         data = {
             "last_scan": api_state.last_scan,
             "results": {
-                c.id: {"latest_tag": c.latest_tag, "update_status": c.update_status}
+                c.id: {
+                    "latest_tag": c.latest_tag,
+                    "update_status": c.update_status,
+                    "error_message": c.error_message,
+                }
                 for c in api_state.containers
             },
         }
@@ -321,6 +330,7 @@ def _restore_scan_state() -> None:
         if r:
             c.latest_tag = r.get("latest_tag")
             c.update_status = r.get("update_status", "unknown")
+            c.error_message = r.get("error_message")
     api_state.containers = containers
     api_state.last_scan = saved.get("last_scan")
 
@@ -588,9 +598,10 @@ def update_container(name: str):
 
         # Check registry for latest tag if not already done
         if not container.latest_tag or container.latest_tag == "unknown":
-            latest_tag, update_status = registry_svc.get_latest_tag(container.repository, container.tag, container.local_digest)
+            latest_tag, update_status, error_message = registry_svc.get_latest_tag(container.repository, container.tag, container.local_digest)
             container.latest_tag    = latest_tag
             container.update_status = update_status
+            container.error_message = error_message
 
         messages: list[str] = []
 

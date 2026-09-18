@@ -6,11 +6,11 @@ import app.api.routes as routes
 from app.services.docker import ContainerInfo
 
 
-def _c(cid, name, tag="latest", latest_tag=None, status="unknown"):
+def _c(cid, name, tag="latest", latest_tag=None, status="unknown", error_message=None):
     return ContainerInfo(
         id=cid, short_id=cid[:10], name=name, image_name=f"{name}:{tag}",
         repository=name, tag=tag, status="running",
-        latest_tag=latest_tag, update_status=status,
+        latest_tag=latest_tag, update_status=status, error_message=error_message,
     )
 
 
@@ -31,6 +31,23 @@ def test_save_load_roundtrip(scan_env):
     assert data["last_scan"] == "2026-01-01T00:00:00+00:00"
     assert data["results"]["id1"]["update_status"] == "update_available"
     assert data["results"]["id1"]["latest_tag"] == "1.2"
+
+
+def test_error_message_roundtrips(scan_env, monkeypatch):
+    routes.api_state.containers = [
+        _c("id1", "ghost", status="error", error_message="Repository not found on Docker Hub")
+    ]
+    routes.api_state.last_scan = "T"
+    routes._save_scan_results()
+
+    live = [_c("id1", "ghost")]
+    monkeypatch.setattr(routes.docker_svc, "get_all_containers", lambda: live)
+    routes.api_state.containers = []
+    routes._restore_scan_state()
+
+    c = routes.api_state.containers[0]
+    assert c.update_status == "error"
+    assert c.error_message == "Repository not found on Docker Hub"
 
 
 def test_missing_file_returns_empty(scan_env):
