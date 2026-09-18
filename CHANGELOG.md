@@ -9,6 +9,12 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.17.0] — 2026-09-18
+
+### Added
+- add full-page loader and boot loader for initial loading state
+- implement scan result persistence and restore on startup
+
 ## [13.16.3] — 2026-09-17
 
 ### Fixed
@@ -227,7 +233,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.16.3...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.17.0...HEAD
+[13.17.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.16.3...v13.17.0
 [13.16.3]: https://github.com/ankityadavpurson/dockradar/compare/v13.16.2...v13.16.3
 [13.16.2]: https://github.com/ankityadavpurson/dockradar/compare/v13.16.1...v13.16.2
 [13.16.1]: https://github.com/ankityadavpurson/dockradar/compare/v13.16.0...v13.16.1
