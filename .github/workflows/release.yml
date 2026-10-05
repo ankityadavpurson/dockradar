@@ -283,8 +283,8 @@ jobs:
 
       - name: Commit version bump and tag
         run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "Ankit Yadav"
+          git config user.email "41839222+ankityadavpurson@users.noreply.github.com"
           git add backend/app/version.py frontend/package.json CHANGELOG.md
           git commit -m "chore(release): v${{ steps.version.outputs.value }}"
           git tag "v${{ steps.version.outputs.value }}"
