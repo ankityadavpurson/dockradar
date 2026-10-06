@@ -9,6 +9,14 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.19.2] — 2026-10-06
+
+### Changed
+- replace div elements with Divider components for consistent styling in Header, InfoBar, and Toolbar
+- remove unnecessary border styles from InfoBar and Toolbar components
+- Refactor code structure for improved readability and maintainability
+- replace lucide-react icons with xedonium components and remove theme management
+
 ## [13.19.1] — 2026-10-05
 
 - Maintenance release.
@@ -247,7 +255,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.1...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.2...HEAD
+[13.19.2]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.1...v13.19.2
 [13.19.1]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.0...v13.19.1
 [13.19.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.18.0...v13.19.0
 [13.18.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.17.0...v13.18.0
