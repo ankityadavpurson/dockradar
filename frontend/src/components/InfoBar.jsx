@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Clock, History, Info, Mail } from 'lucide-react'
+import { Button, ClockIcon, HistoryIcon, InfoIcon, MailIcon } from 'xedonium'
 import EmailConfigDialog from './EmailConfigDialog'
 
 /** "3m ago" style age for a past ISO timestamp; null → 'never'. */
@@ -20,38 +20,35 @@ export default function InfoBar({ health, onTestEmail }) {
   if (!health) return null
 
   const lastScan = timeAgo(health.last_scan)
-  const emailColor = health.email_configured ? 'var(--accent-teal)' : 'var(--text-3)'
 
   return (
-    <div className="card flex items-center flex-wrap gap-x-4 gap-y-1 px-4 py-2 mb-3 text-[13px]"
-      style={{ color: 'var(--text-3)' }}>
+    <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 border border-app-border bg-app-card px-4 py-2 text-[13px] text-app-muted">
 
       <span className="flex items-center gap-1.5">
-        <Clock size={14} style={{ color: 'var(--text-3)' }} />
-        Scans every{' '}
-        <span className="font-semibold" style={{ color: 'var(--text-1)' }}>{health.scan_interval_hours}h</span>
+        <ClockIcon className="h-3.5 w-3.5 shrink-0" />
+        Scans every <span className="font-semibold text-app-text">{health.scan_interval_hours}h</span>
       </span>
 
-      <div className="w-px h-4" style={{ background: 'var(--border-3)' }} />
+      <div className="hidden h-4 w-px bg-app-border sm:block" />
 
       <span className="flex items-center gap-1.5"
         title={health.last_scan ? new Date(health.last_scan).toLocaleString() : undefined}>
-        <History size={14} style={{ color: 'var(--text-3)' }} />
+        <HistoryIcon className="h-3.5 w-3.5 shrink-0" />
         Last scan{' '}
-        <span className="font-semibold" style={{ color: health.last_scan ? 'var(--text-1)' : 'var(--text-3)' }}>{lastScan}</span>
+        <span className={`font-semibold ${health.last_scan ? 'text-app-text' : 'text-app-muted'}`}>{lastScan}</span>
       </span>
 
-      <div className="w-px h-4" style={{ background: 'var(--border-3)' }} />
+      <div className="hidden h-4 w-px bg-app-border sm:block" />
 
       <span className="flex items-center gap-1.5">
-        <Mail size={14} style={{ color: 'var(--text-3)' }} />
+        <MailIcon className="h-3.5 w-3.5 shrink-0" />
         Email
-        <button type="button" onClick={() => setShowEmail(true)}
+        <Button variant="flat" onClick={() => setShowEmail(true)}
           aria-label="Email configuration details"
-          title="View email configuration"
-          className="icon-btn-subtle !h-6 !w-6">
-          <Info size={14} style={{ color: emailColor }} />
-        </button>
+          tooltip="View email configuration"
+          className="!p-1">
+          <InfoIcon className={`h-3.5 w-3.5 shrink-0 ${health.email_configured ? 'text-emerald-500' : ''}`} />
+        </Button>
       </span>
 
       {showEmail && (

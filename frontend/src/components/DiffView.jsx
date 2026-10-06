@@ -6,7 +6,7 @@ const DiffView = ({ current, proposed }) => {
   const maxLen = Math.max(currentLines.length, proposedLines.length)
 
   return (
-    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', lineHeight: 1.6, overflowY: 'auto', maxHeight: '260px' }}>
+    <div className="max-h-[260px] overflow-y-auto font-mono text-xs leading-relaxed">
       {Array.from({ length: maxLen }, (_, i) => {
         const cur = currentLines[i] ?? ''
         const prop = proposedLines[i] ?? ''
@@ -14,19 +14,13 @@ const DiffView = ({ current, proposed }) => {
         return (
           <div key={i}>
             {changed && cur && (
-              <div style={{ background: 'var(--critical-bg)', color: 'var(--accent-red)', padding: '0 12px', whiteSpace: 'pre' }}>
-                {'- ' + cur}
-              </div>
+              <div className="whitespace-pre bg-red-500/10 px-3 text-red-700 dark:text-red-300">{'- ' + cur}</div>
             )}
             {changed && prop && (
-              <div style={{ background: 'var(--success-bg)', color: 'var(--accent-teal)', padding: '0 12px', whiteSpace: 'pre' }}>
-                {'+ ' + prop}
-              </div>
+              <div className="whitespace-pre bg-emerald-500/10 px-3 text-emerald-800 dark:text-emerald-300">{'+ ' + prop}</div>
             )}
             {!changed && (
-              <div style={{ color: 'var(--text-3)', padding: '0 12px', whiteSpace: 'pre' }}>
-                {'  ' + cur}
-              </div>
+              <div className="whitespace-pre px-3 text-app-muted">{'  ' + cur}</div>
             )}
           </div>
         )

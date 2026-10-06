@@ -1,10 +1,6 @@
-import { AlertCircle, FileCode2, Save, XCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Alert, Button, FileCode2Icon, SaveIcon, TextArea, XCircleIcon } from 'xedonium'
 import { composeApi } from '../api/client'
-
-const LABEL = { color: 'var(--text-3)' }
-const PRIMARY = { color: 'var(--text-1)' }
-const BORDER = '1px solid var(--border-1)'
 
 /**
  * Inline YAML editor for a stored compose file. Fetches the raw content on
@@ -36,41 +32,34 @@ export default function ComposeFileEditor({ file, onSave, onCancel }) {
   }
 
   return (
-    <div className="code-surface flex flex-col gap-2 overflow-hidden">
-      {/* Editor toolbar */}
-      <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: BORDER, background: 'var(--surface-raised)' }}>
+    <div className="flex flex-col border border-app-border">
+      <div className="flex items-center justify-between border-b border-app-border bg-app-bg px-3 py-2">
         <div className="flex items-center gap-2">
-          <FileCode2 size={16} style={LABEL} />
-          <span className="font-mono text-[13px]" style={PRIMARY}>{file.filename}</span>
+          <FileCode2Icon className="h-4 w-4 shrink-0 text-app-muted" />
+          <span className="font-mono text-[13px] text-app-text">{file.filename}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <button onClick={handleSave} disabled={saving} className="btn btn-primary btn-xs">
-            <Save size={12} />{saving ? 'Saving…' : 'Save'}
-          </button>
+          <Button onClick={handleSave} disabled={saving} className="inline-flex items-center gap-1.5">
+            <SaveIcon className="h-3 w-3 shrink-0" />{saving ? 'Saving…' : 'Save'}
+          </Button>
           {onCancel && (
-            <button onClick={onCancel} className="btn-icon" aria-label="Cancel edit">
-              <XCircle size={16} />
-            </button>
+            <Button variant="flat" onClick={onCancel} aria-label="Cancel edit" tooltip="Cancel edit">
+              <XCircleIcon className="h-4 w-4 shrink-0" />
+            </Button>
           )}
         </div>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div role="alert" className="infobar infobar-critical mx-3 py-2">
-          <AlertCircle size={16} className="infobar-icon" />
-          <span className="break-words">{error}</span>
-        </div>
-      )}
+      {error && <Alert tone="danger" className="m-3"><span className="break-words">{error}</span></Alert>}
 
-      {/* Textarea */}
-      <textarea
+      <TextArea
         value={content}
-        onChange={e => setContent(e.target.value)}
+        onChange={setContent}
         spellCheck={false}
         rows={16}
-        className="w-full font-mono text-[13px] leading-relaxed resize-none outline-none px-3 py-2"
-        style={{ background: 'var(--surface-0)', color: 'var(--text-2)', border: 'none', tabSize: 2 }}
+        resize={false}
+        aria-label={`Contents of ${file.filename}`}
+        className="!border-0 !px-4 !py-3 font-mono !text-[13px] leading-relaxed"
       />
     </div>
   )

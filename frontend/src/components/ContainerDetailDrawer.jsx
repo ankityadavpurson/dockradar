@@ -1,67 +1,21 @@
-import {
-  AlertCircle, ArrowUpCircle, Box, ChevronDown, Edit2, FileCode2, Globe, HardDrive,
-  Info, KeyRound, Link, Network, Tags, Terminal, X,
-} from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Accordion, Alert, ArrowUpCircleIcon, Badge, BoxIcon, Button, Drawer, EditIcon, FileCode2Icon, GlobeIcon, HardDriveIcon, InfoIcon, KeyRoundIcon, LinkIcon, Loader, NetworkIcon, TagsIcon, TerminalIcon } from 'xedonium'
 import { api } from '../api/client'
 
-const MUTED = { color: 'var(--text-3)' }
-const VALUE = { color: 'var(--text-2)' }
-const ICON = { color: 'var(--text-2)' }
-const BORDER = '1px solid var(--border-1)'
-
-/**
- * Collapsible section. The `preview` renders inline in the header while
- * collapsed, so no information disappears — it just takes one line.
- */
-function Disclosure({ icon, title, count, preview, defaultOpen = false, children }) {
-  const [open, setOpen] = useState(defaultOpen)
-  return (
-    // shrink-0: without it the flex column squashes cards (overflow-hidden
-    // lets them shrink below content height) instead of scrolling the body.
-    <div className="card overflow-hidden shrink-0">
-      <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open}
-        className="expander-header">
-        {icon}
-        <span className="text-[14px] shrink-0" style={{ color: 'var(--text-1)' }}>
-          {title}
-        </span>
-        {count !== undefined && count > 0 && (
-          <span className="badge badge-neutral shrink-0 tabular-nums">
-            {count}
-          </span>
-        )}
-        {!open && preview && (
-          <span className="ml-auto text-[12px] font-mono truncate text-right"
-            style={{ color: 'var(--text-3)', maxWidth: '55%' }}>
-            {preview}
-          </span>
-        )}
-        <ChevronDown size={14} className={`shrink-0 transition-transform ${open || !preview ? 'ml-auto' : ''}`}
-          style={{ ...MUTED, transform: open ? 'rotate(180deg)' : 'none' }} />
-      </button>
-      {open && (
-        <div className="px-4 pb-3 pt-3 flex flex-col gap-1.5"
-          style={{ borderTop: BORDER, background: 'var(--row-hover)' }}>
-          {children}
-        </div>
-      )}
-    </div>
-  )
-}
+const ICON = { className: 'h-4 w-4 shrink-0 text-app-soft' }
 
 function KV({ k, v, title }) {
   if (v === null || v === undefined || v === '') return null
   return (
-    <div className="flex gap-3 text-[13px] font-mono">
-      <span className="w-24 shrink-0 font-sans" style={MUTED}>{k}</span>
-      <span className="break-all" style={VALUE} title={title}>{v}</span>
+    <div className="flex gap-3 font-mono text-[13px]">
+      <span className="w-24 shrink-0 font-sans text-app-muted">{k}</span>
+      <span className="break-all text-app-soft" title={title}>{v}</span>
     </div>
   )
 }
 
 function Line({ children }) {
-  return <div className="text-[13px] font-mono break-all" style={VALUE}>{children}</div>
+  return <div className="break-all font-mono text-[13px] text-app-soft">{children}</div>
 }
 
 function formatPorts(ports) {
@@ -99,12 +53,6 @@ export default function ContainerDetailDrawer({
     api.containerDetails(name).then(setData).catch(e => setError(e.message))
   }, [name])
 
-  useEffect(() => {
-    const onKey = e => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
-
   const ports = data ? formatPorts(data.ports) : []
   const mounts = data?.volumes || []
   const envKeys = data?.environment_keys || []
@@ -120,195 +68,207 @@ export default function ContainerDetailDrawer({
     .map(v => (Array.isArray(v) ? v.join(' ') : v)).filter(Boolean).join(' ')
   const labelPreview = labels.length ? `${labels[0][0]} …` : ''
 
-  return (
-    <div className="fixed inset-0 z-[210]"
-      style={{ background: 'var(--overlay)' }}
-      onClick={e => e.target === e.currentTarget && onClose()}>
+  // Sections open by default when they have something to show; the collapsed
+  // header carries a one-line `preview` so nothing disappears.
+  const [openKeys, setOpenKeys] = useState([])
+  useEffect(() => {
+    if (!data) return
+    setOpenKeys([ports.length > 0 && 'ports', mounts.length > 0 && 'mounts'].filter(Boolean))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data])
 
-      <div role="dialog" aria-modal="true" aria-label={`Details for ${name}`}
-        className="drawer absolute top-0 right-0 h-full w-full max-w-[520px] flex flex-col">
+  const section = (key, icon, label, { count, preview, content }) => ({
+    key,
+    title: (
+      <span className="flex w-full min-w-0 items-center gap-2">
+        {icon}
+        <span className="shrink-0 font-normal">{label}</span>
+        {count > 0 && <Badge badgeContent={count} color="secondary" className="shrink-0" />}
+        {!openKeys.includes(key) && preview && (
+          <span className="ml-auto min-w-0 max-w-[55%] truncate text-right font-mono text-xs font-normal text-app-muted">
+            {preview}
+          </span>
+        )}
+      </span>
+    ),
+    content: <div className="flex flex-col gap-1.5 pt-2">{content}</div>,
+  })
 
-        {/* Header — the essentials, nothing else */}
-        <div className="flex items-start justify-between px-5 pt-5 pb-4 gap-3">
-          <div className="flex flex-col gap-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-[20px] font-semibold truncate" style={{ color: 'var(--text-1)' }}>{name}</span>
-              {data && (
-                <span className={`badge shrink-0 capitalize ${data.status === 'running' ? 'badge-success' : 'badge-caution'}`}>
-                  {data.status}
-                </span>
-              )}
+  const accordionItems = !data ? [] : [
+    section('ports', <GlobeIcon {...ICON} />, 'Ports', {
+      count: ports.length, preview: portPreview || 'none',
+      content: ports.length === 0 ? <Line>none published</Line> : ports.map((p, i) => <Line key={i}>{p}</Line>),
+    }),
+    section('mounts', <HardDriveIcon {...ICON} />, 'Mounts', {
+      count: mounts.length, preview: mountPreview || 'none',
+      content: mounts.length === 0 ? <Line>none captured</Line> : mounts.map((v, i) => <Line key={i}>{v}</Line>),
+    }),
+    section('env', <KeyRoundIcon {...ICON} />, 'Environment', {
+      count: envKeys.length, preview: envPreview || 'none',
+      content: (<>
+        {envKeys.length === 0
+          ? <Line>none</Line>
+          : (
+            <div className="flex flex-wrap gap-1.5">
+              {envKeys.map(k => (
+                <span key={k} className="border border-app-border bg-app-card px-1.5 py-0.5 font-mono text-xs text-app-soft">{k}</span>
+              ))}
             </div>
-            {data && (
-              <span className="text-[12px] font-mono truncate" style={MUTED}
-                title={data.local_digest || undefined}>
-                {data.image}
-                {data.local_digest && <span style={{ color: 'var(--text-4)' }}> @ {shortDigest(data.local_digest)}</span>}
-              </span>
-            )}
+          )}
+        <span className="text-xs text-app-muted">Values are hidden — they may contain secrets.</span>
+      </>),
+    }),
+    section('network', <NetworkIcon {...ICON} />, 'Network', {
+      preview: netPreview || '—',
+      content: (<>
+        <KV k="mode" v={data.network_mode} />
+        <KV k="networks" v={networks.join(', ')} />
+        <KV k="hostname" v={data.hostname} />
+        <KV k="restart" v={data.restart_policy?.Name} />
+      </>),
+    }),
+    (data.command || data.entrypoint || data.user || data.working_dir) && section('process', <TerminalIcon {...ICON} />, 'Process', {
+      preview: procPreview || '—',
+      content: (<>
+        <KV k="entrypoint" v={Array.isArray(data.entrypoint) ? data.entrypoint.join(' ') : data.entrypoint} />
+        <KV k="command" v={Array.isArray(data.command) ? data.command.join(' ') : data.command} />
+        <KV k="user" v={data.user} />
+        <KV k="workdir" v={data.working_dir} />
+      </>),
+    }),
+    data.compose
+      ? section('compose', <FileCode2Icon {...ICON} />, 'Compose', {
+        preview: `${data.compose.filename} / ${data.compose.service_name}`,
+        content: (<>
+          <KV k="file" v={data.compose.filename} />
+          <KV k="service" v={data.compose.service_name} />
+          {isLinked && onEditCompose && (
+            <div className="mt-2">
+              <Button variant="secondary" className="inline-flex items-center gap-2"
+                onClick={onEditCompose} tooltip="Edit the linked compose file">
+                <EditIcon className="h-3.5 w-3.5 shrink-0" />
+                Edit compose file
+              </Button>
+            </div>
+          )}
+        </>),
+      })
+      : section('compose', <FileCode2Icon {...ICON} />, 'Compose', {
+        preview: 'no compose file linked',
+        content: onLinkCompose && (
+          <div>
+            <Button variant="secondary" className="inline-flex items-center gap-2"
+              onClick={onLinkCompose} tooltip="Link this container to a compose file">
+              <LinkIcon className="h-3.5 w-3.5 shrink-0" />
+              Link compose file
+            </Button>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close details" className="btn-icon shrink-0">
-            <X size={16} />
-          </button>
-        </div>
+        ),
+      }),
+    section('image', <BoxIcon {...ICON} />, 'Image', {
+      preview: shortDigest(data.local_digest) || data.tag,
+      content: (<>
+        <KV k="image" v={data.image} />
+        <KV k="tag" v={data.tag} />
+        {data.latest_tag && data.latest_tag !== data.tag && <KV k="latest" v={data.latest_tag} />}
+        <KV k="digest" v={data.local_digest} />
+        <KV k="id" v={data.short_id} />
+      </>),
+    }),
+    section('labels', <TagsIcon {...ICON} />, 'Labels', {
+      count: labels.length, preview: labelPreview || 'none',
+      content: labels.length === 0
+        ? <Line>none</Line>
+        : labels.map(([k, v]) => (
+          <div key={k} className="break-all font-mono text-xs">
+            <span className="text-app-muted">{k}</span>
+            {v && <span className="text-app-soft"> = {v}</span>}
+          </div>
+        )),
+    }),
+    section('coverage', <InfoIcon className="h-4 w-4 shrink-0 shrink-0 text-amber-500" />, 'Direct update coverage', {
+      preview: 'what survives an update?',
+      content: (
+        <p className="text-xs leading-relaxed text-app-muted">
+          Direct updates recreate this container from the configuration above.{' '}
+          <span className="text-app-soft">Preserved:</span> ports, bind mounts, env vars,
+          restart policy, network mode, labels, command/entrypoint.{' '}
+          <span className="text-app-soft">Not preserved:</span> named volumes attached
+          via <code>--mount</code>, multiple networks, and advanced options — use a
+          compose association for containers that rely on them.
+        </p>
+      ),
+    }),
+  ].filter(Boolean)
+
+  const title = (
+    <span className="flex min-w-0 items-center gap-2 normal-case tracking-normal">
+      <span className="truncate text-base font-semibold">{name}</span>
+      {data && (
+        <Badge color={data.status === 'running' ? 'success' : 'warning'} badgeContent={data.status}
+          className="shrink-0 capitalize" />
+      )}
+    </span>
+  )
+
+  return (
+    <Drawer open onClose={onClose} title={title} width="max-w-[520px]" padded={false}>
+      <div className="flex h-full flex-col">
+        {data && (
+          <span className="truncate px-6 pb-3 pt-4 font-mono text-xs text-app-muted"
+            title={data.local_digest || undefined}>
+            {data.image}
+            {data.local_digest && <span className="opacity-70"> @ {shortDigest(data.local_digest)}</span>}
+          </span>
+        )}
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-4 pb-4 flex flex-col gap-1">
+        <div className="flex flex-1 flex-col gap-2 overflow-y-auto px-6 pb-6">
           {/* Actions — update (direct / compose) and compose file link/edit */}
           {container && (onDirectUpdate || onLinkCompose) && (
-            <div className="shrink-0 flex flex-wrap items-center gap-2 mb-2">
+            <div className="mb-1 flex shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center [&>*]:w-full sm:[&>*]:w-auto">
               {updateAvailable && hasCompose && onComposeUpdate && (
-                <button type="button" className="btn btn-ghost btn-sm"
+                <Button variant="secondary" className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
                   disabled={isBusy || composeUnavailable}
                   onClick={() => onComposeUpdate(container)}
-                  title={composeUnavailable
+                  tooltip={composeUnavailable
                     ? 'Compose CLI not available in this deployment'
                     : 'Preview and update via docker compose'}>
-                  <FileCode2 size={14} />
+                  <FileCode2Icon className="h-3.5 w-3.5 shrink-0" />
                   Update via compose
-                </button>
+                </Button>
               )}
               {updateAvailable && onDirectUpdate && (
-                <button type="button" className="btn btn-yellow btn-sm"
+                <Button variant="warning" className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
                   disabled={isBusy}
                   onClick={() => onDirectUpdate(container)}
-                  title="Stop, remove, and recreate with the latest image">
-                  <ArrowUpCircle size={14} />
+                  tooltip="Stop, remove, and recreate with the latest image">
+                  <ArrowUpCircleIcon className="h-3.5 w-3.5 shrink-0" />
                   Update (pull + recreate)
-                </button>
+                </Button>
               )}
             </div>
           )}
 
           {error && (
-            <div role="alert" className="infobar infobar-critical shrink-0">
-              <AlertCircle size={16} className="infobar-icon" />
-              <span className="break-words">{error}</span>
-            </div>
+            <Alert tone="danger" className="shrink-0"><span className="break-words">{error}</span></Alert>
           )}
 
           {!data && !error && (
-            <div className="text-[14px] py-8 text-center" style={MUTED}>Loading…</div>
+            <Loader variant="inline" label="Loading…" className="justify-center py-8" />
           )}
 
-          {data && (<>
-            <Disclosure icon={<Globe size={16} style={ICON} />} title="Ports"
-              count={ports.length} preview={portPreview || 'none'} defaultOpen={ports.length > 0}>
-              {ports.length === 0
-                ? <Line>none published</Line>
-                : ports.map((p, i) => <Line key={i}>{p}</Line>)}
-            </Disclosure>
-
-            <Disclosure icon={<HardDrive size={16} style={ICON} />} title="Mounts"
-              count={mounts.length} preview={mountPreview || 'none'} defaultOpen={mounts.length > 0}>
-              {mounts.length === 0
-                ? <Line>none captured</Line>
-                : mounts.map((v, i) => <Line key={i}>{v}</Line>)}
-            </Disclosure>
-
-            <Disclosure icon={<KeyRound size={16} style={ICON} />} title="Environment"
-              count={envKeys.length} preview={envPreview || 'none'}>
-              {envKeys.length === 0
-                ? <Line>none</Line>
-                : (
-                  <div className="flex flex-wrap gap-1.5">
-                    {envKeys.map(k => (
-                      <span key={k} className="text-[12px] font-mono px-1.5 py-0.5 rounded"
-                        style={{ color: 'var(--text-2)', background: 'var(--hover-bg)', border: BORDER }}>
-                        {k}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              <span className="text-[12px]" style={MUTED}>Values are hidden — they may contain secrets.</span>
-            </Disclosure>
-
-            <Disclosure icon={<Network size={16} style={ICON} />} title="Network"
-              preview={netPreview || '—'}>
-              <KV k="mode" v={data.network_mode} />
-              <KV k="networks" v={networks.join(', ')} />
-              <KV k="hostname" v={data.hostname} />
-              <KV k="restart" v={data.restart_policy?.Name} />
-            </Disclosure>
-
-            {(data.command || data.entrypoint || data.user || data.working_dir) && (
-              <Disclosure icon={<Terminal size={16} style={ICON} />} title="Process"
-                preview={procPreview || '—'}>
-                <KV k="entrypoint" v={Array.isArray(data.entrypoint) ? data.entrypoint.join(' ') : data.entrypoint} />
-                <KV k="command" v={Array.isArray(data.command) ? data.command.join(' ') : data.command} />
-                <KV k="user" v={data.user} />
-                <KV k="workdir" v={data.working_dir} />
-              </Disclosure>
-            )}
-
-            {data.compose ? (
-              <Disclosure icon={<FileCode2 size={16} style={ICON} />} title="Compose"
-                preview={`${data.compose.filename} / ${data.compose.service_name}`}>
-                <KV k="file" v={data.compose.filename} />
-                <KV k="service" v={data.compose.service_name} />
-                {isLinked && onEditCompose && (
-                  <div className="mt-2">
-                    <button type="button" className="btn btn-ghost btn-sm"
-                      onClick={onEditCompose}
-                      title="Edit the linked compose file">
-                      <Edit2 size={14} />
-                      Edit compose file
-                    </button>
-                  </div>
-                )}
-              </Disclosure>
-            ) : (
-              <Disclosure icon={<FileCode2 size={16} style={ICON} />} title="Compose"
-                preview={'no compose file linked'}>
-                {onLinkCompose && (
-                  <div>
-                    <button type="button" className="btn btn-ghost btn-sm"
-                      onClick={onLinkCompose}
-                      title="Link this container to a compose file">
-                      <Link size={14} />
-                      Link compose file
-                    </button>
-                  </div>
-                )}
-              </Disclosure>
-            )}
-
-            <Disclosure icon={<Box size={16} style={ICON} />} title="Image"
-              preview={shortDigest(data.local_digest) || data.tag}>
-              <KV k="image" v={data.image} />
-              <KV k="tag" v={data.tag} />
-              {data.latest_tag && data.latest_tag !== data.tag && <KV k="latest" v={data.latest_tag} />}
-              <KV k="digest" v={data.local_digest} />
-              <KV k="id" v={data.short_id} />
-            </Disclosure>
-
-            <Disclosure icon={<Tags size={16} style={ICON} />} title="Labels"
-              count={labels.length} preview={labelPreview || 'none'}>
-              {labels.length === 0
-                ? <Line>none</Line>
-                : labels.map(([k, v]) => (
-                  <div key={k} className="text-[12px] font-mono break-all">
-                    <span style={MUTED}>{k}</span>
-                    {v && <span style={VALUE}> = {v}</span>}
-                  </div>
-                ))}
-            </Disclosure>
-
-            {/* Update-coverage note — present but quiet */}
-            <Disclosure icon={<Info size={16} style={{ color: 'var(--accent-amber)' }} />}
-              title="Direct update coverage" preview="what survives an update?">
-              <p className="text-[12px] leading-relaxed" style={{ color: 'var(--text-3)' }}>
-                Direct updates recreate this container from the configuration above.{' '}
-                <span style={{ color: 'var(--text-2)' }}>Preserved:</span> ports, bind mounts, env vars,
-                restart policy, network mode, labels, command/entrypoint.{' '}
-                <span style={{ color: 'var(--text-2)' }}>Not preserved:</span> named volumes attached
-                via <code>--mount</code>, multiple networks, and advanced options — use a
-                compose association for containers that rely on them.
-              </p>
-            </Disclosure>
-          </>)}
+          {data && (
+            <Accordion
+              multiple
+              items={accordionItems}
+              value={openKeys}
+              onChange={setOpenKeys}
+              className="shrink-0 bg-app-card [&_h3_button>span:first-child]:flex-1"
+            />
+          )}
         </div>
       </div>
-    </div>
+    </Drawer>
   )
 }
