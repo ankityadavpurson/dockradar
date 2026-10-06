@@ -1,4 +1,4 @@
-import { AlertCircle } from 'lucide-react'
+import { Alert, Button } from 'xedonium'
 import Modal from './Modal'
 
 /**
@@ -7,32 +7,26 @@ import Modal from './Modal'
  */
 export default function ErrorDetailDialog({ container, onClose }) {
   const title = (
-    <div className="min-w-0">
-      <div className="modal-title truncate">
-        Scan error — <span style={{ color: 'var(--accent)' }}>{container.name}</span>
-      </div>
-      <div className="text-[12px] font-mono truncate" style={{ color: 'var(--text-3)' }}>
+    <span className="block min-w-0 normal-case tracking-normal">
+      <span className="block truncate">Scan error — {container.name}</span>
+      <span className="block truncate font-mono text-xs font-normal text-app-muted">
         {container.repository}:{container.tag}
-      </div>
-    </div>
-  )
-
-  const footer = (
-    <button className="btn btn-primary btn-sm" onClick={onClose}>Close</button>
+      </span>
+    </span>
   )
 
   return (
-    <Modal title={title} onClose={onClose} size="md" footer={footer}
+    <Modal title={title} onClose={onClose} size="md"
+      footer={<Button onClick={onClose}>Close</Button>}
       ariaLabel={`Scan error for ${container.name}`}>
-      <div role="alert" className="infobar infobar-critical items-start">
-        <AlertCircle size={16} className="infobar-icon" />
+      <Alert tone="danger">
         <span className="break-words">
           {container.error_message
             || 'The last scan could not determine this container’s update status.'}
         </span>
-      </div>
+      </Alert>
 
-      <p className="text-[13px] mt-3 leading-relaxed" style={{ color: 'var(--text-3)' }}>
+      <p className="text-[13px] leading-relaxed text-app-muted">
         DockRadar couldn’t check this image against its registry, so its update
         status is unknown. Common causes: the image is private (needs
         authentication), the repository was renamed or removed, or the registry

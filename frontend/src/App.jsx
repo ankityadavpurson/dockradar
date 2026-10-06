@@ -1,5 +1,5 @@
-import { AlertCircle, Loader2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { Alert, Progress } from 'xedonium'
 import ComposeFileEditor from './components/ComposeFileEditor'
 import ComposeLinkDialog from './components/ComposeLinkDialog'
 import ComposeManager from './components/ComposeManager'
@@ -73,10 +73,8 @@ const App = () => {
   // UI is never blank (or a misleading "no containers found") on load.
   if (initialLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3"
-        style={{ color: 'var(--text-3)' }}>
-        <Loader2 size={28} className="animate-spin" />
-        <div className="text-[14px]">Connecting to DockRadar…</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <Progress variant="circular" size="lg" label="Connecting to DockRadar…" />
       </div>
     )
   }
@@ -85,11 +83,9 @@ const App = () => {
     <div className="min-h-screen">
 
       {health && !health.docker_connected && (
-        <div role="alert" className="infobar infobar-critical"
-          style={{ borderRadius: 0, borderWidth: '0 0 1px 0' }}>
-          <AlertCircle size={16} className="infobar-icon" />
-          <span><strong className="font-semibold">Docker unavailable.</strong>{' '}Can't reach the Docker daemon. DockRadar can't scan or update containers until it reconnects — check that Docker is running and the socket (or DOCKER_HOST) is accessible.</span>
-        </div>
+        <Alert tone="danger" title="Docker unavailable.">
+          Can't reach the Docker daemon. DockRadar can't scan or update containers until it reconnects — check that Docker is running and the socket (or DOCKER_HOST) is accessible.
+        </Alert>
       )}
 
       {/* Header */}
@@ -100,14 +96,13 @@ const App = () => {
       />
 
       {/* Main content */}
-      <main className="max-w-[1400px] mx-auto px-6 py-6">
+      <main className="mx-auto max-w-[1400px] px-4 py-4 md:px-6 md:py-6">
 
         {/* Connection error */}
         {error && (
-          <div role="alert" className="infobar infobar-critical mb-4 animate-fade_in">
-            <AlertCircle size={16} className="infobar-icon" />
+          <Alert tone="danger" className="mb-4">
             <span className="break-words">{error}</span>
-          </div>
+          </Alert>
         )}
 
         {/* Toolbar */}
@@ -134,13 +129,12 @@ const App = () => {
         <InfoBar health={health} onTestEmail={testEmail} />
 
         {/* Container table */}
-        <div className="card overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3"
-            style={{ borderBottom: '1px solid var(--border-1)' }}>
-            <span className="section-label">
+        <div className="overflow-hidden border border-app-border bg-app-card">
+          <div className="flex items-center justify-between border-b border-app-border px-4 py-3">
+            <span className="text-xs font-semibold uppercase tracking-widest text-app-muted">
               Containers
             </span>
-            <span className="caption tabular-nums">
+            <span className="text-xs tabular-nums text-app-muted">
               {visible.length} of {containers.length}
             </span>
           </div>
@@ -175,8 +169,7 @@ const App = () => {
       </main>
 
       {/* Footer */}
-      <footer className="max-w-[1400px] mx-auto px-6 py-4 text-center text-[12px]"
-        style={{ color: 'var(--text-4)' }}>
+      <footer className="max-w-[1400px] mx-auto px-4 md:px-6 py-4 text-center text-xs text-app-muted">
         DockRadar{health?.version && ` v${health.version}`}
       </footer>
 
@@ -190,7 +183,6 @@ const App = () => {
 Preserved: ports, bind mounts, env vars, restart policy, network mode, labels.
 Not preserved: named volumes attached via --mount, extra networks, and advanced options — use a compose association for those containers.`}
         confirmLabel="Update"
-        confirmClass="btn-yellow"
         onConfirm={() => { updateOne(confirmUpdate.name); setConfirmUpdate(null) }}
         onCancel={() => setConfirmUpdate(null)}
       />
@@ -201,7 +193,7 @@ Not preserved: named volumes attached via --mount, extra networks, and advanced 
         title={`Remove ${confirmDelete?.name}?`}
         message="This will stop and permanently remove the container. This action cannot be undone."
         confirmLabel="Remove"
-        confirmClass="btn-red"
+        danger
         onConfirm={() => { deleteContainer(confirmDelete.name); setConfirmDelete(null) }}
         onCancel={() => setConfirmDelete(null)}
       />
@@ -212,7 +204,6 @@ Not preserved: named volumes attached via --mount, extra networks, and advanced 
         title={`Update all ${outdatedCount} outdated container(s)?`}
         message="This will stop, remove, and recreate all outdated containers with their latest images. Original configurations will be preserved."
         confirmLabel="Update All"
-        confirmClass="btn-green"
         onConfirm={() => { updateAll(); setConfirmAll(false) }}
         onCancel={() => setConfirmAll(false)}
       />
@@ -223,7 +214,6 @@ Not preserved: named volumes attached via --mount, extra networks, and advanced 
         title={`Update ${selectedCount} selected container(s)?`}
         message="This will stop, remove, and recreate every selected container with its latest image — including containers that are already up to date."
         confirmLabel="Update Selected"
-        confirmClass="btn-primary"
         onConfirm={() => { updateSelected(); setConfirmSel(false) }}
         onCancel={() => setConfirmSel(false)}
       />

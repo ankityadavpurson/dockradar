@@ -1,4 +1,4 @@
-import { ArrowUpCircle, FileCode2, RefreshCw, Search, UploadCloud, X } from 'lucide-react'
+import { ArrowUpCircleIcon, Badge, Button, CloseIcon, CloudUploadIcon, Divider, FileCode2Icon, Input, RefreshCwIcon, SearchIcon, Switch } from 'xedonium'
 
 export default function Toolbar({
   isBusy, selectedCount, outdatedCount, visibleCount, totalCount,
@@ -10,97 +10,77 @@ export default function Toolbar({
   const runText = showFirstRunHint ? 'Run first scan' : 'Scan'
 
   return (
-    <div className="card flex items-center gap-1.5 flex-wrap px-2 py-2 mb-3">
+    <div className="flex items-center gap-2 flex-wrap p-2 mb-3">
 
-      {/* Scan */}
-      <button className="btn btn-primary btn-sm" onClick={onScan} disabled={isBusy}>
-        <RefreshCw size={14} className={isBusy ? 'animate-spin' : ''} />
+      <Button onClick={onScan} disabled={isBusy} className="inline-flex h-[38px] items-center gap-2 mr-4">
+        <RefreshCwIcon className={`h-3.5 w-3.5 shrink-0 ${isBusy ? 'animate-spin' : ''}`} />
         {isBusy ? 'Working…' : runText}
-      </button>
+      </Button>
 
-      <div className="w-px h-5 mx-1 shrink-0" style={{ background: 'var(--border-3)' }} />
+      <Divider orientation="vertical" className="mx-1 hidden !h-5 shrink-0 !self-center sm:block" />
 
-      {/* Update selected */}
-      <button className="btn btn-subtle btn-sm" onClick={onUpdateSelected}
-        disabled={isBusy || selectedCount === 0}>
-        <ArrowUpCircle size={14} />
+      <Button variant="flat" onClick={onUpdateSelected}
+        disabled={isBusy || selectedCount === 0} className="inline-flex h-[38px] items-center gap-2">
+        <ArrowUpCircleIcon className="h-3.5 w-3.5 shrink-0" />
         Update selected
-        {selectedCount > 0 && (
-          <span className="badge badge-accent tabular-nums">{selectedCount}</span>
-        )}
-      </button>
+        {selectedCount > 0 && <Badge badgeContent={selectedCount} />}
+      </Button>
 
-      {/* Update all */}
-      <button className="btn btn-subtle btn-sm" onClick={onUpdateAll}
-        disabled={isBusy || outdatedCount === 0}>
-        <UploadCloud size={14} />
+      <Button variant="flat" onClick={onUpdateAll}
+        disabled={isBusy || outdatedCount === 0} className="inline-flex h-[38px] items-center gap-2">
+        <CloudUploadIcon className="h-3.5 w-3.5 shrink-0" />
         Update all
-        {outdatedCount > 0 && (
-          <span className="badge badge-caution tabular-nums">{outdatedCount}</span>
-        )}
-      </button>
+        {outdatedCount > 0 && <Badge badgeContent={outdatedCount} color="warning" />}
+      </Button>
 
-      <div className="w-px h-5 mx-1 shrink-0" style={{ background: 'var(--border-3)' }} />
+      <Divider orientation="vertical" className="mx-1 hidden !h-5 shrink-0 !self-center sm:block" />
 
-      {/* Compose */}
-      <button className="btn btn-subtle btn-sm" onClick={onOpenCompose}
-        title="Manage docker-compose files">
-        <FileCode2 size={14} />
+      <Button variant="flat" onClick={onOpenCompose} tooltip="Manage docker-compose files"
+        className="inline-flex h-[38px] items-center gap-2">
+        <FileCode2Icon className="h-3.5 w-3.5 shrink-0" />
         Compose
-      </button>
+      </Button>
 
-      <div className="flex-1" />
+      <div className="hidden flex-1 sm:block" />
 
-      {/* Search */}
-      <div className="relative">
-        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
-          style={{ color: 'var(--text-3)' }} />
-        <input
+      <div className="relative w-full transition-[width] sm:w-48 sm:focus-within:w-64">
+        <SearchIcon className="h-3.5 w-3.5 shrink-0 pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-app-muted" />
+        <Input
           type="search"
           placeholder="Search containers"
           aria-label="Search containers"
           value={search}
-          onChange={e => onSearch(e.target.value)}
-          className="input pl-8 pr-8 w-48 focus:w-64 transition-[width,background-color] [&::-webkit-search-cancel-button]:hidden"
+          onChange={onSearch}
+          className="!h-[38px] !pl-9 !pr-8 [&::-webkit-search-cancel-button]:hidden"
         />
         {search && (
           <button type="button" onClick={() => onSearch('')} aria-label="Clear search"
-            className="icon-btn-subtle absolute right-1 top-1/2 -translate-y-1/2 !h-6 !w-6">
-            <X size={12} />
+            className="absolute right-1 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center text-app-muted hover:text-app-text">
+            <CloseIcon className="h-3 w-3 shrink-0" />
           </button>
         )}
       </div>
 
-      {/* Match count while filtering */}
       {filtering && (
-        <span className="caption whitespace-nowrap tabular-nums px-1"
+        <span className="text-xs text-app-muted whitespace-nowrap tabular-nums px-1"
           title="Matching / total containers">
           {visibleCount} of {totalCount}
         </span>
       )}
 
-      {/* Outdated filter toggle */}
-      <label className="flex items-center gap-2.5 cursor-pointer select-none text-[14px] px-2"
-        style={{ color: 'var(--text-1)' }}>
-        <span className="toggle">
-          <input type="checkbox" checked={filterOutdated}
-            onChange={e => onFilterOutdated(e.target.checked)} className="sr-only peer" />
-          <span className="toggle-track" aria-hidden="true" />
-        </span>
-        Outdated only
-      </label>
+      <Divider orientation="vertical" className="mx-1 hidden !h-5 shrink-0 !self-center sm:block" />
 
-      <div className="w-px h-5 mx-1 shrink-0" style={{ background: 'var(--border-3)' }} />
+      <Switch label="Outdated only" checked={filterOutdated} onChange={onFilterOutdated} />
 
-      <button className="btn btn-subtle btn-sm" onClick={onSelectAll}
-        title="Select all visible containers">
+      <Divider orientation="vertical" className="mx-1 hidden !h-5 shrink-0 !self-center sm:block" />
+
+      <Button variant="flat" className="h-[38px]" onClick={onSelectAll} tooltip="Select all visible containers">
         Select all
-      </button>
+      </Button>
       {selectedCount > 0 && (
-        <button className="btn btn-subtle btn-sm" onClick={onClearSelection}
-          title={`Clear selection (${selectedCount})`}>
+        <Button variant="flat" className="h-[38px]" onClick={onClearSelection} tooltip={`Clear selection (${selectedCount})`}>
           Clear
-        </button>
+        </Button>
       )}
     </div>
   )

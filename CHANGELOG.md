@@ -9,6 +9,10 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.19.1] — 2026-10-05
+
+- Maintenance release.
+
 ## [13.19.0] — 2026-09-18
 
 ### Added
@@ -243,7 +247,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.0...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.1...HEAD
+[13.19.1]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.0...v13.19.1
 [13.19.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.18.0...v13.19.0
 [13.18.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.17.0...v13.18.0
 [13.17.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.16.3...v13.17.0

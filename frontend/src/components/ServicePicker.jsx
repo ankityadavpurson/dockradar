@@ -1,6 +1,4 @@
-import { ChevronDown } from 'lucide-react'
-
-const LABEL = { color: 'var(--text-3)' }
+import { Select } from 'xedonium'
 
 /**
  * Two linked selects: pick a stored compose file, then a service inside it.
@@ -14,26 +12,26 @@ export default function ServicePicker({ composeFiles, labels = {}, selectedFileI
 
   return (
     <div className="flex gap-2">
-      <div className="relative flex-1 min-w-0">
-        <select value={selectedFileId} onChange={e => onChange(e.target.value, '')} className="select"
-          aria-label="Compose file">
-          <option value="">— file —</option>
-          {composeFiles.map(f => (
-            <option key={f.file_id} value={f.file_id}>
-              {labels[f.file_id] ?? f.filename}
-            </option>
-          ))}
-        </select>
-        <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={LABEL} />
+      <div className="min-w-0 flex-[3]">
+      <Select
+        className="w-full"
+        aria-label="Compose file"
+        value={selectedFileId}
+        placeholder="— file —"
+        onChange={v => onChange(v, '')}
+        options={composeFiles.map(f => ({ value: f.file_id, label: labels[f.file_id] ?? f.filename }))}
+      />
       </div>
-      <div className="relative flex-1 min-w-0">
-        <select value={selectedService} onChange={e => onChange(selectedFileId, e.target.value)}
-          disabled={!selectedFileId} className="select"
-          aria-label="Compose service">
-          <option value="">— service —</option>
-          {services.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={LABEL} />
+      <div className="min-w-0 flex-[2]">
+      <Select
+        className="w-full"
+        aria-label="Compose service"
+        value={selectedService}
+        placeholder="— service —"
+        disabled={!selectedFileId}
+        onChange={v => onChange(selectedFileId, v)}
+        options={services.map(s => ({ value: s, label: s }))}
+      />
       </div>
     </div>
   )

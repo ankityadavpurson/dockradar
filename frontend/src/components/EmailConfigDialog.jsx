@@ -1,12 +1,12 @@
-import { CheckCircle2, Mail, Send, XCircle } from 'lucide-react'
 import { useState } from 'react'
+import { Alert, Button, SendIcon } from 'xedonium'
 import Modal from './Modal'
 
 function Row({ k, v }) {
   return (
-    <div className="flex gap-3 text-[14px] py-1.5" style={{ borderBottom: '1px solid var(--border-1)' }}>
-      <span className="w-32 shrink-0" style={{ color: 'var(--text-3)' }}>{k}</span>
-      <span className="break-all font-mono text-[13px]" style={{ color: 'var(--text-1)' }}>{v}</span>
+    <div className="flex gap-3 py-1.5 text-sm">
+      <span className="w-32 shrink-0 text-app-muted">{k}</span>
+      <span className="break-all font-mono text-[13px] text-app-text">{v}</span>
     </div>
   )
 }
@@ -26,34 +26,24 @@ export default function EmailConfigDialog({ health, onClose, onTestEmail }) {
     try { await onTestEmail() } finally { setTesting(false) }
   }
 
-  const title = (
-    <div className="flex items-center gap-2">
-      <Mail size={20} style={{ color: 'var(--accent)' }} />
-      <span className="modal-title">Email notifications</span>
-    </div>
-  )
-
   const footer = (
     <>
       {configured && onTestEmail && (
-        <button type="button" onClick={handleTest} disabled={testing}
-          className="btn btn-blue btn-sm">
-          <Send size={13} />
+        <Button variant="secondary" onClick={handleTest} disabled={testing}
+          className="inline-flex items-center gap-2">
+          <SendIcon className="h-[13px] w-[13px] shrink-0" />
           {testing ? 'Sending…' : 'Send test email'}
-        </button>
+        </Button>
       )}
-      <button type="button" onClick={onClose} className="btn btn-ghost btn-sm">Close</button>
+      <Button onClick={onClose}>Close</Button>
     </>
   )
 
   return (
-    <Modal title={title} onClose={onClose} size="md" footer={footer} ariaLabel="Email notifications">
-      {/* Status */}
-      <div className={`infobar ${configured ? 'infobar-success' : ''} items-center py-2`}>
-        {configured
-          ? <><CheckCircle2 size={16} className="infobar-icon !mt-0" /><span>Configured</span></>
-          : <><XCircle size={16} className="infobar-icon !mt-0" style={{ color: 'var(--text-3)' }} /><span>Not configured</span></>}
-      </div>
+    <Modal title="Email notifications" onClose={onClose} size="md" footer={footer}>
+      <Alert tone={configured ? 'success' : 'info'}>
+        {configured ? 'Configured' : 'Not configured'}
+      </Alert>
 
       <div className="flex flex-col">
         <Row k="SMTP server" v={`${health?.smtp_host || '—'}:${health?.smtp_port ?? ''}`} />
@@ -64,7 +54,7 @@ export default function EmailConfigDialog({ health, onClose, onTestEmail }) {
       </div>
 
       {!configured && (
-        <p className="text-[13px] leading-relaxed" style={{ color: 'var(--text-3)' }}>
+        <p className="text-[13px] leading-relaxed text-app-muted">
           Set <code>SMTP_HOST</code> and <code>EMAIL_TO</code> in your <code>.env</code> and restart to
           enable update notifications. Credentials (<code>SMTP_USER</code>/<code>SMTP_PASSWORD</code>) are
           optional for open relays.

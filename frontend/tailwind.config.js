@@ -1,3 +1,5 @@
+import xedonium from 'xedonium/tailwind-preset'
+
 /** @type {import('tailwindcss').Config} */
 
 // System type stacks — resolved from the OS, no web-font request.
@@ -10,7 +12,8 @@ const segoe = [
 const easeDecelerate = 'cubic-bezier(0.1, 0.9, 0.2, 1)'
 
 export default {
-  content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
+  presets: [xedonium],
+  content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}', './node_modules/xedonium/dist/**/*.js'],
   theme: {
     extend: {
       fontFamily: {

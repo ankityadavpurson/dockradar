@@ -1,32 +1,26 @@
-import {
-  AlertCircle, CheckCircle2, ChevronDown, ClipboardCopy,
-  Download, Edit2, FileCode2, Link, Link2Off,
-  Trash2, Upload, X,
-} from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { Alert, Badge, Button, CheckCircleIcon, ChevronDownIcon, CopyIcon, DownloadIcon, EditIcon, FileCode2Icon, FileUpload, LinkIcon, Trash2Icon, UnlinkIcon } from 'xedonium'
 import { composeApi } from '../api/client'
 import ComposeFileEditor from './ComposeFileEditor'
+import Modal from './Modal'
 import ServicePicker from './ServicePicker'
-
-// ── Shared styles ─────────────────────────────────────────────────────────────
-
-const S = {
-  section: { color: 'var(--text-4)' },
-  label: { color: 'var(--text-3)' },
-  primary: { color: 'var(--text-1)' },
-}
 
 // ── Helper components ─────────────────────────────────────────────────────────
 
 function StatusMsg({ msg, isError, onDismiss }) {
   if (!msg) return null
   return (
-    <div role={isError ? 'alert' : 'status'}
-      className={`infobar ${isError ? 'infobar-critical' : 'infobar-success'} items-center py-2`}>
-      {isError ? <AlertCircle size={16} className="infobar-icon !mt-0" /> : <CheckCircle2 size={16} className="infobar-icon !mt-0" />}
-      <span className="flex-1 break-words">{msg}</span>
-      <button onClick={onDismiss} className="icon-btn-subtle shrink-0" aria-label="Dismiss message"><X size={16} /></button>
-    </div>
+    <Alert tone={isError ? 'danger' : 'success'} onClose={onDismiss}>
+      <span className="break-words">{msg}</span>
+    </Alert>
+  )
+}
+
+function SectionLabel({ children, className = '' }) {
+  return (
+    <span className={`text-xs font-semibold uppercase tracking-widest text-app-muted ${className}`}>
+      {children}
+    </span>
   )
 }
 
@@ -77,35 +71,27 @@ function DownloadPanel({ file, onClose }) {
   }
 
   return (
-    <div className="card flex flex-col gap-3 p-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <CheckCircle2 size={16} style={{ color: 'var(--accent-teal)' }} />
-          <span className="section-label">Update complete</span>
-        </div>
-        <button onClick={onClose} className="btn-icon" aria-label="Dismiss">
-          <X size={16} />
-        </button>
-      </div>
-
-      <p className="text-[14px]" style={S.label}>
-        Download or copy the updated <span className="font-mono" style={S.primary}>{file.filename}</span> compose file.
+    <Alert tone="success" title="Update complete" onClose={onClose} icon={<CheckCircleIcon className="h-4 w-4 shrink-0" />}>
+      <p className="mb-3">
+        Download or copy the updated <span className="font-mono font-semibold">{file.filename}</span> compose file.
       </p>
-
       <div className="flex gap-2">
-        <button onClick={handleDownload} className="btn btn-primary btn-sm flex-1 justify-center">
-          <Download size={13} />
+        <Button onClick={handleDownload} className="inline-flex flex-1 items-center justify-center gap-2">
+          <DownloadIcon className="h-[13px] w-[13px] shrink-0" />
           Download .yml
-        </button>
-
-        <button onClick={handleCopy} disabled={!content} className="btn btn-blue btn-sm flex-1 justify-center">
-          <ClipboardCopy size={13} />
+        </Button>
+        <Button variant="secondary" onClick={handleCopy} disabled={!content}
+          className="inline-flex flex-1 items-center justify-center gap-2">
+          <CopyIcon className="h-[13px] w-[13px] shrink-0" />
           {copied ? 'Copied!' : 'Copy to clipboard'}
-        </button>
+        </Button>
       </div>
-    </div>
+    </Alert>
   )
 }
+
+// Square icon button sized to match the selects (38px tall) beside it.
+const ICON_BTN = 'inline-flex !h-[38px] !w-[38px] items-center justify-center !p-0'
 
 // ── Container row ─────────────────────────────────────────────────────────────
 
@@ -130,30 +116,29 @@ function ContainerRow({ container, association, composeFiles, labels, onAssociat
   }
 
   return (
-    <div className="grid gap-2 px-3 py-2 items-center hover:bg-[var(--hover-bg)]"
-      style={{ gridTemplateColumns: '1fr 2fr auto' }}>
-      <div className="flex items-center gap-2 min-w-0">
-        <span className="w-2 h-2 rounded-full shrink-0"
-          style={{ background: container.status === 'running' ? 'var(--accent-teal)' : 'var(--text-4)' }} />
-        <span className="text-[14px] font-semibold truncate" style={{ color: 'var(--text-1)' }}
-          title={container.name}>{container.name}</span>
+    <div className="-mx-3 grid items-center gap-3 px-3 py-2 hover:bg-app-bg"
+      style={{ gridTemplateColumns: 'minmax(0, 7rem) minmax(0, 1fr) 38px' }}>
+      <div className="flex min-w-0 items-center gap-2">
+        <span className={`h-2 w-2 shrink-0 rounded-full ${container.status === 'running' ? 'bg-emerald-500' : 'bg-app-border'}`} />
+        <span className="truncate text-sm font-semibold text-app-text" title={container.name}>{container.name}</span>
       </div>
 
       <ServicePicker composeFiles={composeFiles} labels={labels} selectedFileId={fileId} selectedService={service}
         onChange={(fid, svc) => { setFileId(fid); setService(svc) }} />
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center justify-end gap-1">
         {canSave && (
-          <button onClick={handleSave} disabled={saving} className="btn btn-primary btn-xs">
-            <Link size={12} />{saving ? '…' : 'Link'}
-          </button>
+          <Button onClick={handleSave} disabled={saving} tooltip={`Link ${container.name}`}
+            aria-label={`Link ${container.name}`} className={ICON_BTN}>
+            <LinkIcon className="h-3.5 w-3.5 shrink-0" />
+          </Button>
         )}
         {hasAssociation && !canSave && (
-          <button onClick={() => onDisassociate(container.name)}
-            className="icon-btn-subtle is-danger"
-            title={`Unlink ${container.name}`} aria-label={`Unlink ${container.name}`}>
-            <Link2Off size={14} />
-          </button>
+          <Button variant="danger" onClick={() => onDisassociate(container.name)}
+            tooltip={`Unlink ${container.name}`} aria-label={`Unlink ${container.name}`}
+            className={ICON_BTN}>
+            <UnlinkIcon className="h-3.5 w-3.5 shrink-0" />
+          </Button>
         )}
       </div>
     </div>
@@ -165,14 +150,13 @@ function ContainerRow({ container, association, composeFiles, labels, onAssociat
 export default function ComposeManager({ containers, onClose, lastUpdatedFile }) {
   const [composeFiles, setComposeFiles] = useState([])
   const [associations, setAssociations] = useState({})
-  const [dragging, setDragging] = useState(false)
+  const [uploadKey, setUploadKey] = useState(0)
   const [uploading, setUploading] = useState(false)
   const [statusMsg, setStatusMsg] = useState(null)
   const [isError, setIsError] = useState(false)
   const [editingFile, setEditingFile] = useState(null)   // ComposeFile being edited
   const [downloadFile, setDownloadFile] = useState(null)   // ComposeFile for download panel
   const [showStoredFiles, setShowStoredFiles] = useState(false)
-  const fileInputRef = useRef()
 
   function notify(msg, error = false) { setStatusMsg(msg); setIsError(error) }
 
@@ -190,12 +174,6 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
   }, [])
 
   useEffect(() => { refresh() }, [refresh])
-
-  useEffect(() => {
-    const onKey = e => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
 
   // If a compose update just finished, auto-open the download panel for the relevant file
   useEffect(() => {
@@ -216,6 +194,7 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
     setUploading(false)
     if (uploaded > 0) notify(`Uploaded ${uploaded} file${uploaded > 1 ? 's' : ''}.`)
     await refresh()
+    setUploadKey(k => k + 1)
   }
 
   async function handleDeleteFile(fileId) {
@@ -245,165 +224,122 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
   const linkedCount = Object.keys(associations).length
   const labels = buildFileLabels(composeFiles)
 
+  const title = (
+    <span className="flex items-center gap-2.5">
+      <FileCode2Icon className="h-5 w-5 shrink-0" />
+      <span>Compose files</span>
+      {composeFiles.length > 0 && <Badge badgeContent={composeFiles.length} color="secondary" />}
+    </span>
+  )
+
+  const footer = (
+    <>
+      <span className="flex-1 text-[13px] text-app-muted">
+        {linkedCount} container{linkedCount !== 1 ? 's' : ''} linked
+      </span>
+      {editingFile && (
+        <Button variant="secondary" onClick={() => setEditingFile(null)}>← Back</Button>
+      )}
+      <Button variant="secondary" onClick={onClose}>Close</Button>
+    </>
+  )
+
   return (
-    <div className="modal-overlay"
-      onClick={e => e.target === e.currentTarget && onClose()}>
+    <Modal title={title} onClose={onClose} size="lg" footer={footer} ariaLabel="Compose files">
+      <StatusMsg msg={statusMsg} isError={isError} onDismiss={() => setStatusMsg(null)} />
 
-      <div className="modal-panel max-w-2xl"
-        role="dialog" aria-modal="true" aria-label="Compose files">
+      {/* Post-update download panel */}
+      {downloadFile && (
+        <DownloadPanel
+          file={downloadFile}
+          onClose={() => setDownloadFile(null)}
+        />
+      )}
 
-        {/* Header */}
-        <div className="modal-header">
-          <div className="flex items-center gap-2.5">
-            <FileCode2 size={20} style={{ color: 'var(--accent)' }} />
-            <span className="modal-title">Compose files</span>
-            {composeFiles.length > 0 && (
-              <span className="badge badge-neutral tabular-nums">
-                {composeFiles.length}
-              </span>
-            )}
-          </div>
-          <button onClick={onClose} className="btn-icon" aria-label="Close compose manager">
-            <X size={16} />
-          </button>
-        </div>
+      {/* Inline editor — shown when editing a file */}
+      {editingFile ? (
+        <ComposeFileEditor
+          file={editingFile}
+          onSave={handleEditorSave}
+          onCancel={() => setEditingFile(null)}
+        />
+      ) : (
+        <>
+          {/* Drop zone — keyed so the picked-file list resets after each upload */}
+          <FileUpload
+            key={uploadKey}
+            label={uploading ? 'Uploading…' : 'Drop compose files here, or select to browse (.yml / .yaml)'}
+            accept=".yml,.yaml"
+            multiple
+            disabled={uploading}
+            onChange={handleFiles}
+          />
 
-        <div className="modal-body flex-1">
-          <StatusMsg msg={statusMsg} isError={isError} onDismiss={() => setStatusMsg(null)} />
-
-          {/* Post-update download panel */}
-          {downloadFile && (
-            <DownloadPanel
-              file={downloadFile}
-              onClose={() => setDownloadFile(null)}
-            />
-          )}
-
-          {/* Inline editor — shown when editing a file */}
-          {editingFile ? (
-            <ComposeFileEditor
-              file={editingFile}
-              onSave={handleEditorSave}
-              onCancel={() => setEditingFile(null)}
-            />
-          ) : (
-            <>
-              {/* Drop zone */}
-              <div
-                onDragOver={e => { e.preventDefault(); setDragging(true) }}
-                onDragLeave={() => setDragging(false)}
-                onDrop={e => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files) }}
-                onClick={() => fileInputRef.current?.click()}
-                role="button" tabIndex={0}
-                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click() } }}
-                className="flex flex-col items-center justify-center gap-2 py-7 cursor-pointer transition-colors hover:bg-[var(--hover-bg)]"
-                style={{
-                  borderRadius: 'var(--radius-overlay)',
-                  border: `1px dashed ${dragging ? 'var(--accent)' : 'var(--border-3)'}`,
-                  background: dragging ? 'var(--accent-subtle)' : 'var(--surface-raised)',
-                }}>
-                <Upload size={24} style={{ color: dragging ? 'var(--accent)' : 'var(--text-3)' }} />
-                <span className="text-[14px]"
-                  style={{ color: 'var(--text-1)' }}>
-                  {uploading ? 'Uploading…' : 'Drop compose files here, or select to browse'}
-                </span>
-                <span className="caption">.yml / .yaml only</span>
-              </div>
-              <input ref={fileInputRef} type="file" accept=".yml,.yaml" multiple className="hidden"
-                onChange={e => { handleFiles(e.target.files); e.target.value = '' }} />
-
-              {/* File list */}
-              {composeFiles.length > 0 && (
-                <div className="flex flex-col gap-1">
-                  <button
-                    onClick={() => setShowStoredFiles(!showStoredFiles)}
-                    aria-expanded={showStoredFiles}
-                    className="flex items-center justify-between gap-2 px-2 -mx-2 min-h-[32px] rounded hover:bg-[var(--hover-bg)] transition-colors">
-                    <span className="section-label">Stored files</span>
-                    <ChevronDown size={16} className={`transition-transform ${showStoredFiles ? 'rotate-180' : ''}`} style={S.label} />
-                  </button>
-                  {showStoredFiles && composeFiles.map(f => (
-                    <div key={f.file_id} className="flex items-center justify-between px-3 py-2 hover:bg-[var(--hover-bg)]">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <FileCode2 size={16} style={{ color: 'var(--text-2)', flexShrink: 0 }} />
-                        <div className="flex flex-col min-w-0">
-                          <span className="font-mono text-[13px] truncate" style={{ color: 'var(--text-1)' }}>
-                            {f.filename}
-                          </span>
-                          {labels[f.file_id] !== f.filename && (
-                            <span className="font-mono text-[11px]" style={S.section}>
-                              #{f.file_id.slice(0, 10)}
-                            </span>
-                          )}
-                        </div>
-                        <span className="caption shrink-0">
-                          {f.services.length} service{f.services.length !== 1 ? 's' : ''}: {f.services.slice(0, 4).join(', ')}{f.services.length > 4 ? '…' : ''}
-                        </span>
-                      </div>
-
-                      {/* File actions: Edit · Download · Delete */}
-                      <div className="flex items-center gap-1 ml-2 shrink-0">
-                        <button onClick={() => setEditingFile(f)}
-                          title="Edit file content" aria-label={`Edit ${f.filename}`}
-                          className="icon-btn-subtle">
-                          <Edit2 size={14} />
-                        </button>
-                        <button onClick={() => setDownloadFile(f)}
-                          title="Download file" aria-label={`Download ${f.filename}`}
-                          className="icon-btn-subtle">
-                          <Download size={14} />
-                        </button>
-                        <button onClick={() => handleDeleteFile(f.file_id)}
-                          title="Delete file" aria-label={`Delete ${f.filename}`}
-                          className="icon-btn-subtle is-danger">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Container associations */}
-              <div className="flex flex-col gap-1">
-                <span className="section-label mb-1">Container associations</span>
-                {composeFiles.length === 0 ? (
-                  <p className="text-[14px] py-2" style={S.label}>
-                    Upload a compose file above to start linking containers.
-                  </p>
-                ) : containers.length === 0 ? (
-                  <p className="text-[14px] py-2" style={S.label}>
-                    No containers found. Run a scan first.
-                  </p>
-                ) : (
-                  <div className="flex flex-col gap-1">
-                    {containers.map(c => (
-                      <ContainerRow key={c.name} container={c} association={associations[c.name]}
-                        composeFiles={composeFiles} labels={labels} onAssociate={handleAssociate}
-                        onDisassociate={handleDisassociate} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="modal-footer justify-between">
-          <span className="text-[13px]" style={S.label}>
-            {linkedCount} container{linkedCount !== 1 ? 's' : ''} linked
-          </span>
-          <div className="flex items-center gap-2">
-            {editingFile && (
-              <button onClick={() => setEditingFile(null)} className="btn btn-ghost btn-sm">
-                ← Back
+          {/* File list */}
+          {composeFiles.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <button
+                onClick={() => setShowStoredFiles(!showStoredFiles)}
+                aria-expanded={showStoredFiles}
+                className="-mx-3 flex min-h-[32px] items-center justify-between gap-2 px-3 transition-colors hover:bg-app-bg">
+                <SectionLabel>Stored files</SectionLabel>
+                <ChevronDownIcon className={`h-4 w-4 shrink-0 text-app-muted transition-transform ${showStoredFiles ? 'rotate-180' : ''}`} />
               </button>
+              {showStoredFiles && composeFiles.map(f => (
+                <div key={f.file_id} className="-mx-3 flex items-center justify-between px-3 py-2 hover:bg-app-bg">
+                  <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                    <FileCode2Icon className="h-4 w-4 shrink-0 text-app-soft" />
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate font-mono text-[13px] text-app-text">{f.filename}</span>
+                      {labels[f.file_id] !== f.filename && (
+                        <span className="font-mono text-[11px] text-app-muted">#{f.file_id.slice(0, 10)}</span>
+                      )}
+                    </div>
+                    <span className="w-48 shrink-0 truncate text-xs text-app-muted"
+                      title={f.services.join(', ')}>
+                      {f.services.length} service{f.services.length !== 1 ? 's' : ''}: {f.services.slice(0, 4).join(', ')}{f.services.length > 4 ? '…' : ''}
+                    </span>
+                  </div>
+
+                  {/* File actions: Edit · Download · Delete */}
+                  <div className="ml-2 flex shrink-0 items-center gap-1">
+                    <Button variant="flat" onClick={() => setEditingFile(f)}
+                      tooltip="Edit file content" aria-label={`Edit ${f.filename}`} className="!p-1.5">
+                      <EditIcon className="h-3.5 w-3.5 shrink-0" />
+                    </Button>
+                    <Button variant="flat" onClick={() => setDownloadFile(f)}
+                      tooltip="Download file" aria-label={`Download ${f.filename}`} className="!p-1.5">
+                      <DownloadIcon className="h-3.5 w-3.5 shrink-0" />
+                    </Button>
+                    <Button variant="danger" onClick={() => handleDeleteFile(f.file_id)}
+                      tooltip="Delete file" aria-label={`Delete ${f.filename}`} className="!p-1.5">
+                      <Trash2Icon className="h-3.5 w-3.5 shrink-0" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Container associations */}
+          <div className="flex flex-col gap-1">
+            <SectionLabel className="mb-1">Container associations</SectionLabel>
+            {composeFiles.length === 0 ? (
+              <p className="py-2 text-sm text-app-muted">Upload a compose file above to start linking containers.</p>
+            ) : containers.length === 0 ? (
+              <p className="py-2 text-sm text-app-muted">No containers found. Run a scan first.</p>
+            ) : (
+              <div className="flex flex-col gap-1">
+                {containers.map(c => (
+                  <ContainerRow key={c.name} container={c} association={associations[c.name]}
+                    composeFiles={composeFiles} labels={labels} onAssociate={handleAssociate}
+                    onDisassociate={handleDisassociate} />
+                ))}
+              </div>
             )}
-            <button onClick={onClose} className="btn btn-ghost btn-sm">Close</button>
           </div>
-        </div>
-      </div>
-    </div>
+        </>
+      )}
+    </Modal>
   )
 }

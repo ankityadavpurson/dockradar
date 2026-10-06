@@ -1,7 +1,6 @@
-import { X } from 'lucide-react'
-import { useEffect } from 'react'
+import { Modal as XModal } from 'xedonium'
 
-const SIZES = {
+const WIDTHS = {
   sm: 'max-w-sm',
   md: 'max-w-md',
   lg: 'max-w-2xl',
@@ -9,41 +8,14 @@ const SIZES = {
 }
 
 /**
- * Shared modal shell — one chrome for every centered dialog: overlay, panel,
- * header (title + close), scrollable body, optional footer. Closes on Escape
- * and backdrop click. Pass `title` as a string or a node.
+ * Thin adapter over xedonium's Modal: keeps the app's `size` / mounted-means-open
+ * contract. Pass `title` as a string or a node.
  */
-export default function Modal({
-  title, onClose, size = 'md', footer, children, ariaLabel,
-}) {
-  useEffect(() => {
-    const onKey = e => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
-
+export default function Modal({ title, onClose, size = 'md', footer, children, ariaLabel, ...rest }) {
   return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div role="dialog" aria-modal="true" aria-label={typeof title === 'string' ? title : ariaLabel}
-        className={`modal-panel ${SIZES[size] ?? SIZES.md}`}>
-
-        {title !== undefined && (
-          <div className="modal-header">
-            <div className="min-w-0 flex-1">
-              {typeof title === 'string'
-                ? <span className="modal-title truncate block">{title}</span>
-                : title}
-            </div>
-            <button type="button" onClick={onClose} aria-label="Close" className="btn-icon shrink-0">
-              <X size={16} />
-            </button>
-          </div>
-        )}
-
-        <div className="modal-body">{children}</div>
-
-        {footer && <div className="modal-footer">{footer}</div>}
-      </div>
-    </div>
+    <XModal open onClose={onClose} title={title} footer={footer}
+      maxWidth={WIDTHS[size] ?? WIDTHS.md} aria-label={ariaLabel} {...rest}>
+      <div className="flex flex-col gap-3 px-6 py-5">{children}</div>
+    </XModal>
   )
 }

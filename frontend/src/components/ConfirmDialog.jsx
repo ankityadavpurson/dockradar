@@ -1,29 +1,19 @@
-import { useEffect, useRef } from 'react'
-import Modal from './Modal'
+import { ConfirmDialog as XConfirmDialog } from 'xedonium'
 
 export default function ConfirmDialog({
   open, title, message, onConfirm, onCancel,
-  confirmLabel = 'Confirm', confirmClass = 'btn-primary',
+  confirmLabel = 'Confirm', danger = false,
 }) {
-  const confirmRef = useRef(null)
-
-  useEffect(() => {
-    if (open) confirmRef.current?.focus()
-  }, [open])
-
-  if (!open) return null
-
   return (
-    <Modal
+    <XConfirmDialog
+      open={!!open}
       title={title}
+      tone={danger ? 'danger' : 'default'}
+      confirmLabel={confirmLabel}
+      onConfirm={onConfirm}
       onClose={onCancel}
-      size="sm"
-      footer={<>
-        <button ref={confirmRef} className={`btn ${confirmClass} btn-sm`} onClick={onConfirm}>{confirmLabel}</button>
-        <button className="btn btn-ghost btn-sm" onClick={onCancel}>Cancel</button>
-      </>}
     >
-      <p className="text-[14px] whitespace-pre-line" style={{ color: 'var(--text-3)' }}>{message}</p>
-    </Modal>
+      <p className="whitespace-pre-line">{message}</p>
+    </XConfirmDialog>
   )
 }
