@@ -22,7 +22,7 @@ export default function InfoBar({ health, onTestEmail }) {
   const lastScan = timeAgo(health.last_scan)
 
   return (
-    <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 border border-app-border bg-app-card px-4 py-2 text-[13px] text-app-muted">
+    <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 text-[13px] text-app-muted">
 
       <span className="flex items-center gap-1.5">
         <ClockIcon className="h-3.5 w-3.5 shrink-0" />

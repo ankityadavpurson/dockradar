@@ -10,7 +10,7 @@ export default function Toolbar({
   const runText = showFirstRunHint ? 'Run first scan' : 'Scan'
 
   return (
-    <div className="flex items-center gap-2 flex-wrap border border-app-border bg-app-card p-2 mb-3">
+    <div className="flex items-center gap-2 flex-wrap p-2 mb-3">
 
       <Button onClick={onScan} disabled={isBusy} className="inline-flex h-[38px] items-center gap-2">
         <RefreshCwIcon className={`h-3.5 w-3.5 shrink-0 ${isBusy ? 'animate-spin' : ''}`} />
