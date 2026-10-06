@@ -1,4 +1,4 @@
-import { ArrowUpCircleIcon, Badge, Button, CloseIcon, CloudUploadIcon, FileCode2Icon, Input, RefreshCwIcon, SearchIcon, Switch } from 'xedonium'
+import { ArrowUpCircleIcon, Badge, Button, CloseIcon, CloudUploadIcon, Divider, FileCode2Icon, Input, RefreshCwIcon, SearchIcon, Switch } from 'xedonium'
 
 export default function Toolbar({
   isBusy, selectedCount, outdatedCount, visibleCount, totalCount,
@@ -12,12 +12,12 @@ export default function Toolbar({
   return (
     <div className="flex items-center gap-2 flex-wrap p-2 mb-3">
 
-      <Button onClick={onScan} disabled={isBusy} className="inline-flex h-[38px] items-center gap-2">
+      <Button onClick={onScan} disabled={isBusy} className="inline-flex h-[38px] items-center gap-2 mr-4">
         <RefreshCwIcon className={`h-3.5 w-3.5 shrink-0 ${isBusy ? 'animate-spin' : ''}`} />
         {isBusy ? 'Working…' : runText}
       </Button>
 
-      <div className="mx-1 hidden h-5 w-px shrink-0 bg-app-border sm:block" />
+      <Divider orientation="vertical" className="mx-1 hidden !h-5 shrink-0 !self-center sm:block" />
 
       <Button variant="flat" onClick={onUpdateSelected}
         disabled={isBusy || selectedCount === 0} className="inline-flex h-[38px] items-center gap-2">
@@ -33,7 +33,7 @@ export default function Toolbar({
         {outdatedCount > 0 && <Badge badgeContent={outdatedCount} color="warning" />}
       </Button>
 
-      <div className="mx-1 hidden h-5 w-px shrink-0 bg-app-border sm:block" />
+      <Divider orientation="vertical" className="mx-1 hidden !h-5 shrink-0 !self-center sm:block" />
 
       <Button variant="flat" onClick={onOpenCompose} tooltip="Manage docker-compose files"
         className="inline-flex h-[38px] items-center gap-2">
@@ -68,11 +68,11 @@ export default function Toolbar({
         </span>
       )}
 
-      <div className="mx-1 hidden h-5 w-px shrink-0 bg-app-border sm:block" />
+      <Divider orientation="vertical" className="mx-1 hidden !h-5 shrink-0 !self-center sm:block" />
 
       <Switch label="Outdated only" checked={filterOutdated} onChange={onFilterOutdated} />
 
-      <div className="mx-1 hidden h-5 w-px shrink-0 bg-app-border sm:block" />
+      <Divider orientation="vertical" className="mx-1 hidden !h-5 shrink-0 !self-center sm:block" />
 
       <Button variant="flat" className="h-[38px]" onClick={onSelectAll} tooltip="Select all visible containers">
         Select all

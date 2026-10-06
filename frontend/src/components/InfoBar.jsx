@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, ClockIcon, HistoryIcon, InfoIcon, MailIcon } from 'xedonium'
+import { Button, ClockIcon, Divider, HistoryIcon, InfoIcon, MailIcon } from 'xedonium'
 import EmailConfigDialog from './EmailConfigDialog'
 
 /** "3m ago" style age for a past ISO timestamp; null → 'never'. */
@@ -29,7 +29,7 @@ export default function InfoBar({ health, onTestEmail }) {
         Scans every <span className="font-semibold text-app-text">{health.scan_interval_hours}h</span>
       </span>
 
-      <div className="hidden h-4 w-px bg-app-border sm:block" />
+      <Divider orientation="vertical" className="hidden !h-4 !self-center sm:block" />
 
       <span className="flex items-center gap-1.5"
         title={health.last_scan ? new Date(health.last_scan).toLocaleString() : undefined}>
@@ -38,7 +38,7 @@ export default function InfoBar({ health, onTestEmail }) {
         <span className={`font-semibold ${health.last_scan ? 'text-app-text' : 'text-app-muted'}`}>{lastScan}</span>
       </span>
 
-      <div className="hidden h-4 w-px bg-app-border sm:block" />
+      <Divider orientation="vertical" className="hidden !h-4 !self-center sm:block" />
 
       <span className="flex items-center gap-1.5">
         <MailIcon className="h-3.5 w-3.5 shrink-0" />

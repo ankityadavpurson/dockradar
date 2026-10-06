@@ -1,4 +1,4 @@
-import { ThemeToggle } from 'xedonium'
+import { Divider, ThemeToggle } from 'xedonium'
 import favicon from '../../assets/favicon.svg'
 
 /** "in 5h 12m" style countdown to a future date. */
@@ -28,7 +28,7 @@ export default function Header({ health, containers, scanStatus }) {
 
   const connected = !!health?.docker_connected
 
-  const divider = (cls = '') => <div className={`h-5 w-px bg-app-border ${cls}`} />
+  const divider = (cls = '') => <Divider orientation="vertical" className={`!h-5 !self-center ${cls}`} />
 
   return (
     <header className="sticky top-0 z-40 border-b border-app-border bg-app-bg/95 backdrop-blur">
