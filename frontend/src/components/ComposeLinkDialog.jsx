@@ -1,5 +1,5 @@
-import { AlertCircle, FileCode2, Link } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Alert, Button, FileCode2Icon, LinkIcon } from 'xedonium'
 import { composeApi } from '../api/client'
 import Modal from './Modal'
 import ServicePicker from './ServicePicker'
@@ -52,54 +52,39 @@ export default function ComposeLinkDialog({ container, onLinked, onClose, onOpen
   }
 
   const title = (
-    <div className="min-w-0">
-      <div className="modal-title truncate">
-        Link compose file — <span style={{ color: 'var(--accent)' }}>{container.name}</span>
-      </div>
-      <div className="text-[12px] truncate" style={{ color: 'var(--text-3)' }}>
+    <span className="block min-w-0 normal-case tracking-normal">
+      <span className="block truncate">Link compose file — {container.name}</span>
+      <span className="block truncate text-xs font-normal text-app-muted">
         Use <code>docker compose</code> to update this container.
-      </div>
-    </div>
+      </span>
+    </span>
   )
 
   const footer = (
     <>
-      <span className="flex-1 text-[13px]" style={{ color: 'var(--text-3)' }}>
+      <span className="flex-1 text-[13px] text-app-muted">
         {composeFiles.length === 0
           ? 'No compose files stored yet.'
           : 'Select the file and service that defines this container.'}
       </span>
-      <button className="btn btn-primary btn-sm" onClick={handleLink} disabled={!canLink}>
-        <Link size={13} />{saving ? 'Linking…' : 'Link'}
-      </button>
-      <button className="btn btn-ghost btn-sm" onClick={onClose}>Cancel</button>
+      <Button onClick={handleLink} disabled={!canLink} className="inline-flex items-center gap-1.5">
+        <LinkIcon className="h-[13px] w-[13px] shrink-0" />{saving ? 'Linking…' : 'Link'}
+      </Button>
+      <Button variant="secondary" onClick={onClose}>Cancel</Button>
     </>
   )
 
   return (
     <Modal title={title} onClose={onClose} size="md" footer={footer} ariaLabel={`Link compose file for ${container.name}`}>
-      {error && (
-        <div role="alert" className="infobar infobar-critical">
-          <AlertCircle size={16} className="infobar-icon" />
-          <span className="break-words">{error}</span>
-        </div>
-      )}
+      {error && <Alert tone="danger"><span className="break-words">{error}</span></Alert>}
 
       {loading ? (
-        <div className="text-[14px] text-center py-6" style={{ color: 'var(--text-3)' }}>
-          Loading compose files…
-        </div>
+        <div className="py-6 text-center text-sm text-app-muted">Loading compose files…</div>
       ) : composeFiles.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-6 text-center">
-          <FileCode2 size={28} style={{ color: 'var(--text-3)' }} />
-          <p className="text-[14px]" style={{ color: 'var(--text-2)' }}>
-            Upload a compose file first, then come back to link it.
-          </p>
-          {onOpenManager && (
-            <button className="btn btn-primary btn-sm" onClick={onOpenManager}>
-              Open Compose Manager
-            </button>
-          )}
+          <FileCode2Icon className="h-7 w-7 shrink-0 text-app-muted" />
+          <p className="text-sm text-app-soft">Upload a compose file first, then come back to link it.</p>
+          {onOpenManager && <Button onClick={onOpenManager}>Open Compose Manager</Button>}
         </div>
       ) : (
         <ServicePicker

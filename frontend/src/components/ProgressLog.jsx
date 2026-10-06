@@ -1,5 +1,5 @@
-import { Maximize2, Minimize2, Terminal, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { Button, CloseIcon, MaximizeIcon, MinimizeIcon, TerminalIcon } from 'xedonium'
 
 const ProgressLog = ({ messages, scanning, updating, visible = false, onDismiss }) => {
   const endRef = useRef(null)
@@ -37,76 +37,59 @@ const ProgressLog = ({ messages, scanning, updating, visible = false, onDismiss 
   return (
     <>
       {!open && (
-        <button
-          type="button"
-          className="flyout fixed right-4 bottom-4 z-[190] flex items-center gap-2 px-4 min-h-[36px] text-[14px] transition-colors hover:bg-[var(--control-bg-hover)]"
-          style={{ color: 'var(--text-1)' }}
-          onClick={() => setOpen(true)}
-        >
-          <Terminal size={14} />
+        <Button variant="secondary" onClick={() => setOpen(true)}
+          className="fixed bottom-4 right-4 z-[40] inline-flex items-center gap-2 shadow-lg">
+          <TerminalIcon className="h-3.5 w-3.5 shrink-0" />
           <span>{active ? (scanning ? 'Scanning…' : 'Updating…') : 'View log'}</span>
-          {active && (
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse_soft" style={{ background: 'var(--accent-amber)' }} />
-          )}
-        </button>
+          {active && <span className="h-1.5 w-1.5 animate-pulse_soft rounded-full bg-amber-500" />}
+        </Button>
       )}
 
       {/* Non-modal: no backdrop — the page stays fully interactive. */}
       {open && (
         <div
           role="complementary" aria-label="Progress log"
-          className={`drawer fixed top-0 right-0 h-full w-full ${fullscreen
-            ? 'z-[260] max-w-none !border-l-0'
-            : 'z-[190] max-w-[480px]'}`}
+          className={`fixed right-0 top-0 h-full w-full border-l border-app-border bg-app-card shadow-2xl ${fullscreen
+            ? 'z-[60] max-w-none border-l-0'
+            : 'z-[40] max-w-[480px]'}`}
         >
           <div className="flex h-full flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4">
-              <div className="flex items-center gap-2.5" style={{ color: 'var(--text-1)' }}>
-                <Terminal size={18} style={{ color: active ? (scanning ? 'var(--accent-amber)' : 'var(--accent-teal)') : 'var(--accent)' }} />
-                <span className="text-[20px] font-semibold">
+            <div className="flex items-center justify-between border-b border-app-border px-5 py-4">
+              <div className="flex items-center gap-2.5 text-app-text">
+                <TerminalIcon className={`h-[18px] w-[18px] shrink-0 ${active ? (scanning ? 'text-amber-500' : 'text-emerald-500') : ''}`} />
+                <span className="text-sm font-semibold uppercase tracking-widest">
                   {scanning ? 'Scanning…' : updating ? 'Updating…' : 'Progress log'}
                 </span>
-                {active && (
-                  <span className="ml-1 w-1.5 h-1.5 rounded-full animate-pulse_soft" style={{ background: 'var(--accent-amber)' }} />
-                )}
+                {active && <span className="ml-1 h-1.5 w-1.5 animate-pulse_soft rounded-full bg-amber-500" />}
               </div>
 
-              <button
-                type="button"
-                className="btn-icon"
-                onClick={close}
-                aria-label="Close progress log"
-              >
-                <X size={16} />
-              </button>
+              <Button variant="secondary" onClick={close} aria-label="Close progress log">
+                <CloseIcon className="h-4 w-4 shrink-0" />
+              </Button>
             </div>
 
-            <div className="px-5 pb-3 caption">
+            <div className="px-5 py-3 text-xs text-app-muted">
               {messages.length} line{messages.length === 1 ? '' : 's'}
             </div>
 
-            <div className="code-surface flex-1 overflow-y-auto mx-4 mb-4 p-4 font-mono text-[12px] leading-relaxed"
+            <div className="mx-4 mb-4 flex-1 overflow-y-auto border border-app-border bg-app-bg p-4 font-mono text-xs leading-relaxed"
               role="log" aria-live="polite">
               {messages.map((msg, i) => (
-                <div key={i} className="mb-1 break-words" style={{ color: getLineColor(msg) }}>{msg}</div>
+                <div key={i} className={`mb-1 break-words ${getLineColor(msg)}`}>{msg}</div>
               ))}
               <div ref={endRef} />
             </div>
 
-            <div className="modal-footer !py-4">
-              <button type="button" className="btn btn-sm"
-                onClick={() => setFullscreen(f => !f)}
-                aria-pressed={fullscreen}>
-                {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+            <div className="flex items-center justify-end gap-3 border-t border-app-border px-5 py-4">
+              <Button variant="secondary" onClick={() => setFullscreen(f => !f)}
+                aria-pressed={fullscreen} className="inline-flex items-center gap-2">
+                {fullscreen ? <MinimizeIcon className="h-3.5 w-3.5 shrink-0" /> : <MaximizeIcon className="h-3.5 w-3.5 shrink-0" />}
                 {fullscreen ? 'Exit full screen' : 'Full screen'}
-              </button>
-              {/* Wrapper carries the tooltip — disabled buttons get no pointer events */}
-              <span title={active ? 'Available when the current operation finishes' : undefined}>
-                <button type="button" className="btn btn-primary btn-sm"
-                  onClick={() => { close(); onDismiss && onDismiss() }} disabled={active}>
-                  Close
-                </button>
-              </span>
+              </Button>
+              <Button onClick={() => { close(); onDismiss && onDismiss() }} disabled={active}
+                tooltip={active ? 'Available when the current operation finishes' : undefined}>
+                Close
+              </Button>
             </div>
           </div>
         </div>
@@ -116,11 +99,11 @@ const ProgressLog = ({ messages, scanning, updating, visible = false, onDismiss 
 }
 
 function getLineColor(msg) {
-  if (msg.includes('✓') || msg.includes('complete') || msg.includes('up to date')) return 'var(--accent-teal)'
-  if (msg.includes('✗') || msg.includes('failed') || msg.includes('error')) return 'var(--accent-red)'
-  if (msg.includes('⚠') || msg.includes('warn') || msg.includes('Pulling') || msg.includes('Updating')) return 'var(--accent-amber)'
-  if (msg.includes('✅') || msg.includes('Scan complete')) return 'var(--accent-teal)'
-  return 'var(--text-1)'
+  if (msg.includes('✓') || msg.includes('complete') || msg.includes('up to date')) return 'text-emerald-600 dark:text-emerald-400'
+  if (msg.includes('✗') || msg.includes('failed') || msg.includes('error')) return 'text-red-600 dark:text-red-400'
+  if (msg.includes('⚠') || msg.includes('warn') || msg.includes('Pulling') || msg.includes('Updating')) return 'text-amber-600 dark:text-amber-400'
+  if (msg.includes('✅') || msg.includes('Scan complete')) return 'text-emerald-600 dark:text-emerald-400'
+  return 'text-app-text'
 }
 
 export default ProgressLog

@@ -1,5 +1,5 @@
-import { AlertCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Alert, Button, Loader, TextArea } from 'xedonium'
 import { composeApi } from '../api/client'
 import DiffView from './DiffView'
 import Modal from './Modal'
@@ -44,22 +44,20 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
     && container.compose?.writable === false
 
   const title = (
-    <div className="min-w-0">
-      <div className="modal-title truncate">
-        Compose update — <span style={{ color: 'var(--accent)' }}>{container.name}</span>
-      </div>
+    <span className="block min-w-0 normal-case tracking-normal">
+      <span className="block truncate">Compose update — {container.name}</span>
       {diff && (
-        <div className="text-[12px] font-mono truncate" style={{ color: 'var(--text-3)' }}>
+        <span className="block truncate font-mono text-xs font-normal text-app-muted">
           {diff.filename} · service: {diff.service_name}
           {diff.mode === 'labels' && ' · via its own compose project'}
-        </div>
+        </span>
       )}
-    </div>
+    </span>
   )
 
   const footer = (
     <>
-      <span className="flex-1 text-[13px]" style={{ color: cannotWrite ? 'var(--accent-red)' : 'var(--text-3)' }}>
+      <span className={`flex-1 text-[13px] ${cannotWrite ? 'text-red-500' : 'text-app-muted'}`}>
         {cannotWrite
           ? 'DockRadar can’t write this compose file — grant its user write access, or mount it read-write.'
           : diff?.has_change
@@ -68,53 +66,41 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
                 : 'File will be saved, then compose pull + up -d will run.')
             : 'compose pull + up -d will run without file changes.'}
       </span>
-      <button className="btn btn-primary btn-sm" onClick={handleUpdate} disabled={loading || saving || !!error || cannotWrite}>
+      <Button onClick={handleUpdate} disabled={loading || saving || !!error || cannotWrite}>
         {saving ? 'Updating…' : 'Confirm & Update'}
-      </button>
-      <button className="btn btn-ghost btn-sm" onClick={onCancel}>Cancel</button>
+      </Button>
+      <Button variant="secondary" onClick={onCancel}>Cancel</Button>
     </>
   )
 
   return (
     <Modal title={title} onClose={onCancel} size="lg" footer={footer} ariaLabel={`Compose update ${container.name}`}>
-      {loading && (
-        <div className="text-[14px] text-center py-6" style={{ color: 'var(--text-3)' }}>
-          Checking for updates…
-        </div>
-      )}
+      {loading && <Loader variant="inline" label="Checking for updates…" className="justify-center py-6" />}
 
-      {error && (
-        <div role="alert" className="infobar infobar-critical">
-          <AlertCircle size={16} className="infobar-icon" />
-          <span className="break-words">{error}</span>
-        </div>
-      )}
+      {error && <Alert tone="danger"><span className="break-words">{error}</span></Alert>}
 
       {diff && !loading && (<>
         {/* Image change summary */}
-        <div className="card overflow-hidden">
-          <div className="px-3 py-2 section-label"
-            style={{ borderBottom: '1px solid var(--border-1)' }}>
+        <div className="overflow-hidden border border-app-border">
+          <div className="border-b border-app-border px-3 py-2 text-xs font-semibold uppercase tracking-widest text-app-muted">
             Image change
           </div>
-          <div className="p-3 flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 p-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-[12px] w-14 shrink-0" style={{ color: 'var(--text-3)' }}>Current</span>
-              <code className="text-[13px] px-2 py-0.5 rounded break-all"
-                style={{ color: 'var(--accent-red)', background: 'var(--critical-bg)' }}>{diff.current_image}</code>
+              <span className="w-14 shrink-0 text-xs text-app-muted">Current</span>
+              <code className="break-all bg-red-500/10 px-2 py-0.5 text-[13px] text-red-700 dark:text-red-300">{diff.current_image}</code>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-[12px] w-14 shrink-0" style={{ color: 'var(--text-3)' }}>Latest</span>
-              <code className="text-[13px] px-2 py-0.5 rounded break-all"
-                style={{ color: 'var(--accent-teal)', background: 'var(--success-bg)' }}>{diff.latest_image}</code>
+              <span className="w-14 shrink-0 text-xs text-app-muted">Latest</span>
+              <code className="break-all bg-emerald-500/10 px-2 py-0.5 text-[13px] text-emerald-800 dark:text-emerald-300">{diff.latest_image}</code>
             </div>
             {!diff.has_change && (
-              <div className="text-[13px] mt-1" style={{ color: 'var(--text-3)' }}>
+              <div className="mt-1 text-[13px] text-app-muted">
                 ✓ Image tag is already up to date — <code>pull + up -d</code> will refresh the image without file changes.
               </div>
             )}
             {diff.has_change && diff.editable === false && (
-              <div className="text-[13px] mt-1" style={{ color: 'var(--text-3)' }}>
+              <div className="mt-1 text-[13px] text-app-muted">
                 DockRadar will update the <code>image:</code> tag to <code>{diff.latest_image}</code> in
                 the container’s own compose file (<code>{diff.filename}</code>), keeping a{' '}
                 <code>.bak</code> backup, then run <code>pull + up -d</code>.
@@ -124,17 +110,17 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
         </div>
 
         {/* Compose file diff / editor (editable = uploaded copy) or read-only view (label mode) */}
-        <div className="code-surface overflow-hidden">
-          <div className="px-3 py-2 flex justify-between items-center" style={{ borderBottom: '1px solid var(--border-1)', background: 'var(--surface-raised)' }}>
-            <span className="section-label">
+        <div className="overflow-hidden border border-app-border">
+          <div className="flex items-center justify-between border-b border-app-border bg-app-bg px-3 py-2">
+            <span className="text-xs font-semibold uppercase tracking-widest text-app-muted">
               {diff.editable === false
                 ? (diff.has_change ? 'File change (applied on confirm)' : 'Compose file (read-only)')
                 : showFull ? 'Compose file (editable)' : 'File changes'}
             </span>
             {diff.editable !== false && (
-              <button onClick={() => setShowFull(s => !s)} className="btn btn-ghost btn-xs">
+              <Button variant="flat" onClick={() => setShowFull(s => !s)}>
                 {showFull ? 'Show diff' : 'Edit full file'}
-              </button>
+              </Button>
             )}
           </div>
 
@@ -142,23 +128,23 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
             diff.has_change ? (
               <DiffView current={diff.current_content} proposed={diff.proposed_content} />
             ) : (
-              <pre className="w-full font-mono text-[13px] leading-relaxed overflow-auto p-3"
-                style={{ maxHeight: '260px', margin: 0, background: 'var(--surface-0)', color: 'var(--text-2)' }}>
+              <pre className="m-0 max-h-[260px] w-full overflow-auto p-3 font-mono text-[13px] leading-relaxed text-app-soft">
                 {diff.current_content}
               </pre>
             )
           ) : showFull ? (
-            <textarea
+            <TextArea
               value={content}
-              onChange={e => setContent(e.target.value)}
+              onChange={setContent}
               spellCheck={false}
-              className="w-full font-mono text-[13px] leading-relaxed resize-y outline-none p-3"
-              style={{ minHeight: '220px', maxHeight: '320px', background: 'var(--surface-0)', color: 'var(--text-2)', border: 'none', tabSize: 2 }}
+              rows={12}
+              aria-label="Compose file contents"
+              className="!border-0 font-mono !text-[13px] leading-relaxed"
             />
           ) : (
             diff.has_change
               ? <DiffView current={diff.current_content} proposed={content} />
-              : <div className="px-3 py-4 text-[13px]" style={{ color: 'var(--text-3)' }}>No changes to the compose file.</div>
+              : <div className="px-3 py-4 text-[13px] text-app-muted">No changes to the compose file.</div>
           )}
         </div>
       </>)}
