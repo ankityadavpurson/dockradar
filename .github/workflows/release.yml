@@ -329,6 +329,10 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # See docker-publish.yml — attestations would add an
+          # "unknown/unknown" manifest and hide the image's OCI labels.
+          provenance: false
+          sbom: false
 
       # Attach the image itself to the release so it can be downloaded and
       # `docker load`-ed without registry access. (GitHub always adds the
