@@ -84,6 +84,11 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # Push a plain single-platform image, not an index. Attestations
+          # would add an "unknown/unknown" manifest and hide the image's
+          # OCI labels (description, source, …) from the registry UIs.
+          provenance: false
+          sbom: false
 
       # Sync the Docker Hub overview page from DOCKERHUB.md. Needs a token
       # with Read, Write, Delete scope.
