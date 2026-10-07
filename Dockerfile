@@ -1,4 +1,21 @@
 FROM node:20-alpine AS frontend-build
+
+# ============================================================
+# OCI Image Metadata
+# ============================================================
+
+LABEL org.opencontainers.image.title="DockRadar"
+LABEL org.opencontainers.image.description="A lightweight Docker container monitoring and management docker images."
+LABEL org.opencontainers.image.url="https://github.com/ankityadavpurson/dockradar"
+LABEL org.opencontainers.image.source="https://github.com/ankityadavpurson/dockradar"
+LABEL org.opencontainers.image.documentation="https://github.com/ankityadavpurson/dockradar#readme"
+LABEL org.opencontainers.image.vendor="Ankit Yadav"
+LABEL org.opencontainers.image.licenses="MIT"
+
+# ============================================================
+# Application
+# ============================================================
+
 WORKDIR /app/frontend
 
 COPY frontend/package.json frontend/yarn.lock ./
