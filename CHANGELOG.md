@@ -9,6 +9,11 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.19.7] — 2026-10-07
+
+### Changed
+- update xedonium dependency to version 1.7.0 and adjust component layout
+
 ## [13.19.6] — 2026-10-07
 
 ### Changed
@@ -275,7 +280,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.6...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.7...HEAD
+[13.19.7]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.6...v13.19.7
 [13.19.6]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.5...v13.19.6
 [13.19.5]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.4...v13.19.5
 [13.19.4]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.3...v13.19.4
