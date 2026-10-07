@@ -186,7 +186,7 @@ export default function ContainerDetailDrawer({
           </div>
         )),
     }),
-    section('coverage', <InfoIcon className="h-4 w-4 shrink-0 shrink-0 text-amber-500" />, 'Direct update coverage', {
+    section('coverage', <InfoIcon className="h-4 w-4 shrink-0 text-amber-500" />, 'Direct update coverage', {
       preview: 'what survives an update?',
       content: (
         <p className="text-xs leading-relaxed text-app-muted">
@@ -261,6 +261,7 @@ export default function ContainerDetailDrawer({
           {data && (
             <Accordion
               multiple
+              gap='sm'
               items={accordionItems}
               value={openKeys}
               onChange={setOpenKeys}
