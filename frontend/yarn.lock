@@ -1191,10 +1191,10 @@ vite@^5.2.0:
   optionalDependencies:
     fsevents "~2.3.3"
 
-xedonium@^1.6.0:
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/xedonium/-/xedonium-1.6.0.tgz#0e043b1b967a55370867ada2504ae6acc934e5f6"
-  integrity sha512-JOgyy40DTUYa7BwZ3QOAA2icsBAWwUVt+iT3gB0SN2wYSdPmg3+RBAPHJIRfIFc09aGycazIUFV217FVHYtpnQ==
+xedonium@^1.7.0:
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/xedonium/-/xedonium-1.7.0.tgz#a4c37256e085977b18b933db3381893e581520aa"
+  integrity sha512-+nOuKVTR+PejztrdKCeNZJQW+e+ksGpqn8PutEVCf7BW18cSSj2W4ZSgyRPW4eXZeeWKpSL00apJQAdgjl19fw==
 
 yallist@^3.0.2:
   version "3.1.1"
