@@ -5,4 +5,4 @@ The release workflow (.github/workflows/release.yml) rewrites the
 of the form ``__version__ = "X.Y.Z"``.
 """
 
-__version__ = "13.19.3"
+__version__ = "13.19.4"

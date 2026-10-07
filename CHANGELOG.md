@@ -9,6 +9,11 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.19.4] — 2026-10-07
+
+### Changed
+- streamline OCI metadata handling in Dockerfile and workflows
+
 ## [13.19.3] — 2026-10-07
 
 ### Changed
@@ -260,7 +265,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.3...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.4...HEAD
+[13.19.4]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.3...v13.19.4
 [13.19.3]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.2...v13.19.3
 [13.19.2]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.1...v13.19.2
 [13.19.1]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.0...v13.19.1
