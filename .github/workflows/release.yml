@@ -51,7 +51,7 @@ concurrency:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # For chained runs, only release after a successful build; manual
     # dispatches always run.
     if: >-
@@ -327,6 +327,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # See docker-publish.yml — the registry UIs read the description
+          # from the manifest annotations, not the config labels.
+          annotations: ${{ steps.meta.outputs.annotations }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           # See docker-publish.yml — attestations would add an
