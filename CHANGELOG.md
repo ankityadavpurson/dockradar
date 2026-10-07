@@ -9,6 +9,11 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.19.5] — 2026-10-07
+
+### Changed
+- update CI workflows to use ubuntu-24.04 for consistency
+
 ## [13.19.4] — 2026-10-07
 
 ### Changed
@@ -265,7 +270,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.4...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.5...HEAD
+[13.19.5]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.4...v13.19.5
 [13.19.4]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.3...v13.19.4
 [13.19.3]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.2...v13.19.3
 [13.19.2]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.1...v13.19.2
