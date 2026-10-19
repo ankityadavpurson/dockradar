@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Alert } from 'xedonium'
+import radarLoader from '../assets/radar-loader.svg'
 import ComposeFileEditor from './components/ComposeFileEditor'
 import ComposeLinkDialog from './components/ComposeLinkDialog'
 import ComposeManager from './components/ComposeManager'
@@ -74,7 +75,7 @@ const App = () => {
   if (initialLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-sm text-app-muted">
-        <div className="radar-loader"><i style={{ left: '70%', top: '28%', animationDelay: '0.33s' }} /><i style={{ left: '30%', top: '36%', animationDelay: '2.03s' }} /><i style={{ left: '62%', top: '72%', animationDelay: '1.00s' }} /><i style={{ left: '40%', top: '66%', animationDelay: '1.43s' }} /><svg className="radar-logo" viewBox="0 0 64 48" fill="none" stroke="#5ff0a6" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round"><rect x="10" y="20" width="7" height="7"/><rect x="18" y="20" width="7" height="7"/><rect x="26" y="20" width="7" height="7"/><rect x="34" y="20" width="7" height="7"/><rect x="18" y="12" width="7" height="7"/><rect x="26" y="12" width="7" height="7"/><rect x="34" y="12" width="7" height="7"/><rect x="26" y="4" width="7" height="7"/><path d="M4 29h42c3-.2 5-1.4 6-3.6 2.2.2 4 .2 5.6-1.2-1.4-1-1.6-2.8-1.2-4.4-2 1.2-3.6.6-4.6-.4-.4 3-2.6 4-5.2 3.4-.6 0-1 0-1.4 0H4c-.4 6 .6 11 4 14.6 3.4 3.6 9 5 15.6 5 11 0 19-4.6 23.4-14"/></svg></div>
+        <img src={radarLoader} alt="" className="h-28 w-28" />
         <div>Connecting to DockRadar…</div>
       </div>
     )

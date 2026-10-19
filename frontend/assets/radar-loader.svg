@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="DockRadar scanning">
   <defs>
     <filter id="g" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-    <radialGradient id="bg"><stop offset="0" stop-color="#0c1a14"/><stop offset="1" stop-color="#08110d"/></radialGradient>
+    <radialGradient id="bg"><stop offset="0" stop-color="#0c1a147e"/><stop offset="1" stop-color="#08110d7d"/></radialGradient>
     <clipPath id="disc"><circle cx="60" cy="60" r="56"/></clipPath>
   </defs>
   <circle cx="60" cy="60" r="56" fill="url(#bg)"/>
@@ -15,5 +15,5 @@
   </g>
   <circle cx="84.0" cy="33.6" r="3" fill="#7dffbc" filter="url(#g)" opacity="0"><animate attributeName="opacity" values="1;0.15;0" keyTimes="0;0.6;1" dur="2.4s" begin="0.33s" repeatCount="indefinite"/></circle><circle cx="36.0" cy="43.2" r="3" fill="#7dffbc" filter="url(#g)" opacity="0"><animate attributeName="opacity" values="1;0.15;0" keyTimes="0;0.6;1" dur="2.4s" begin="2.03s" repeatCount="indefinite"/></circle><circle cx="74.4" cy="86.4" r="3" fill="#7dffbc" filter="url(#g)" opacity="0"><animate attributeName="opacity" values="1;0.15;0" keyTimes="0;0.6;1" dur="2.4s" begin="1.00s" repeatCount="indefinite"/></circle><circle cx="48.0" cy="79.2" r="3" fill="#7dffbc" filter="url(#g)" opacity="0"><animate attributeName="opacity" values="1;0.15;0" keyTimes="0;0.6;1" dur="2.4s" begin="1.43s" repeatCount="indefinite"/></circle>
   <g transform="translate(37 40) scale(0.72)" fill="none" stroke="#5ff0a6" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" filter="url(#g)"><rect x="10" y="20" width="7" height="7"/><rect x="18" y="20" width="7" height="7"/><rect x="26" y="20" width="7" height="7"/><rect x="34" y="20" width="7" height="7"/><rect x="18" y="12" width="7" height="7"/><rect x="26" y="12" width="7" height="7"/><rect x="34" y="12" width="7" height="7"/><rect x="26" y="4" width="7" height="7"/><path d="M4 29h42c3-.2 5-1.4 6-3.6 2.2.2 4 .2 5.6-1.2-1.4-1-1.6-2.8-1.2-4.4-2 1.2-3.6.6-4.6-.4-.4 3-2.6 4-5.2 3.4-.6 0-1 0-1.4 0H4c-.4 6 .6 11 4 14.6 3.4 3.6 9 5 15.6 5 11 0 19-4.6 23.4-14"/></g>
-  <circle cx="60" cy="60" r="56" fill="none" stroke="#1a8fe8" stroke-width="3"/>
+  <circle cx="60" cy="60" r="56" fill="none" stroke="#004121" stroke-width="3"/>
 </svg>
