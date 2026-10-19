@@ -1,5 +1,5 @@
 import { Divider, ThemeToggle } from 'xedonium'
-import favicon from '../../assets/favicon.svg'
+import favicon from '../../assets/logo.png'
 
 /** "in 5h 12m" style countdown to a future date. */
 function relativeTime(date) {

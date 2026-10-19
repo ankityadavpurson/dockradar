@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DockRadar</title>
-    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+    <link rel="icon" type="image/png" href="./assets/favicon.png" />
     <script>
       /* Resolve the theme before first paint to avoid a flash of the wrong theme. */
       (function () {
@@ -14,7 +14,7 @@
             ? t
             : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
           document.documentElement.setAttribute('data-theme', resolved);
-          document.documentElement.style.backgroundColor = resolved === 'light' ? '#f3f3f3' : '#202020';
+          document.documentElement.style.backgroundColor = resolved === 'light' ? '#f3f3f3' : '#0a1016';
         } catch (e) {
           document.documentElement.setAttribute('data-theme', 'dark');
         }
