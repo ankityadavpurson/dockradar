@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DockRadar</title>
-    <link rel="icon" type="image/png" href="./assets/favicon.png" />
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
     <script>
       /* Resolve the theme before first paint to avoid a flash of the wrong theme. */
       (function () {
@@ -29,18 +29,48 @@
         gap: 14px; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
         font-size: 14px; color: rgba(128,128,128,0.9);
       }
-      #boot-loader .spin {
-        width: 26px; height: 26px; border-radius: 50%;
-        border: 3px solid rgba(128,128,128,0.25); border-top-color: rgba(128,128,128,0.9);
-        animation: boot-spin 0.8s linear infinite;
+      /* Radar scanner loader: rings + crosshair, rotating sweep with a fading trail,
+         and blips that light up as the sweep passes them (period 2.4s). */
+      .radar-loader {
+        --t: 2.4s; position: relative; width: 112px; height: 112px; border-radius: 50%;
+        background:
+          radial-gradient(circle, #2ee58a 0 2px, transparent 3px),
+          repeating-radial-gradient(circle, transparent 0 17px, rgba(46,229,138,0.28) 17px 18px),
+          radial-gradient(circle, #0c1a14 0%, #08110d 100%);
+        border: 3px solid #1a8fe8; box-shadow: 0 0 18px rgba(26,143,232,0.45), inset 0 0 14px rgba(46,229,138,0.15);
+        overflow: hidden;
       }
-      @keyframes boot-spin { to { transform: rotate(360deg); } }
+      .radar-loader::before { /* crosshair */
+        content: ''; position: absolute; inset: 0;
+        background:
+          linear-gradient(rgba(46,229,138,0.28), rgba(46,229,138,0.28)) center / 1px 100% no-repeat,
+          linear-gradient(rgba(46,229,138,0.28), rgba(46,229,138,0.28)) center / 100% 1px no-repeat;
+      }
+      .radar-loader::after { /* sweep */
+        content: ''; position: absolute; inset: 0; border-radius: 50%;
+        background: conic-gradient(from 0deg, rgba(46,229,138,0) 0deg, rgba(46,229,138,0) 200deg, rgba(46,229,138,0.55) 358deg, #7dffbc 360deg);
+        animation: radar-sweep var(--t) linear infinite;
+      }
+      .radar-loader i {
+        position: absolute; width: 6px; height: 6px; margin: -3px; border-radius: 50%;
+        background: #7dffbc; box-shadow: 0 0 6px #2ee58a; opacity: 0; z-index: 1;
+        animation: radar-blip var(--t) linear infinite;
+      }
+      .radar-logo {
+        position: absolute; left: 50%; top: 50%; width: 53%; transform: translate(-50%, -50%); z-index: 2;
+        filter: drop-shadow(0 0 4px rgba(46,229,138,0.8));
+      }
+      @keyframes radar-sweep { to { transform: rotate(360deg); } }
+      @keyframes radar-blip { 0% { opacity: 1; transform: scale(1.4); } 60% { opacity: 0.15; transform: scale(1); } 100% { opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) {
+        .radar-loader::after, .radar-loader i { animation: none; }
+      }
     </style>
   </head>
   <body>
     <div id="root">
       <div id="boot-loader">
-        <div class="spin"></div>
+        <div class="radar-loader"><i style="left:70%;top:28%;animation-delay:0.33s"></i><i style="left:30%;top:36%;animation-delay:2.03s"></i><i style="left:62%;top:72%;animation-delay:1.00s"></i><i style="left:40%;top:66%;animation-delay:1.43s"></i><svg class="radar-logo" viewBox="0 0 64 48" fill="none" stroke="#5ff0a6" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><rect x="10" y="20" width="7" height="7"/><rect x="18" y="20" width="7" height="7"/><rect x="26" y="20" width="7" height="7"/><rect x="34" y="20" width="7" height="7"/><rect x="18" y="12" width="7" height="7"/><rect x="26" y="12" width="7" height="7"/><rect x="34" y="12" width="7" height="7"/><rect x="26" y="4" width="7" height="7"/><path d="M4 29h42c3-.2 5-1.4 6-3.6 2.2.2 4 .2 5.6-1.2-1.4-1-1.6-2.8-1.2-4.4-2 1.2-3.6.6-4.6-.4-.4 3-2.6 4-5.2 3.4-.6 0-1 0-1.4 0H4c-.4 6 .6 11 4 14.6 3.4 3.6 9 5 15.6 5 11 0 19-4.6 23.4-14"/></svg></div>
         <div>Loading DockRadar…</div>
       </div>
     </div>

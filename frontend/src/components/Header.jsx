@@ -1,5 +1,5 @@
 import { Divider, ThemeToggle } from 'xedonium'
-import favicon from '../../assets/logo.png'
+import logo from '../../assets/logo.svg'
 
 /** "in 5h 12m" style countdown to a future date. */
 function relativeTime(date) {
@@ -36,7 +36,7 @@ export default function Header({ health, containers, scanStatus }) {
 
         {/* Logo */}
         <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
-          <img src={favicon} alt="" className="h-6 w-6 sm:h-7 sm:w-7" />
+          <img src={logo} alt="" className="h-6 w-6 sm:h-7 sm:w-7" />
           <span className="text-[15px] font-semibold text-app-strong sm:text-base">DockRadar</span>
         </div>
 
