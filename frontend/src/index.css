@@ -9,3 +9,11 @@
     @apply !text-red-600 hover:!bg-red-500/10 dark:!text-red-400;
   }
 }
+
+/* Dark theme tinted navy to match the logo. */
+html[data-theme='dark'] {
+  --color-app-bg: 10 16 22;
+  --color-app-card: 14 22 30;
+  --color-app-border: 36 50 64;
+  --color-app-muted: 140 154 166;
+}

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Alert, Progress } from 'xedonium'
+import { Alert } from 'xedonium'
+import radarLoader from '../assets/radar-loader.svg'
 import ComposeFileEditor from './components/ComposeFileEditor'
 import ComposeLinkDialog from './components/ComposeLinkDialog'
 import ComposeManager from './components/ComposeManager'
@@ -73,8 +74,9 @@ const App = () => {
   // UI is never blank (or a misleading "no containers found") on load.
   if (initialLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Progress variant="circular" size="lg" label="Connecting to DockRadar…" />
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-sm text-app-muted">
+        <img src={radarLoader} alt="" className="h-28 w-28" />
+        <div>Connecting to DockRadar…</div>
       </div>
     )
   }
