@@ -9,6 +9,15 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.20.0] — 2026-10-19
+
+### Added
+- replace PNG assets with SVG versions for favicon and logo; add radar loader SVG
+
+### Changed
+- Update SVG assets and loading animation in the frontend
+- replace favicon.svg with favicon.png and update logo; bump xedonium to version 1.15.0
+
 ## [13.19.7] — 2026-10-07
 
 ### Changed
@@ -280,7 +289,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.7...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.20.0...HEAD
+[13.20.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.7...v13.20.0
 [13.19.7]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.6...v13.19.7
 [13.19.6]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.5...v13.19.6
 [13.19.5]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.4...v13.19.5
