@@ -40,7 +40,7 @@ const PANELS = [
     lang: 'bash',
     title: 'terminal',
     code: RUN,
-    note: <>A single container next to your Docker socket — nothing else to set up.</>,
+    note: <>A single container next to your Docker socket  - nothing else to set up.</>,
   },
   {
     key: 'linux',
@@ -48,7 +48,7 @@ const PANELS = [
     lang: 'bash',
     title: 'terminal',
     code: LINUX,
-    note: <>Native install as a systemd service. Needs systemd, Python 3.10+ with <code className="font-mono text-app-text">venv</code>, and Docker Engine. Re-run the same command to upgrade — config and data are kept.</>,
+    note: <>Native install as a systemd service. Needs systemd, Python 3.10+ with <code className="font-mono text-app-text">venv</code>, and Docker Engine. Re-run the same command to upgrade  - config and data are kept.</>,
   },
   {
     key: 'macos',
@@ -92,10 +92,10 @@ export default function Install() {
           <div>
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-app-muted">Optional settings</h3>
             <ul className="space-y-1.5 text-app-soft">
-              <li><code className="font-mono text-app-text">API_KEY</code> — require a key on every API route</li>
-              <li><code className="font-mono text-app-text">SMTP_*</code>, <code className="font-mono text-app-text">EMAIL_TO</code> — update alerts</li>
-              <li><code className="font-mono text-app-text">HIDDEN_REPOSITORY</code> — leave containers out</li>
-              <li><code className="font-mono text-app-text">SCAN_INTERVAL_HOURS</code> — scan frequency</li>
+              <li><code className="font-mono text-app-text">API_KEY</code>  - require a key on every API route</li>
+              <li><code className="font-mono text-app-text">SMTP_*</code>, <code className="font-mono text-app-text">EMAIL_TO</code>  - update alerts</li>
+              <li><code className="font-mono text-app-text">HIDDEN_REPOSITORY</code>  - leave containers out</li>
+              <li><code className="font-mono text-app-text">SCAN_INTERVAL_HOURS</code>  - scan frequency</li>
             </ul>
           </div>
         </aside>

@@ -1,27 +1,29 @@
-name: Release
+name: Pipeline
 
-# Release pipeline. Runs automatically after a successful
-# "Build and Publish Docker Image" run on main, or manually via dispatch.
-#   1. Determines the release version — explicit input, or auto-calculated
-#      from the latest v* tag + commit messages (conventional commits)
-#   2. Bumps the app version (backend __version__ + frontend package.json)
-#   3. Rotates CHANGELOG.md — the [Unreleased] section becomes the new version
-#   4. Commits, tags vX.Y.Z, and pushes
-#   5. Builds and pushes the Docker image tagged X.Y.Z + latest to GHCR
-#   6. Creates a GitHub Release with the changelog section + auto-generated
-#      notes, and attaches the Docker image tarball as an asset
+# One pipeline, in order:  test -> docker -> deploy-landing -> release
 #
-# Note: the tag is pushed with GITHUB_TOKEN, which deliberately does NOT
-# trigger other workflows (docker-publish.yml will not fire for it). That is
-# why this workflow builds and pushes the image itself.
+#   test            backend tests, frontend + landing builds, shell lint (ci.yml)
+#   docker          build and push the :latest / :sha image to GHCR + Docker Hub
+#   deploy-landing  publish landing/ to Firebase Hosting (main only)
+#   release         main only. Determines the next version, bumps it, rotates
+#                   CHANGELOG.md, tags vX.Y.Z, pushes the versioned image and
+#                   creates the GitHub Release with its assets
+#
+# Each stage needs the previous one, so a failure stops everything after it.
+# A push to main runs all four. A pushed v* tag runs test + docker only (the
+# version check below guards hand-made tags). Run it manually (workflow_dispatch)
+# on main to release with an explicit version or bump level.
+#
+# Note: the release tag is pushed with GITHUB_TOKEN, which deliberately does NOT
+# trigger other workflows (this pipeline will not fire for it). That is why the
+# release job builds and pushes the versioned image itself.
 
 on:
-  # Auto-release: fires after the image build succeeds on main. The version
-  # is always auto-calculated in this mode (dispatch inputs are empty here).
-  workflow_run:
-    workflows: ["Build and Publish Docker Image"]
-    types: [completed]
-    branches: [main]
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       version:
@@ -40,28 +42,161 @@ on:
           - patch
 
 permissions:
-  contents: write   # commit, tag, create release
-  packages: write   # push image to GHCR
+  contents: read
+  packages: write
 
-# Only one release at a time; queue (never cancel) — a cancelled release
-# could leave a tag without its image or GitHub Release.
+# Queue concurrent runs per ref so parallel pushes can't race the
+# :latest tag or the release commit; never cancel an in-flight run — a
+# cancelled release could leave a tag without its image or GitHub Release.
 concurrency:
-  group: release
+  group: pipeline-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  release:
+  # Quality gate — the image is only built and pushed when tests and the
+  # frontend build pass.
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  docker:
     runs-on: ubuntu-24.04
-    # For chained runs, only release after a successful build; manual
-    # dispatches always run.
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
+    needs: test
 
     steps:
       - name: Checkout source
         uses: actions/checkout@v5
+
+      # For tag builds, the published image is tagged with the git tag's
+      # version — make sure the code inside actually carries that version.
+      - name: Verify version consistency (tag builds only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          APP_VERSION=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' backend/app/version.py)
+          PKG_VERSION=$(node -p "require('./frontend/package.json').version")
+          echo "tag=v$TAG_VERSION  backend=$APP_VERSION  frontend=$PKG_VERSION"
+          if [ "$TAG_VERSION" != "$APP_VERSION" ] || [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::Version mismatch — tag v$TAG_VERSION, backend __version__ $APP_VERSION, frontend package.json $PKG_VERSION. Bump the versions before tagging (or let the release job of this pipeline do it for you)."
+            exit 1
+          fi
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
         with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Every tag below is applied to both registries.
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: |
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
+            docker.io/ankityadavpurson/dockradar
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=sha
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Buildx pushes OCI-format manifests, and the registry UIs read the
+          # description from the manifest's annotations — config labels alone
+          # leave the GHCR package page blank.
+          annotations: ${{ steps.meta.outputs.annotations }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # Push a plain single-platform image, not an index. Attestations
+          # would add an "unknown/unknown" manifest and hide the image's
+          # OCI labels (description, source, …) from the registry UIs.
+          provenance: false
+          sbom: false
+
+      # Sync the Docker Hub overview page from DOCKERHUB.md. Needs a token
+      # with Read, Write, Delete scope.
+      - name: Update Docker Hub description
+        if: github.ref == 'refs/heads/main'
+        uses: peter-evans/dockerhub-description@v5
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ankityadavpurson/dockradar
+          short-description: Monitors your Docker containers for outdated images and lets you update them.
+          readme-filepath: ./DOCKERHUB.md
+
+  # Publish the landing page (landing/) to Firebase Hosting once the image is
+  # out. Main only — tag builds publish an image but don't touch the site.
+  # Needs the FIREBASE_SERVICE_ACCOUNT_DOCKRADAR secret (service account JSON);
+  # the project comes from landing/.firebaserc. See landing/README.md.
+  # The release job needs this one, so a failed deploy also holds back the release.
+  deploy-landing:
+    runs-on: ubuntu-24.04
+    needs: docker
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: yarn
+          cache-dependency-path: landing/yarn.lock
+
+      - name: Install dependencies
+        working-directory: landing
+        run: yarn install --frozen-lockfile
+
+      - name: Build
+        working-directory: landing
+        run: yarn build
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DOCKRADAR }}
+          entryPoint: landing
+          channelId: live
+
+  # Cut the release: runs only on main, after the image and the landing page
+  # are out. Pushing the release commit and tag uses GITHUB_TOKEN, so it does
+  # not start another pipeline run.
+  release:
+    runs-on: ubuntu-24.04
+    needs: deploy-landing
+    # Pushes to main and manual dispatches on main; never for tag pushes.
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write   # commit, tag, create release
+      packages: write   # push image to GHCR
+
+    steps:
+      # Always release from the tip of main, not the commit that started this
+      # run: if main moved while the earlier stages ran, the release commit
+      # would otherwise be rejected as a non-fast-forward push.
+      - name: Checkout source
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0
           fetch-tags: true
 
@@ -69,7 +204,7 @@ jobs:
         id: version
         run: |
           EXPLICIT="${{ inputs.version }}"
-          # inputs are empty on workflow_run triggers — default to auto
+          # inputs are empty on push triggers — default to auto
           BUMP="${{ inputs.bump }}"
           BUMP="${BUMP:-auto}"
 
@@ -327,12 +462,12 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # See docker-publish.yml — the registry UIs read the description
+          # See the docker job — the registry UIs read the description
           # from the manifest annotations, not the config labels.
           annotations: ${{ steps.meta.outputs.annotations }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          # See docker-publish.yml — attestations would add an
+          # See the docker job — attestations would add an
           # "unknown/unknown" manifest and hide the image's OCI labels.
           provenance: false
           sbom: false

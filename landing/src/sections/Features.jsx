@@ -23,7 +23,7 @@ const FEATURES = [
   {
     icon: LayoutDashboardIcon,
     title: 'Per-container details',
-    body: 'Ports, mounts, env keys, networks, labels and update coverage in one drawer — plus the exact scan error when a check fails.',
+    body: 'Ports, mounts, env keys, networks, labels and update coverage in one drawer  - plus the exact scan error when a check fails.',
   },
   {
     icon: ClockIcon,
@@ -33,7 +33,7 @@ const FEATURES = [
   {
     icon: MailIcon,
     title: 'Email alerts',
-    body: 'Optional SMTP notifications when a scan finds updates — deduplicated, so the same update is only announced once.',
+    body: 'Optional SMTP notifications when a scan finds updates  - deduplicated, so the same update is only announced once.',
   },
   {
     icon: KeyIcon,
@@ -55,7 +55,7 @@ const FEATURES = [
 export default function Features() {
   return (
     <Section id="features" eyebrow="Features" title="Everything you need to keep images fresh."
-      lede="DockRadar does one job — keeping the containers on your host current — and gives you control over how.">
+      lede="DockRadar does one job  - keeping the containers on your host current  - and gives you control over how.">
       <div className="grid gap-px border border-app-border bg-app-border sm:grid-cols-2 lg:grid-cols-3">
         {FEATURES.map(({ icon: Icon, title, body }) => (
           <article key={title} className="bg-app-card p-6 transition-colors hover:bg-app-bg">

@@ -31,9 +31,11 @@ cached) and `.firebaserc` names the project.
    npx firebase-tools deploy --only hosting
    ```
 
-3. Automatic deploys (`.github/workflows/landing-deploy.yml`): pushes to `main`
-   that touch `landing/` go live, and PRs get a temporary preview URL. Add the
-   `FIREBASE_SERVICE_ACCOUNT` repository secret first — the easiest way is
+3. Automatic deploys: the `deploy-landing` job in `.github/workflows/pipeline.yml`
+   publishes the site on every push to `main`, as one stage of a single pipeline:
+   tests (`ci.yml`, which also builds the landing page) → Docker image → deploy
+   landing → release.
+   Add the `FIREBASE_SERVICE_ACCOUNT_DOCKRADAR` repository secret first  - the easiest way is
    `npx firebase-tools init hosting:github` inside `landing/`, which creates the
    service account and the secret for you (answer **no** when it offers to
    overwrite `firebase.json` or write workflow files; this repo already has them).
@@ -49,5 +51,5 @@ For a custom domain, add it under Hosting → Add custom domain in the console.
 | External links (GitHub, Docker Hub, …) | `src/links.js` |
 | Brand assets (copied from `frontend/assets`) | `assets/` |
 
-The install commands and feature copy mirror the root `README.md` — update both
+The install commands and feature copy mirror the root `README.md`  - update both
 together when behavior changes.
