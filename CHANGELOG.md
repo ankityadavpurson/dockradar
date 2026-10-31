@@ -9,6 +9,12 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.21.0] — 2026-10-31
+
+### Added
+- add landing page with Firebase Hosting deploy
+- add blog post on automated versioning and release pipeline
+
 ## [13.20.0] — 2026-10-19
 
 ### Added
@@ -289,7 +295,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.20.0...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.21.0...HEAD
+[13.21.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.20.0...v13.21.0
 [13.20.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.7...v13.20.0
 [13.19.7]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.6...v13.19.7
 [13.19.6]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.5...v13.19.6
