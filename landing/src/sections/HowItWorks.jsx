@@ -5,7 +5,7 @@ const STEPS = [
   {
     icon: BoxIcon,
     title: 'Discover',
-    body: 'DockRadar reads the containers on your host through the Docker socket — running and stopped — and works out which image and tag each one uses.',
+    body: 'DockRadar reads the containers on your host through the Docker socket  - running and stopped  - and works out which image and tag each one uses.',
     code: 'docker.sock → 14 containers',
   },
   {

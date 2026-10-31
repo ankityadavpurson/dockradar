@@ -4,7 +4,7 @@ import {
 } from 'xedonium'
 import logo from '../../assets/logo.svg'
 
-// Sample data only — mirrors the shape of the real dashboard's container table.
+// Sample data only  - mirrors the shape of the real dashboard's container table.
 const INITIAL = [
   { id: 'npm',   name: 'proxy',      repo: 'jc21/nginx-proxy-manager', tag: '2.11.3', latest: '2.12.0', state: 'outdated', kind: 'tag' },
   { id: 'pg',    name: 'postgres',   repo: 'library/postgres',          tag: '16.3',   latest: '16.4',   state: 'outdated', kind: 'tag' },
@@ -128,7 +128,7 @@ export default function MockDashboard() {
               Update All{outdated > 0 && ` (${outdated})`}
             </Button>
             <span className="ml-auto hidden text-[12px] text-app-muted sm:inline">
-              Click an Update button — it’s a live demo with sample data.
+              Click an Update button  - it’s a live demo with sample data.
             </span>
           </div>
 

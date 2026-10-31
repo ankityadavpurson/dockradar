@@ -1,5 +1,6 @@
 import { ButtonLink, GithubIcon, RocketIcon } from 'xedonium'
 import logo from '../../assets/logo.svg'
+import { useLatestVersion } from '../useLatestVersion'
 import { CHANGELOG_URL, DOCKERHUB_URL, GITHUB_URL, LICENSE_URL, RELEASES_URL, SECURITY_URL } from '../links'
 
 const LINKS = [
@@ -12,6 +13,8 @@ const LINKS = [
 ]
 
 export default function Footer() {
+  const version = useLatestVersion()
+
   return (
     <>
       {/* Closing call to action */}
@@ -42,7 +45,7 @@ export default function Footer() {
         <div className="mx-auto flex max-w-[1200px] flex-col gap-4 px-4 py-6 text-xs text-app-muted md:flex-row md:items-center md:justify-between md:px-6">
           <span className="flex items-center gap-2">
             <img src={logo} alt="" className="h-5 w-5" />
-            DockRadar · MIT licensed
+            DockRadar{version && ` v${version}`} · MIT licensed
           </span>
           <nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2">
             {LINKS.map(l => (

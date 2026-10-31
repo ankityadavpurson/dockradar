@@ -139,7 +139,7 @@ tar -C "$BUILD" -czf "$TARBALL" "dockradar-$VERSION" && (cd "$BUILD" && sha256su
 ```
 
 These commands mirror the "Build native install tarball" step in
-`.github/workflows/release.yml`.
+`.github/workflows/pipeline.yml`.
 
 ---
 

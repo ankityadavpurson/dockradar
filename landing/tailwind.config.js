@@ -2,7 +2,7 @@ import xedonium from 'xedonium/tailwind-preset'
 
 /** @type {import('tailwindcss').Config} */
 
-// System type stacks — resolved from the OS, no web-font request.
+// System type stacks  - resolved from the OS, no web-font request.
 const segoe = [
   '"Segoe UI Variable Text"', '"Segoe UI Variable"', '"Segoe UI"', 'system-ui',
   '-apple-system', 'BlinkMacSystemFont', 'Roboto', '"Helvetica Neue"', 'sans-serif',
@@ -16,7 +16,7 @@ export default {
   content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}', './node_modules/xedonium/dist/**/*.js'],
   theme: {
     extend: {
-      // Brand palette matched to the logo (radar blue ring, green sweep) — same as the dashboard.
+      // Brand palette matched to the logo (radar blue ring, green sweep)  - same as the dashboard.
       colors: {
         sky:     { 300: '#8fd3ff', 400: '#6fc9ff', 500: '#3fb6ff', 600: '#1a8fe8', 700: '#1478c4', 800: '#0f5f9c' },
         emerald: { 300: '#8ff5c0', 400: '#5ff0a6', 500: '#2ee58a', 600: '#16a864', 700: '#118650', 800: '#0e6a40' },

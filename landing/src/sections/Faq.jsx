@@ -9,8 +9,8 @@ const FAQS = [
   },
   {
     key: 'not-preserved',
-    title: 'What is not preserved — and what should I do about it?',
-    body: <>Named volumes attached via <code className="font-mono text-app-text">--mount</code>, membership in multiple networks, network aliases, and advanced options (cap_add, devices, resource limits, healthchecks). For containers that rely on those, link them to a compose file and use the compose update — <code className="font-mono text-app-text">docker compose</code> recreates the container from its full definition.</>,
+    title: 'What is not preserved  - and what should I do about it?',
+    body: <>Named volumes attached via <code className="font-mono text-app-text">--mount</code>, membership in multiple networks, network aliases, and advanced options (cap_add, devices, resource limits, healthchecks). For containers that rely on those, link them to a compose file and use the compose update  - <code className="font-mono text-app-text">docker compose</code> recreates the container from its full definition.</>,
   },
   {
     key: 'compose',
@@ -20,12 +20,12 @@ const FAQS = [
   {
     key: 'registries',
     title: 'Which registries are supported?',
-    body: <>Docker Hub, plus any Docker v2 registry that allows anonymous pulls — such as ghcr.io, lscr.io and gcr.io. DockRadar fetches an anonymous token for each check, so images that need credentials to read their tags can’t be verified. They show an Error status with the reason instead of failing silently.</>,
+    body: <>Docker Hub, plus any Docker v2 registry that allows anonymous pulls  - such as ghcr.io, lscr.io and gcr.io. DockRadar fetches an anonymous token for each check, so images that need credentials to read their tags can’t be verified. They show an Error status with the reason instead of failing silently.</>,
   },
   {
     key: 'scan',
     title: 'How often does it scan?',
-    body: <>Every <code className="font-mono text-app-text">SCAN_INTERVAL_HOURS</code> hours, and whenever you press Scan. Results are persisted and restored on startup, and when SMTP is configured, a scan that finds new updates sends an email — the same update is only announced once.</>,
+    body: <>Every <code className="font-mono text-app-text">SCAN_INTERVAL_HOURS</code> hours, and whenever you press Scan. Results are persisted and restored on startup, and when SMTP is configured, a scan that finds new updates sends an email  - the same update is only announced once.</>,
   },
   {
     key: 'free',
