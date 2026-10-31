@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DockRadar — know when your containers are out of date</title>
+    <meta name="description" content="DockRadar is a self-hosted dashboard that checks your running Docker images against their registries and updates them in one click — with compose support and email alerts." />
+    <meta name="theme-color" content="#0a1016" />
+    <meta property="og:title" content="DockRadar" />
+    <meta property="og:description" content="Know when your containers are out of date — and update them in one click." />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+    <script>
+      /* Resolve the theme before first paint to avoid a flash of the wrong theme. */
+      (function () {
+        try {
+          var t = localStorage.getItem('dockradar_theme') || 'system';
+          var resolved = (t === 'light' || t === 'dark')
+            ? t
+            : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+          document.documentElement.setAttribute('data-theme', resolved);
+          document.documentElement.style.backgroundColor = resolved === 'light' ? '#f3f3f3' : '#0a1016';
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

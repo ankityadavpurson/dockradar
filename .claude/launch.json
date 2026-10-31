@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "landing",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": ["--cwd", "landing", "dev"],
+      "port": 5174
+    }
+  ]
+}
