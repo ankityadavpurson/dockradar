@@ -9,6 +9,11 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.21.1] — 2026-10-31
+
+### Changed
+- update workflow references from release.yml to pipeline.yml in documentation and code comments
+
 ## [13.21.0] — 2026-10-31
 
 ### Added
@@ -295,7 +300,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.21.0...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.21.1...HEAD
+[13.21.1]: https://github.com/ankityadavpurson/dockradar/compare/v13.21.0...v13.21.1
 [13.21.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.20.0...v13.21.0
 [13.20.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.7...v13.20.0
 [13.19.7]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.6...v13.19.7
