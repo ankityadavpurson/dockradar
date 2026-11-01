@@ -60,6 +60,10 @@ const PANELS = [
   },
 ]
 
+// Bulleted list: a small emerald square (matches the flat, square-cornered theme).
+const LIST = 'space-y-2 text-app-soft'
+const ITEM = "relative pl-4 before:absolute before:left-0 before:top-[0.55em] before:h-1.5 before:w-1.5 before:bg-emerald-500 before:content-['']"
+
 export default function Install() {
   const items = PANELS.map(p => ({
     key: p.key,
@@ -83,19 +87,19 @@ export default function Install() {
         <aside className="space-y-6 text-sm">
           <div>
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-app-muted">Requirements</h3>
-            <ul className="space-y-1.5 text-app-soft">
-              <li>Access to a Docker daemon (local socket, SSH or TCP)</li>
-              <li>Docker Engine with the compose plugin for compose-based updates</li>
-              <li>Python 3.10+ for native installs</li>
+            <ul className={LIST}>
+              <li className={ITEM}>Access to a Docker daemon (local socket, SSH or TCP)</li>
+              <li className={ITEM}>Docker Engine with the compose plugin for compose-based updates</li>
+              <li className={ITEM}>Python 3.10+ for native installs</li>
             </ul>
           </div>
           <div>
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-app-muted">Optional settings</h3>
-            <ul className="space-y-1.5 text-app-soft">
-              <li><code className="font-mono text-app-text">API_KEY</code>  - require a key on every API route</li>
-              <li><code className="font-mono text-app-text">SMTP_*</code>, <code className="font-mono text-app-text">EMAIL_TO</code>  - update alerts</li>
-              <li><code className="font-mono text-app-text">HIDDEN_REPOSITORY</code>  - leave containers out</li>
-              <li><code className="font-mono text-app-text">SCAN_INTERVAL_HOURS</code>  - scan frequency</li>
+            <ul className={LIST}>
+              <li className={ITEM}><code className="font-mono text-app-text">API_KEY</code>  - require a key on every API route</li>
+              <li className={ITEM}><code className="font-mono text-app-text">SMTP_*</code>, <code className="font-mono text-app-text">EMAIL_TO</code>  - update alerts</li>
+              <li className={ITEM}><code className="font-mono text-app-text">HIDDEN_REPOSITORY</code>  - leave containers out</li>
+              <li className={ITEM}><code className="font-mono text-app-text">SCAN_INTERVAL_HOURS</code>  - scan frequency</li>
             </ul>
           </div>
         </aside>
