@@ -5,4 +5,4 @@ The release workflow (.github/workflows/pipeline.yml) rewrites the
 of the form ``__version__ = "X.Y.Z"``.
 """
 
-__version__ = "13.21.1"
+__version__ = "13.21.2"

@@ -9,6 +9,11 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.21.2] — 2026-11-01
+
+### Fixed
+- enhance installation instructions with styled bulleted lists
+
 ## [13.21.1] — 2026-10-31
 
 ### Changed
@@ -300,7 +305,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.21.1...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.21.2...HEAD
+[13.21.2]: https://github.com/ankityadavpurson/dockradar/compare/v13.21.1...v13.21.2
 [13.21.1]: https://github.com/ankityadavpurson/dockradar/compare/v13.21.0...v13.21.1
 [13.21.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.20.0...v13.21.0
 [13.20.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.7...v13.20.0
