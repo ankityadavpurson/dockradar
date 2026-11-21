@@ -17,7 +17,7 @@ export default function ServicePicker({ composeFiles, labels = {}, selectedFileI
         className="w-full"
         aria-label="Compose file"
         value={selectedFileId}
-        placeholder="— file —"
+        placeholder="- file -"
         onChange={v => onChange(v, '')}
         options={composeFiles.map(f => ({ value: f.file_id, label: labels[f.file_id] ?? f.filename }))}
       />
@@ -27,7 +27,7 @@ export default function ServicePicker({ composeFiles, labels = {}, selectedFileI
         className="w-full"
         aria-label="Compose service"
         value={selectedService}
-        placeholder="— service —"
+        placeholder="- service -"
         disabled={!selectedFileId}
         onChange={v => onChange(selectedFileId, v)}
         options={services.map(s => ({ value: s, label: s }))}

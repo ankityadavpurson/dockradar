@@ -11,22 +11,22 @@ export function useContainers() {
   const [health, setHealth]           = useState(null)
   const [selected, setSelected]       = useState(new Set())
   const [loading, setLoading]         = useState(false)
-  // True until the first health + containers fetch resolves — drives the
+  // True until the first health + containers fetch resolves - drives the
   // full-page loader so the UI isn't blank (or a misleading "no containers").
   const [initialLoading, setInitialLoading] = useState(true)
   const [error, setError]             = useState(null)
   const [toasts, setToasts]           = useState([])     // [{ id, msg, type }]
-  // Names of containers with an update in flight — drives the per-row loader.
+  // Names of containers with an update in flight - drives the per-row loader.
   const [updatingNames, setUpdatingNames] = useState(new Set())
   // Whether the Progress Log should be shown. Only user-initiated scans/updates
-  // open it — a scan detected on page load (e.g. the startup scan) does not.
+  // open it - a scan detected on page load (e.g. the startup scan) does not.
   const [logVisible, setLogVisible] = useState(false)
   // compose associations: { container_name -> { file_id, service_name, filename } }
   const [associations, setAssociations]   = useState({})
   const pollRef                        = useRef(null)
   const toastTimersRef                 = useRef(new Map())  // id → timeout
 
-  // ── Toast helpers — stacked, max 4, independent timers ────────────────────
+  // ── Toast helpers - stacked, max 4, independent timers ────────────────────
   const dismissToast = useCallback((id) => {
     clearTimeout(toastTimersRef.current.get(id))
     toastTimersRef.current.delete(id)
@@ -259,6 +259,8 @@ export function useContainers() {
     selectAll,
     clearSelection,
     fetchContainers,
+    fetchHealth,
+    notify,
     associations,
     fetchAssociations,
     composeUpdateOne,

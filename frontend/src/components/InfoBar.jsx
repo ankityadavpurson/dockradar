@@ -15,7 +15,7 @@ function timeAgo(iso) {
   return `${Math.floor(hours / 24)}d ago`
 }
 
-export default function InfoBar({ health, onTestEmail }) {
+export default function InfoBar({ health, onTestEmail, onOpenSettings }) {
   const [showEmail, setShowEmail] = useState(false)
   if (!health) return null
 
@@ -55,6 +55,7 @@ export default function InfoBar({ health, onTestEmail }) {
         <EmailConfigDialog
           health={health}
           onTestEmail={onTestEmail}
+          onOpenSettings={onOpenSettings && (() => { setShowEmail(false); onOpenSettings() })}
           onClose={() => setShowEmail(false)}
         />
       )}

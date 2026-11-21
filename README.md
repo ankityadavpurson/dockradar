@@ -4,9 +4,9 @@
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](https://www.python.org/)
 [![React](https://img.shields.io/badge/React-18-61dafb)](https://react.dev/)
 
-Know when your containers are out of date — and update them in one click.
+Know when your containers are out of date - and update them in one click.
 
-DockRadar is a self-hosted dashboard that keeps an eye on the Docker images running on your host. It periodically checks each container's image against its upstream registry, tells you which ones have a newer tag or digest available, and lets you apply updates — one container, a selected few, or all at once — without dropping to the command line. For containers managed by Compose, it edits and re-runs the compose file for you; for the rest, it recreates the container from its captured configuration. Optional email alerts mean you don't even have to open the dashboard to find out something needs attention.
+DockRadar is a self-hosted dashboard that keeps an eye on the Docker images running on your host. It periodically checks each container's image against its upstream registry, tells you which ones have a newer tag or digest available, and lets you apply updates - one container, a selected few, or all at once - without dropping to the command line. For containers managed by Compose, it edits and re-runs the compose file for you; for the rest, it recreates the container from its captured configuration. Optional email alerts mean you don't even have to open the dashboard to find out something needs attention.
 
 Built with a FastAPI backend and a React frontend, it runs as a single container next to your Docker socket.
 
@@ -124,8 +124,8 @@ yarn dev
 ## Install on Linux (native, without Docker)
 
 Run DockRadar directly on a Linux host as a systemd service. One `install.sh`
-serves Linux and macOS — it detects the OS (see the macOS section below). Nothing is
-built on the host — the installer downloads a release tarball with the
+serves Linux and macOS - it detects the OS (see the macOS section below). Nothing is
+built on the host - the installer downloads a release tarball with the
 frontend prebuilt.
 
 Requirements: systemd, Python 3.10+ with `venv` (Debian/Ubuntu:
@@ -175,11 +175,11 @@ recipient) and then starts the service on port `8086`. Running natively also ena
 ## Install on macOS (native, without Docker)
 
 Run DockRadar as a per-user LaunchAgent that starts at login. It is the same
-`install.sh` and release tarball as Linux — the installer detects macOS, and
+`install.sh` and release tarball as Linux - the installer detects macOS, and
 nothing is built on your Mac.
 
 Requirements: Python 3.10+ (`brew install python@3.12`) and Docker Desktop,
-OrbStack or Colima. Run the installer as **your normal user — not with sudo**
+OrbStack or Colima. Run the installer as **your normal user - not with sudo**
 (Docker Desktop's socket belongs to your user).
 
 ```bash
@@ -187,7 +187,7 @@ curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/downloa
 ```
 
 As on Linux, the first install offers to set up email notifications. By default
-DockRadar listens on `127.0.0.1:8086` (this Mac only) — set `HOST=0.0.0.0` and
+DockRadar listens on `127.0.0.1:8086` (this Mac only) - set `HOST=0.0.0.0` and
 `API_KEY` in the config to reach it from other devices.
 
 | What | Where |
@@ -218,7 +218,7 @@ docker compose up -d --build
 ```
 
 `docker-compose.yml` reads your `.env` automatically (via `env_file`), so every
-setting — including SMTP/email and `API_KEY` — applies inside the container.
+setting - including SMTP/email and `API_KEY` - applies inside the container.
 `.env` is optional; without it the app starts on sensible defaults. Regardless
 of what `.env` contains, the container always listens on port `8086` and reaches
 Docker through the mounted socket (`HOST`, `PORT`, and `DOCKER_HOST` are pinned
@@ -252,6 +252,8 @@ docker run --rm -p 8086:8086 \
 Core:
 
 - `GET /api/health`
+- `GET /api/settings` - current settings, their defaults and where each value comes from
+- `PUT /api/settings` - save settings from the UI (applied without a restart)
 - `POST /api/email/test`
 - `GET /api/containers`
 - `GET /api/containers/{name}`
@@ -279,12 +281,20 @@ Compose management:
 
 ## Environment Variables
 
+Most settings can also be changed in the UI: open **Settings** (the gear icon
+in the header). Changes there apply immediately, without a restart, and are
+saved to `settings.json` in the data folder (`COMPOSE_DIR`). A value saved in
+the UI takes priority over the environment; **Reset** on a setting makes it
+follow the environment (or the default) again. `HOST`, `PORT`, `LOG_FILE`,
+`COMPOSE_DIR` and `DOCKER_HOST` are only read at startup, so they are shown
+read-only there and stay in the env file / `docker-compose.yml`.
+
 See `.env.example` for the full list. Configuration is delivered via
 environment variables, loaded automatically depending on how you run DockRadar:
 
-- **Docker Compose** — reads `.env` in the project root (`env_file: .env`).
-- **`docker run`** — pass `--env-file .env`.
-- **Start scripts / manual run** — `.env` is loaded from the project root.
+- **Docker Compose** - reads `.env` in the project root (`env_file: .env`).
+- **`docker run`** - pass `--env-file .env`.
+- **Start scripts / manual run** - `.env` is loaded from the project root.
 
 Most important values:
 
@@ -292,17 +302,17 @@ Most important values:
 - `SCAN_INTERVAL_HOURS`
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`
 - `EMAIL_FROM`, `EMAIL_TO`
-- `APP_URL` — public URL of the UI; adds an "Open DockRadar" link to notification emails
+- `APP_URL` - public URL of the UI; adds an "Open DockRadar" link to notification emails
 - `HOST`, `PORT`
-- `API_KEY` — optional; when set, every `/api` route except `/api/health` requires the `X-Api-Key` header. Give the key to the UI once via the browser console: `localStorage.setItem('dockradar_api_key', '<key>')`
-- `HIDDEN_REPOSITORY` — comma-separated container or repository names (case-insensitive, exact match) to hide from DockRadar entirely: not listed, not scanned, not auto-updated
+- `API_KEY` - optional; when set, every `/api` route except `/api/health` requires the `X-Api-Key` header. The UI asks for the key once and keeps it in the browser; it can also be set or generated on the Settings page
+- `HIDDEN_REPOSITORY` - comma-separated container or repository names (case-insensitive, exact match) to hide from DockRadar entirely: not listed, not scanned, not auto-updated
 - `REGISTRY_CACHE_TTL`
-- `COMPOSE_TIMEOUT` — max seconds a single `docker compose` pull/up may run (default 300)
+- `COMPOSE_TIMEOUT` - max seconds a single `docker compose` pull/up may run (default 300)
 
 ### Email notifications (Gmail)
 
-Gmail requires an [App Password](https://myaccount.google.com/apppasswords) —
-not your account password — and 2-Step Verification must be enabled to create
+Gmail requires an [App Password](https://myaccount.google.com/apppasswords) -
+not your account password - and 2-Step Verification must be enabled to create
 one. Set:
 
 ```bash
@@ -324,12 +334,12 @@ The direct (non-compose) update flow recreates containers from a captured subset
 
 **Not preserved:** named volumes attached via the `Mounts` API (`--mount`), membership in multiple networks, network aliases, and advanced options (cap_add, devices, resource limits, healthchecks, …).
 
-For containers that rely on those, associate them with a compose file and use the compose update flow instead — `docker compose` recreates the container from its full definition.
+For containers that rely on those, associate them with a compose file and use the compose update flow instead - `docker compose` recreates the container from its full definition.
 
 ## Compose updates: native vs container
 
 "Update via compose" runs `docker compose pull` + `up -d` against a service's own
-compose file (discovered from its `com.docker.compose.*` labels — no upload
+compose file (discovered from its `com.docker.compose.*` labels - no upload
 needed), and for a **pinned tag** it rewrites that file's `image:` line to the
 newer tag (keeping a `.bak` backup) so the container actually moves to it. For
 that to work, DockRadar's process needs three things:
@@ -364,7 +374,7 @@ stacks.
 
 The published image includes the Docker CLI + compose plugin. To update **other**
 stacks, bind-mount each stack directory **at its exact host path** (so the
-labelled paths — and any relative `./` volumes/build contexts — resolve inside
+labelled paths - and any relative `./` volumes/build contexts - resolve inside
 the container), read-write:
 
 ```yaml
@@ -377,12 +387,12 @@ services:
 
 The container runs as root, so the mounted files are writable. Without the mount,
 those stacks show as "not reachable" and only the direct (pull + recreate) update
-applies. For the widest compose support, a **native** install is the simplest —
+applies. For the widest compose support, a **native** install is the simplest -
 it sees the host filesystem directly.
 
 ## Security Notice
 
-DockRadar controls Docker on its host — treat it as a privileged service. It has no user accounts or RBAC. Do not expose the API directly to the public internet.
+DockRadar controls Docker on its host - treat it as a privileged service. It has no user accounts or RBAC. Do not expose the API directly to the public internet.
 
 - Set `API_KEY` to require an `X-Api-Key` header on all API routes (except `/api/health`).
 - For anything internet-facing, additionally put it behind a reverse proxy with authentication and TLS.

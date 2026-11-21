@@ -13,7 +13,7 @@ from app.core.config import config
 def setup_logging() -> None:
     """Configure root logger with console and rotating file handlers."""
     fmt = logging.Formatter(
-        fmt="%(asctime)s [%(levelname)-8s] %(name)s — %(message)s",
+        fmt="%(asctime)s [%(levelname)-8s] %(name)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     root = logging.getLogger()

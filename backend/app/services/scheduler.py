@@ -39,7 +39,7 @@ class SchedulerService:
 
         self._scheduler.start()
         logger.info(
-            "Scheduler started — scanning every %d hour(s).",
+            "Scheduler started - scanning every %d hour(s).",
             config.SCAN_INTERVAL_HOURS,
         )
 

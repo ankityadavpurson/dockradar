@@ -11,7 +11,7 @@ function Row({ k, v }) {
   )
 }
 
-export default function EmailConfigDialog({ health, onClose, onTestEmail }) {
+export default function EmailConfigDialog({ health, onClose, onTestEmail, onOpenSettings }) {
   const [testing, setTesting] = useState(false)
 
   const configured = !!health?.email_configured
@@ -35,6 +35,9 @@ export default function EmailConfigDialog({ health, onClose, onTestEmail }) {
           {testing ? 'Sending…' : 'Send test email'}
         </Button>
       )}
+      {onOpenSettings && (
+        <Button variant="secondary" onClick={onOpenSettings}>Edit settings</Button>
+      )}
       <Button onClick={onClose}>Close</Button>
     </>
   )
@@ -46,18 +49,17 @@ export default function EmailConfigDialog({ health, onClose, onTestEmail }) {
       </Alert>
 
       <div className="flex flex-col">
-        <Row k="SMTP server" v={`${health?.smtp_host || '—'}:${health?.smtp_port ?? ''}`} />
+        <Row k="SMTP server" v={`${health?.smtp_host || '-'}:${health?.smtp_port ?? ''}`} />
         <Row k="Encryption"  v={encryption} />
         <Row k="Authentication" v={auth} />
-        <Row k="From" v={health?.email_from || '—'} />
+        <Row k="From" v={health?.email_from || '-'} />
         <Row k="To"   v={health?.email_to || '(not set)'} />
       </div>
 
       {!configured && (
         <p className="text-[13px] leading-relaxed text-app-muted">
-          Set <code>SMTP_HOST</code> and <code>EMAIL_TO</code> in your <code>.env</code> and restart to
-          enable update notifications. Credentials (<code>SMTP_USER</code>/<code>SMTP_PASSWORD</code>) are
-          optional for open relays.
+          Fill in the SMTP server and a recipient under <strong>Settings → Email notifications</strong> to
+          enable update notifications. A username and password are optional for open relays.
         </p>
       )}
     </Modal>

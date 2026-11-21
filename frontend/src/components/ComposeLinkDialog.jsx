@@ -53,7 +53,7 @@ export default function ComposeLinkDialog({ container, onLinked, onClose, onOpen
 
   const title = (
     <span className="block min-w-0 normal-case tracking-normal">
-      <span className="block truncate">Link compose file — {container.name}</span>
+      <span className="block truncate">Link compose file - {container.name}</span>
       <span className="block truncate text-xs font-normal text-app-muted">
         Use <code>docker compose</code> to update this container.
       </span>

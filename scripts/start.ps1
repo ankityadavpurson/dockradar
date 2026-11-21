@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-#  start.ps1 — DockRadar launcher (Windows PowerShell)
+#  start.ps1 - DockRadar launcher (Windows PowerShell)
 #  Starts both the backend (FastAPI) and frontend (Vite dev server)
 #
 #  First time only:
@@ -41,7 +41,7 @@ if (-not (Test-Path $VenvDir)) {
     python -m venv $VenvDir
     Write-Success "Virtual environment created."
 } else {
-    Write-Info "Virtual environment exists — skipping."
+    Write-Info "Virtual environment exists - skipping."
 }
 
 & ".\$VenvDir\Scripts\Activate.ps1"
@@ -62,7 +62,7 @@ if ($needsInstall) {
     New-Item -ItemType File -Path $Marker -Force | Out-Null
     Write-Success "Python dependencies installed."
 } else {
-    Write-Info "Python dependencies up to date — skipping."
+    Write-Info "Python dependencies up to date - skipping."
 }
 
 # ── Frontend dependencies (yarn) ──────────────────────────────
@@ -87,18 +87,18 @@ if ($needsYarn) {
     New-Item -ItemType File -Path $YarnMarker -Force | Out-Null
     Write-Success "Frontend dependencies installed."
 } else {
-    Write-Info "Frontend dependencies up to date — skipping."
+    Write-Info "Frontend dependencies up to date - skipping."
 }
 
 # ── .env ──────────────────────────────────────────────────────
 if (-not (Test-Path $EnvFile)) {
     if (Test-Path $EnvExample) {
         Copy-Item $EnvExample $EnvFile
-        Write-Warn ".env created from .env.example — review it and re-run."
+        Write-Warn ".env created from .env.example - review it and re-run."
         Read-Host "Press Enter to exit"
         exit 0
     } else {
-        Write-Warn ".env not found — proceeding without it."
+        Write-Warn ".env not found - proceeding without it."
     }
 }
 

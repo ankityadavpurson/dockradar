@@ -30,7 +30,7 @@ def _int_env(name: str, default: int) -> int:
     try:
         return int(raw)
     except ValueError:
-        logger.warning("Invalid value for %s: %r — using default %d.", name, raw, default)
+        logger.warning("Invalid value for %s: %r - using default %d.", name, raw, default)
         return default
 
 
@@ -51,7 +51,7 @@ def _path_env(name: str, default: Path) -> Path:
 class Config:
     """Central configuration loaded from environment variables."""
 
-    # Storage — where uploaded compose files live. Defaults to backend/
+    # Storage - where uploaded compose files live. Defaults to backend/
     # compose_files; native Linux installs set /var/lib/dockradar/compose_files.
     COMPOSE_DIR: Path = _path_env(
         "COMPOSE_DIR", Path(__file__).resolve().parents[2] / "compose_files"
@@ -78,7 +78,7 @@ class Config:
     LOG_FILE: str = os.getenv("LOG_FILE", "dockradar.log")
 
     # Public URL of the DockRadar UI, used for the link in notification emails.
-    # e.g. http://192.168.1.10:8086 — leave blank to omit the link.
+    # e.g. http://192.168.1.10:8086 - leave blank to omit the link.
     APP_URL: str = os.getenv("APP_URL", "").rstrip("/")
 
     # Comma-separated container or repository names to hide from DockRadar
@@ -89,7 +89,7 @@ class Config:
         t.strip().lower() for t in HIDDEN_REPOSITORY.split(",") if t.strip()
     )
 
-    # Optional API key — when set, all /api routes except /api/health
+    # Optional API key - when set, all /api routes except /api/health
     # require the X-Api-Key header.
     API_KEY: str = os.getenv("API_KEY", "")
 
@@ -103,7 +103,7 @@ class Config:
     @classmethod
     def email_configured(cls) -> bool:
         """Email is usable when we have a host and a recipient. Auth
-        (SMTP_USER/SMTP_PASSWORD) is optional — some relays don't require it."""
+        (SMTP_USER/SMTP_PASSWORD) is optional - some relays don't require it."""
         return bool(cls.SMTP_HOST and cls.EMAIL_TO)
 
 

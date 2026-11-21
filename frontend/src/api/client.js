@@ -5,17 +5,47 @@
 
 const BASE = '/api'
 
-// Optional API key (when the backend is started with API_KEY set).
-// Store it once via: localStorage.setItem('dockradar_api_key', '<key>')
+// Optional API key (when the backend has API_KEY set). The UI asks for it on
+// the first 401 (ApiKeyPrompt) and keeps it in this browser's localStorage.
+const API_KEY_STORAGE = 'dockradar_api_key'
+
+/** Fired on window whenever the API answers 401 (missing or wrong key). */
+export const AUTH_REQUIRED_EVENT = 'dockradar:auth-required'
+
+export function getApiKey() {
+  try { return localStorage.getItem(API_KEY_STORAGE) || '' } catch { return '' }
+}
+
+export function setApiKey(value) {
+  try {
+    if (value) localStorage.setItem(API_KEY_STORAGE, value)
+    else localStorage.removeItem(API_KEY_STORAGE)
+  } catch { /* storage blocked: the key only lasts until the page reloads */ }
+}
+
 function authHeaders() {
-  const key = localStorage.getItem('dockradar_api_key')
+  const key = getApiKey()
   return key ? { 'X-Api-Key': key } : {}
 }
 
+/** True when `key` is accepted by the API (checked against a guarded route). */
+export async function verifyApiKey(key) {
+  const res = await fetch(`${BASE}/scan/status`, { headers: { 'X-Api-Key': key } })
+  if (res.status === 401) return false
+  if (!res.ok) throw await parseError(res)
+  return true
+}
+
 async function parseError(res) {
+  if (res.status === 401) {
+    window.dispatchEvent(new CustomEvent(AUTH_REQUIRED_EVENT, { detail: { hadKey: !!getApiKey() } }))
+  }
   const err = await res.json().catch(() => ({ detail: res.statusText }))
   const detail = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail)
-  return new Error(detail || `HTTP ${res.status}`)
+  const error = new Error(detail || `HTTP ${res.status}`)
+  error.status = res.status
+  error.detail = err.detail   // structured detail, e.g. { errors: { KEY: msg } }
+  return error
 }
 
 async function request(method, path, body) {
@@ -49,6 +79,12 @@ export const api = {
   updateOne:        (name)       => request('POST',   `/containers/${name}/update`),
   updateSelected:   (names)      => request('POST',   '/update/selected', { names }),
   updateAll:        ()           => request('POST',   '/update/all'),
+}
+
+// Settings (values saved here override the env file)
+export const settingsApi = {
+  get:  ()                    => request('GET', '/settings'),
+  save: (values, reset = [])  => request('PUT', '/settings', { values, reset }),
 }
 
 // Compose

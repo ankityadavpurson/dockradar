@@ -8,7 +8,7 @@ import Modal from './Modal'
 export default function ErrorDetailDialog({ container, onClose }) {
   const title = (
     <span className="block min-w-0 normal-case tracking-normal">
-      <span className="block truncate">Scan error — {container.name}</span>
+      <span className="block truncate">Scan error - {container.name}</span>
       <span className="block truncate font-mono text-xs font-normal text-app-muted">
         {container.repository}:{container.tag}
       </span>

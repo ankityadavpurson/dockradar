@@ -5,7 +5,7 @@ of DockRadar on macOS **before a release exists on GitHub**. Instead of
 downloading a release, you build the tarball from your clone and point the
 installer at it with `--tarball`.
 
-Run every command in **Terminal** as **your normal user — never with `sudo`**,
+Run every command in **Terminal** as **your normal user - never with `sudo`**,
 in the **same terminal session** (step 1 sets shell variables that later steps
 use).
 
@@ -48,7 +48,7 @@ docker compose down
 
 ## 1. Get the code and build the release tarball
 
-Clone the repository (skip if you already have a clone — just `cd` into it):
+Clone the repository (skip if you already have a clone - just `cd` into it):
 
 ```bash
 git clone https://github.com/ankityadavpurson/dockradar.git && cd dockradar
@@ -66,8 +66,8 @@ What each variable holds:
 | --- | --- | --- |
 | `$VERSION` | The app version, read from `__version__` in `backend/app/main.py`. Used in the folder and tarball names, and shown by the installer (`DockRadar v<version> is running`). | `2.0.0` |
 | `$BUILD` | Scratch folder in your home where the package is assembled. Safe to delete after testing (step 8). | `/Users/you/dr-build` |
-| `$STAGE` | The unpacked package folder inside `$BUILD` — the same layout as the release tarball (`backend/`, `frontend/dist/`, `packaging/`, `install.sh`, `uninstall.sh`, `VERSION`). Steps 2–8 run the installer from here: `$STAGE/install.sh`. | `/Users/you/dr-build/dockradar-2.0.0` |
-| `$TARBALL` | The packaged release file built from `$STAGE` — the same file CI attaches to a GitHub Release (one file for both Linux and macOS). Passed to the installer with `--tarball`; a matching `$TARBALL.sha256` checksum sits next to it and is verified during install. | `/Users/you/dr-build/dockradar-2.0.0.tar.gz` |
+| `$STAGE` | The unpacked package folder inside `$BUILD` - the same layout as the release tarball (`backend/`, `frontend/dist/`, `packaging/`, `install.sh`, `uninstall.sh`, `VERSION`). Steps 2-8 run the installer from here: `$STAGE/install.sh`. | `/Users/you/dr-build/dockradar-2.0.0` |
+| `$TARBALL` | The packaged release file built from `$STAGE` - the same file CI attaches to a GitHub Release (one file for both Linux and macOS). Passed to the installer with `--tarball`; a matching `$TARBALL.sha256` checksum sits next to it and is verified during install. | `/Users/you/dr-build/dockradar-2.0.0.tar.gz` |
 | `$DR_HOME` | Where the installer puts DockRadar for your user: app, venv, config and compose files. Used in the checks below. Quoted everywhere because the path contains a space. | `/Users/you/Library/Application Support/DockRadar` |
 
 Check them at any time:
@@ -105,7 +105,7 @@ Copy the built frontend, packaging, and installers:
 cp -R frontend/dist "$STAGE/frontend/" && cp -R packaging .env.example LICENSE README.md scripts/install.sh scripts/uninstall.sh "$STAGE/" && echo "$VERSION" > "$STAGE/VERSION"
 ```
 
-Strip Windows line endings (only matters for clones made on Windows — note
+Strip Windows line endings (only matters for clones made on Windows - note
 macOS `sed -i` needs the empty `''`):
 
 ```bash
@@ -150,7 +150,7 @@ come in `[5/6] Configuring DockRadar`. During `[4/6] Setting up Python
 environment`, one line keeps updating with the package pip is installing. With
 a real release (no `--tarball`), step 2 is `Downloading DockRadar` with a
 progress bar. It ends with `DockRadar v<version> is running.` macOS may also show a
-**"Background Items Added"** notification — that is the LaunchAgent, and is
+**"Background Items Added"** notification - that is the LaunchAgent, and is
 expected.
 
 ---
@@ -195,8 +195,8 @@ tail -f ~/Library/Logs/DockRadar/dockradar.log
 
 In the **browser**:
 
-1. Open <http://localhost:8086> — your containers should be listed.
-2. Click the ⓘ next to **Email** → **Send test email** — the email should arrive.
+1. Open <http://localhost:8086> - your containers should be listed.
+2. Click the ⓘ next to **Email** → **Send test email** - the email should arrive.
 3. Upload a compose file.
 
 The compose file should be stored in your DockRadar folder, not in the app
@@ -277,10 +277,10 @@ The config and data are kept:
 ls "$DR_HOME"
 ```
 
-> **Optional — offline uninstall:** reinstall with step 2, then run
+> **Optional - offline uninstall:** reinstall with step 2, then run
 > `bash "$DR_HOME/current/uninstall.sh"`.
 
-> **Optional — old command:** `install.sh --uninstall [--purge]` still works; it
+> **Optional - old command:** `install.sh --uninstall [--purge]` still works; it
 > hands off to `uninstall.sh` (without the purge question).
 
 ---
@@ -291,7 +291,7 @@ ls "$DR_HOME"
 bash -s -- --purge < "$STAGE/uninstall.sh"
 ```
 
-It lists what it will delete and asks `Continue? [y/N]` — answer `y`.
+It lists what it will delete and asks `Continue? [y/N]` - answer `y`.
 Unattended, add `--yes` to skip the question (`bash -s -- --purge --yes < …`);
 without a terminal and without `--yes` it stops and deletes nothing.
 
@@ -328,21 +328,21 @@ Clean up afterwards with step 8.
 
 | Symptom | Check |
 | --- | --- |
-| `No such file or directory` for `$STAGE` / `$TARBALL` | New terminal session — `cd` to the repo root and re-run the variables command in step 1. |
-| `Run as your normal user, without sudo` | Drop `sudo` — the installer is per-user on macOS. |
+| `No such file or directory` for `$STAGE` / `$TARBALL` | New terminal session - `cd` to the repo root and re-run the variables command in step 1. |
+| `Run as your normal user, without sudo` | Drop `sudo` - the installer is per-user on macOS. |
 | `Python 3.10+ not found` | `brew install python@3.12`, then re-run. |
 | `Docker is installed but not running` | Start Docker Desktop (or `orbstack` / `colima start`); DockRadar connects once it is up. |
-| `DockRadar did not answer on port 8086 yet` | `tail -n 50 ~/Library/Logs/DockRadar/dockradar.err.log` — often port 8086 is already in use (`lsof -nP -iTCP:8086`). |
+| `DockRadar did not answer on port 8086 yet` | `tail -n 50 ~/Library/Logs/DockRadar/dockradar.err.log` - often port 8086 is already in use (`lsof -nP -iTCP:8086`). |
 | Containers list is empty / Docker errors | `grep DOCKER_HOST "$DR_HOME/dockradar.env"` should match `docker context inspect --format '{{.Endpoints.docker.Host}}'`; fix it and restart (step 4). |
 | Agent stopped / disabled | System Settings → General → Login Items & Extensions → make sure **python** / DockRadar is allowed in the background, then `launchctl kickstart -k gui/$(id -u)/com.dockradar`. |
 | Test email fails | Gmail needs an App Password and 2-Step Verification; re-check `SMTP_*` values. |
-| `sed: 1: … invalid command code` | You used Linux `sed -i` syntax — on macOS it is `sed -i ''`. |
+| `sed: 1: … invalid command code` | You used Linux `sed -i` syntax - on macOS it is `sed -i ''`. |
 
 ---
 
 ## Once a real release exists
 
-No clone or build is needed — use the GitHub commands (no `sudo`):
+No clone or build is needed - use the GitHub commands (no `sudo`):
 
 ```bash
 curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install.sh | bash

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────
-#  start.sh — DockRadar launcher (Linux / macOS / WSL)
+#  start.sh - DockRadar launcher (Linux / macOS / WSL)
 #  Starts both the backend (FastAPI) and frontend (Vite dev server)
 # ─────────────────────────────────────────────────────────────
 
@@ -45,7 +45,7 @@ if [ ! -d "$VENV_DIR" ]; then
     "$PYTHON" -m venv "$VENV_DIR"
     success "Virtual environment created."
 else
-    info "Virtual environment already exists — skipping creation."
+    info "Virtual environment already exists - skipping creation."
 fi
 
 # shellcheck disable=SC1091
@@ -67,7 +67,7 @@ if [ "$needs_install" = true ]; then
     touch "$MARKER"
     success "Python dependencies installed."
 else
-    info "Python dependencies up to date — skipping."
+    info "Python dependencies up to date - skipping."
 fi
 
 # ── Frontend dependencies (yarn) ──────────────────────────────
@@ -87,17 +87,17 @@ if [ "$needs_yarn" = true ]; then
     touch "$YARN_MARKER"
     success "Frontend dependencies installed."
 else
-    info "Frontend dependencies up to date — skipping."
+    info "Frontend dependencies up to date - skipping."
 fi
 
 # ── .env ──────────────────────────────────────────────────────
 if [ ! -f "$ENV_FILE" ]; then
     if [ -f "$ENV_EXAMPLE" ]; then
         cp "$ENV_EXAMPLE" "$ENV_FILE"
-        warn ".env created from .env.example — review it and re-run."
+        warn ".env created from .env.example - review it and re-run."
         exit 0
     else
-        warn ".env not found — proceeding without it."
+        warn ".env not found - proceeding without it."
     fi
 fi
 

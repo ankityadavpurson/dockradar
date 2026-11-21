@@ -62,6 +62,11 @@ class RegistryCache:
     def clear(self):
         self._store.clear()
 
+    def set_ttl(self, ttl: int):
+        """Change the TTL; cached entries are dropped so the new value applies at once."""
+        self._ttl = ttl
+        self._store.clear()
+
 
 class RegistryService:
     """Service for checking Docker image versions against registries."""
@@ -70,6 +75,10 @@ class RegistryService:
         self._cache = RegistryCache(ttl=config.REGISTRY_CACHE_TTL)
         self._session = requests.Session()
         self._session.headers.update({"User-Agent": "DockRadar/1.0"})
+
+    def set_cache_ttl(self, ttl: int):
+        """Apply a new REGISTRY_CACHE_TTL (from the Settings page) without a restart."""
+        self._cache.set_ttl(ttl)
 
     def get_latest_tag(self, repository: str, current_tag: str, local_digest: Optional[str] = None) -> tuple[str, str, Optional[str]]:
         """
@@ -121,13 +130,13 @@ class RegistryService:
         """Check Docker Hub for updates.
 
         Strategy (in order):
-        1. Tag comparison  — if a newer tag exists, report update_available immediately.
+        1. Tag comparison  - if a newer tag exists, report update_available immediately.
            Special case: if latest is the only "newer" tag and we have a local digest,
-           compare digests first — the running container may already be the latest image
+           compare digests first - the running container may already be the latest image
            just labelled with a concrete version tag (e.g. 2024.5.13-a0bc346 == latest).
-        2. Digest comparison — if tags are identical, compare manifest digests to catch
+        2. Digest comparison - if tags are identical, compare manifest digests to catch
                                silent image rebuilds (important for 'latest').
-        3. Fallback         — if digest fetch fails, trust the tag match as up_to_date.
+        3. Fallback         - if digest fetch fails, trust the tag match as up_to_date.
         """
         if is_official:
             image_path = f"library/{repo}"
@@ -164,7 +173,7 @@ class RegistryService:
                 remote_digest = self._get_remote_digest_dockerhub(image_path, "latest")
                 if remote_digest and remote_digest == local_digest:
                     logger.info(
-                        "%s: running %s which matches latest digest — up to date",
+                        "%s: running %s which matches latest digest - up to date",
                         repo, current_tag,
                     )
                     return current_tag, "up_to_date"
@@ -178,17 +187,17 @@ class RegistryService:
             if remote_digest:
                 if remote_digest != local_digest:
                     logger.info(
-                        "%s:%s same tag but digest mismatch — image was rebuilt\n  local : %s\n  remote: %s",
+                        "%s:%s same tag but digest mismatch - image was rebuilt\n  local : %s\n  remote: %s",
                         repo, current_tag, local_digest[:19], remote_digest[:19],
                     )
                     return current_tag, "update_available"
                 else:
-                    logger.info("%s:%s tag and digest both match — fully up to date", repo, current_tag)
+                    logger.info("%s:%s tag and digest both match - fully up to date", repo, current_tag)
                     return current_tag, "up_to_date"
-            # Digest fetch failed — trust the tag match
+            # Digest fetch failed - trust the tag match
             logger.debug("%s:%s digest fetch failed, trusting tag match", repo, current_tag)
 
-        # ── Step 3: Fallback — tags matched, no digest available ──────────────
+        # ── Step 3: Fallback - tags matched, no digest available ──────────────
         return current_tag, "up_to_date"
 
     def _get_remote_digest_dockerhub(self, image_path: str, tag: str) -> Optional[str]:
@@ -230,19 +239,19 @@ class RegistryService:
             return digest
 
         except Exception as exc:
-            logger.debug("Could not fetch remote digest for %s:%s — %s", image_path, tag, exc)
+            logger.debug("Could not fetch remote digest for %s:%s - %s", image_path, tag, exc)
             return None
 
     def _check_registry_v2(self, repository: str, current_tag: str, local_digest: Optional[str] = None) -> tuple[str, str]:
         """Check a generic Docker v2 registry (lscr.io, ghcr.io, gcr.io, etc.).
 
         Strategy (in order):
-        1. Tag comparison  — list tags, handling Bearer auth challenges automatically.
-        2. Digest comparison — if tags are identical, compare manifest digests.
-        3. Digest-only fallback — if tag listing is unavailable (auth required with
+        1. Tag comparison  - list tags, handling Bearer auth challenges automatically.
+        2. Digest comparison - if tags are identical, compare manifest digests.
+        3. Digest-only fallback - if tag listing is unavailable (auth required with
            no public token), fall back to a digest-only check which many registries
            allow anonymously (e.g. lscr.io manifest endpoint with a Bearer token).
-        4. Final fallback   — trust the tag match if nothing else works.
+        4. Final fallback   - trust the tag match if nothing else works.
         """
         registry, name = self._split_registry(repository)
 
@@ -266,13 +275,13 @@ class RegistryService:
 
             if latest_tag != current_tag:
                 # When the "newer" tag is `latest` and we know our local
-                # digest, compare digests first — a pinned version tag often
+                # digest, compare digests first - a pinned version tag often
                 # points at exactly the same image as `latest`.
                 if latest_tag == "latest" and local_digest:
                     remote_digest = self._get_remote_digest_v2(registry, name, "latest")
                     if remote_digest and remote_digest == local_digest:
                         logger.info(
-                            "%s/%s: %s matches latest digest — up to date",
+                            "%s/%s: %s matches latest digest - up to date",
                             registry, name, current_tag,
                         )
                         return current_tag, "up_to_date"
@@ -284,7 +293,7 @@ class RegistryService:
                 if remote_digest:
                     if remote_digest != local_digest:
                         logger.info(
-                            "%s/%s:%s same tag but digest mismatch — image was rebuilt",
+                            "%s/%s:%s same tag but digest mismatch - image was rebuilt",
                             registry, name, current_tag,
                         )
                         return current_tag, "update_available"
@@ -292,23 +301,23 @@ class RegistryService:
 
             return current_tag, "up_to_date"
 
-        # ── Step 3: Tag list unavailable — try digest-only check ──────────────
+        # ── Step 3: Tag list unavailable - try digest-only check ──────────────
         # Some registries (e.g. lscr.io with latest tag) allow manifest fetches
         # even when tag listing is restricted.
         if resp.status_code in (401, 403) and local_digest:
             logger.debug(
-                "%s tag listing returned %d — falling back to digest-only check",
+                "%s tag listing returned %d - falling back to digest-only check",
                 registry, resp.status_code,
             )
             remote_digest = self._get_remote_digest_v2(registry, name, current_tag)
             if remote_digest:
                 if remote_digest != local_digest:
                     logger.info(
-                        "%s/%s:%s digest mismatch (tag list unavailable) — update available",
+                        "%s/%s:%s digest mismatch (tag list unavailable) - update available",
                         registry, name, current_tag,
                     )
                     return current_tag, "update_available"
-                logger.info("%s/%s:%s digest matches — up to date", registry, name, current_tag)
+                logger.info("%s/%s:%s digest matches - up to date", registry, name, current_tag)
                 return current_tag, "up_to_date"
 
         # ── Step 4: Nothing worked ────────────────────────────────────────────
@@ -339,7 +348,7 @@ class RegistryService:
                 return None
             return resp.headers.get("Docker-Content-Digest")
         except Exception as exc:
-            logger.debug("Could not fetch remote digest for %s/%s:%s — %s", registry, name, tag, exc)
+            logger.debug("Could not fetch remote digest for %s/%s:%s - %s", registry, name, tag, exc)
             return None
 
     def _get_bearer_token_v2(self, challenge_resp: "requests.Response", registry: str, name: str) -> Optional[str]:

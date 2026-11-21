@@ -61,10 +61,10 @@ function VersionCheckCell({ container }) {
   const tagsMatch = !latest_tag || latest_tag === tag || latest_tag === 'unknown'
 
   if (update_status === 'unknown' || update_status === 'error') {
-    return <span className="text-app-muted">—</span>
+    return <span className="text-app-muted">-</span>
   }
 
-  // A newer tag exists — the genuinely interesting tag-level state.
+  // A newer tag exists - the genuinely interesting tag-level state.
   if (!tagsMatch) {
     return <Pill color="warning" title={`Newer tag available: ${latest_tag}`}>
       <TagIcon className="h-3 w-3 shrink-0" />→ {latest_tag}
@@ -234,7 +234,7 @@ export default function ContainerTable({
         {isFiltered ? (
           <>
             <p className="mb-1 text-base font-semibold text-app-text">No matching containers</p>
-            <p className="text-sm">Nothing matches the current search or filter — clear them to see all containers.</p>
+            <p className="text-sm">Nothing matches the current search or filter - clear them to see all containers.</p>
           </>
         ) : (
           <>
@@ -287,7 +287,7 @@ export default function ContainerTable({
     {
       key: '_version', header: 'Version',
       render: c => dim(c, updatingNames.has(c.name)
-        ? <span className="text-[13px] text-app-muted">—</span>
+        ? <span className="text-[13px] text-app-muted">-</span>
         : scanning
           ? <Skeleton className="h-4 w-20" />
           : <VersionCheckCell container={c} />),

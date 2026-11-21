@@ -335,7 +335,7 @@ class TestSetServiceImage:
         assert changed is False
 
     def test_preserves_sequence_indentation(self):
-        # Standard 2-space compose with an indented list — only the image line
+        # Standard 2-space compose with an indented list - only the image line
         # may change; sequences must keep their original indentation.
         src = (
             "services:\n"

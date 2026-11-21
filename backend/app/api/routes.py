@@ -15,7 +15,9 @@ POST    /api/containers/{name}/update          Update a single container
 POST    /api/update/selected                   Update a list of containers by name
 POST    /api/update/all                        Update all outdated containers
 DELETE  /api/containers/{name}               Stop + remove a container (no recreate)
-GET     /api/health                            Health check — Docker connectivity + scheduler
+GET     /api/health                            Health check - Docker connectivity + scheduler
+GET     /api/settings                          Current settings with defaults and where each comes from
+PUT     /api/settings                          Save settings from the UI (applied without a restart)
 """
 
 import json
@@ -37,9 +39,14 @@ from app.services.update import UpdateService
 from app.services.scheduler import SchedulerService
 from app.services.compose import ComposeService
 from app.core.config import config
+from app.core.settings import SettingsValidationError, get_store as get_settings_store
 from app.version import __version__
 
 logger = logging.getLogger(__name__)
+
+# Apply values saved from the Settings page before the services below read
+# their configuration (e.g. the registry cache TTL).
+get_settings_store()
 
 # ---------------------------------------------------------------------------
 # Shared service instances
@@ -61,7 +68,7 @@ class ApiState:
     """Shared scan/update state.
 
     The busy flags must only be claimed via try_begin() and released via
-    end() — workers run in threads, and a bare check-then-set would let a
+    end() - workers run in threads, and a bare check-then-set would let a
     scan and an update start concurrently.
     """
 
@@ -105,9 +112,9 @@ class ContainerOut(BaseModel):
     update_status: str
     local_digest: Optional[str] = None
     # Why the last scan couldn't determine status (only set when update_status is
-    # 'error') — shown on hover over the Error pill in the UI.
+    # 'error') - shown on hover over the Error pill in the UI.
     error_message: Optional[str] = None
-    # Present when the container was created by Docker Compose — lets the UI offer
+    # Present when the container was created by Docker Compose - lets the UI offer
     # a compose update without a manual file upload/association.
     compose: Optional[dict] = None
 
@@ -188,7 +195,7 @@ class AssociationOut(BaseModel):
 # ---------------------------------------------------------------------------
 
 def _do_scan():
-    """Blocking scan worker — the caller must have claimed the 'scanning'
+    """Blocking scan worker - the caller must have claimed the 'scanning'
     flag via api_state.try_begin('scanning') before scheduling this."""
     try:
         _scan_work()
@@ -197,9 +204,9 @@ def _do_scan():
 
 
 def _scheduled_scan():
-    """Entry point for the APScheduler job — skips if a scan/update is busy."""
+    """Entry point for the APScheduler job - skips if a scan/update is busy."""
     if not api_state.try_begin("scanning"):
-        logger.info("Skipping scheduled scan — a scan or update is already running.")
+        logger.info("Skipping scheduled scan - a scan or update is already running.")
         return
     _do_scan()
 
@@ -214,7 +221,7 @@ def _scan_work():
 
     def check(c: ContainerInfo):
         if c.tag.startswith("sha256:"):
-            # Digest-pinned container — there is no tag to compare against.
+            # Digest-pinned container - there is no tag to compare against.
             c.latest_tag, c.update_status, c.error_message = None, "unknown", None
             return
         c.latest_tag, c.update_status, c.error_message = registry_svc.get_latest_tag(
@@ -244,7 +251,7 @@ def _scan_work():
     api_state.last_scan = datetime.now(timezone.utc).isoformat()
     outdated_infos = [c for c in containers if c.update_status == "update_available"]
     api_state.progress.append(
-        f"✅ Scan complete — {len(containers)} containers, {len(outdated_infos)} update(s) available."
+        f"✅ Scan complete - {len(containers)} containers, {len(outdated_infos)} update(s) available."
     )
     logger.info("[API] Scan complete: %d containers, %d updates.", len(containers), len(outdated_infos))
     _save_scan_results()
@@ -262,7 +269,7 @@ def _load_notified() -> set[str]:
         return set(json.loads(_NOTIFIED_FILE.read_text(encoding="utf-8")))
     except FileNotFoundError:
         return set()
-    except Exception as exc:  # corrupt/unreadable — start clean rather than crash
+    except Exception as exc:  # corrupt/unreadable - start clean rather than crash
         logger.warning("Could not load notified-updates state: %s", exc)
         return set()
 
@@ -282,7 +289,7 @@ _notified_updates: set[str] = _load_notified()
 # ---------------------------------------------------------------------------
 # api_state is in-memory, so a restart (of the process, container, or host)
 # loses every scan result and containers show as "unknown" until the next scan
-# — which the interval scheduler only fires SCAN_INTERVAL_HOURS later. We (A)
+# - which the interval scheduler only fires SCAN_INTERVAL_HOURS later. We (A)
 # run a scan on startup and (B) persist the last results so the UI shows the
 # last-known statuses immediately after a restart while the fresh scan runs.
 _SCAN_FILE: Path = config.COMPOSE_DIR / "scan_results.json"
@@ -358,7 +365,7 @@ def _maybe_notify(outdated: list[ContainerInfo]):
     if not config.email_configured():
         return
     def _short_digest(d: Optional[str]) -> str:
-        return d.replace("sha256:", "")[:12] if d else "—"
+        return d.replace("sha256:", "")[:12] if d else "-"
 
     payload = [
         {
@@ -375,7 +382,7 @@ def _maybe_notify(outdated: list[ContainerInfo]):
 
 
 def _do_update(containers: list[ContainerInfo]):
-    """Blocking update worker — the caller must have claimed the 'updating'
+    """Blocking update worker - the caller must have claimed the 'updating'
     flag via api_state.try_begin('updating') before scheduling this."""
     try:
         api_state.progress.clear()
@@ -414,7 +421,7 @@ def health():
         "version": __version__,
         "docker_connected": docker_svc.is_connected(),
         # False when no `docker compose` CLI is callable (e.g. a container image
-        # without the plugin) — the UI uses this to explain why compose updates
+        # without the plugin) - the UI uses this to explain why compose updates
         # are unavailable instead of failing on click.
         "compose_cli": compose_svc.compose_cli_available(),
         "scheduler_running": scheduler_svc.is_running(),
@@ -439,6 +446,45 @@ def send_test_email():
     """Send a test email to EMAIL_TO and return the result (or the SMTP error)."""
     ok, message = email_svc.send_test()
     return {"success": ok, "message": message}
+
+
+# ── GET/PUT /api/settings ────────────────────────────────────────────────────
+
+class SettingsIn(BaseModel):
+    # Only the settings being changed; secrets are left out to keep them.
+    values: dict[str, object] = {}
+    # Settings to stop overriding, so they follow the env file / default again.
+    reset: list[str] = []
+
+
+@router.get("/settings", summary="Current settings")
+def get_settings():
+    """Every setting with its current value, default and source
+    (saved / env / default). Secret values are never returned."""
+    return get_settings_store().view()
+
+
+@router.put("/settings", summary="Save settings")
+def put_settings(body: SettingsIn):
+    """Validate and save settings, then apply them without a restart."""
+    try:
+        changed = get_settings_store().update(body.values, body.reset)
+    except SettingsValidationError as exc:
+        raise HTTPException(status_code=422, detail={"errors": exc.errors})
+    except OSError as exc:
+        logger.error("Could not save settings: %s", exc)
+        raise HTTPException(status_code=500, detail=f"Could not save settings: {exc}")
+
+    if "SCAN_INTERVAL_HOURS" in changed and scheduler_svc.is_running():
+        scheduler_svc.update_interval(config.SCAN_INTERVAL_HOURS)
+    if "REGISTRY_CACHE_TTL" in changed:
+        registry_svc.set_cache_ttl(config.REGISTRY_CACHE_TTL)
+    if "HIDDEN_REPOSITORY" in changed and not (api_state.scanning or api_state.updating):
+        # Rediscover on the next list so hidden containers drop out and
+        # un-hidden ones come back (with their last saved scan result).
+        api_state.containers = []
+
+    return {"changed": sorted(changed), **get_settings_store().view()}
 
 
 # ── GET /api/containers ──────────────────────────────────────────────────────
@@ -482,7 +528,7 @@ def container_details(name: str):
     Return the captured configuration for a container (ports, mounts, network,
     labels, …) as used by the recreate-on-update flow.
 
-    Environment variables are returned as key names only — their values may
+    Environment variables are returned as key names only - their values may
     contain secrets and are deliberately never exposed over the API.
     """
     container = next((c for c in api_state.containers if c.name == name), None)
@@ -537,7 +583,7 @@ def container_details(name: str):
 def trigger_scan(background_tasks: BackgroundTasks):
     """
     Start a background scan of all containers against their registries.
-    Returns immediately — poll GET /api/scan/status for progress.
+    Returns immediately - poll GET /api/scan/status for progress.
     """
     if not api_state.try_begin("scanning"):
         raise HTTPException(status_code=409, detail="A scan or update is already in progress.")
@@ -629,7 +675,7 @@ def update_container(name: str):
 def update_selected(body: UpdateRequest, background_tasks: BackgroundTasks):
     """
     Start a background update for the given container names.
-    Returns immediately — poll GET /api/scan/status for progress.
+    Returns immediately - poll GET /api/scan/status for progress.
     """
     if not api_state.try_begin("updating"):
         raise HTTPException(status_code=409, detail="A scan or update is already running.")
@@ -806,7 +852,7 @@ def download_compose_file(file_id: str):
 
 # ── GET /api/compose/associations ────────────────────────────────────────────
 
-@router.get("/compose/associations", summary="List all container–service associations")
+@router.get("/compose/associations", summary="List all container-service associations")
 def list_associations():
     """Return all container → compose service mappings."""
     raw = compose_svc.all_associations()
@@ -877,7 +923,7 @@ def compose_diff(name: str):
     mode = target["mode"]
 
     if mode == "stored":
-        # Uploaded copy — editable: the UI may hand-edit and save it before update.
+        # Uploaded copy - editable: the UI may hand-edit and save it before update.
         cf = compose_svc.get_file(target["file_id"])
         current_content = cf.content
         filename = cf.filename
@@ -885,7 +931,7 @@ def compose_diff(name: str):
         editable = True
         current_image = cf.service_image(service_name) or container.image_name
     else:
-        # Label mode — read the container's real compose file (read-only preview).
+        # Label mode - read the container's real compose file (read-only preview).
         from pathlib import Path as _Path
         path = _Path(labels["config_files"][0])
         try:

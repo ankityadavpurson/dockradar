@@ -80,7 +80,7 @@ class UpdateService:
         stop_ok = self._docker.stop_container(container.name)
         result.add_step("Stop container", stop_ok)
         if not stop_ok:
-            logger.warning("Could not stop %s — attempting removal anyway.", container.name)
+            logger.warning("Could not stop %s - attempting removal anyway.", container.name)
 
         report("Removing container ...")
         remove_ok = self._docker.remove_container(container.name)
@@ -111,7 +111,7 @@ class UpdateService:
             report(f"✗ Recreate failed: {result.error}")
             return result
 
-        # Verify — recreate_container already polled for status, but do a
+        # Verify - recreate_container already polled for status, but do a
         # final check here to set result.success accurately.
         status = self._docker.get_container_status(container.name)
         started = status == "running"
@@ -122,7 +122,7 @@ class UpdateService:
             report(f"✓ Container updated and running → {full_image}")
         else:
             result.error = f"Container recreated but status is '{status}'"
-            report(f"⚠ Container recreated but status is '{status}' — check container logs")
+            report(f"⚠ Container recreated but status is '{status}' - check container logs")
 
         return result
 

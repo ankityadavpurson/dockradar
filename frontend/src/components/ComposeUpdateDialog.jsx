@@ -26,7 +26,7 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
     setError(null)
     try {
       // Only stored (uploaded) files are editable/savable, and only when the
-      // content actually changed — otherwise skip the write. In label mode the
+      // content actually changed - otherwise skip the write. In label mode the
       // backend runs compose against the real file (and rewrites the tag itself).
       if (diff.editable && diff.file_id && content !== diff.current_content) {
         await composeApi.updateContent(diff.file_id, content)
@@ -45,7 +45,7 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
 
   const title = (
     <span className="block min-w-0 normal-case tracking-normal">
-      <span className="block truncate">Compose update — {container.name}</span>
+      <span className="block truncate">Compose update - {container.name}</span>
       {diff && (
         <span className="block truncate font-mono text-xs font-normal text-app-muted">
           {diff.filename} · service: {diff.service_name}
@@ -59,7 +59,7 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
     <>
       <span className={`flex-1 text-[13px] ${cannotWrite ? 'text-red-500' : 'text-app-muted'}`}>
         {cannotWrite
-          ? 'DockRadar can’t write this compose file — grant its user write access, or mount it read-write.'
+          ? 'DockRadar can’t write this compose file - grant its user write access, or mount it read-write.'
           : diff?.has_change
             ? (diff.editable === false
                 ? 'The tag in the container’s own compose file will be updated (backup kept), then pull + up -d.'
@@ -96,7 +96,7 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
             </div>
             {!diff.has_change && (
               <div className="mt-1 text-[13px] text-app-muted">
-                ✓ Image tag is already up to date — <code>pull + up -d</code> will refresh the image without file changes.
+                ✓ Image tag is already up to date - <code>pull + up -d</code> will refresh the image without file changes.
               </div>
             )}
             {diff.has_change && diff.editable === false && (

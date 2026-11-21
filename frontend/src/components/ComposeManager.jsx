@@ -256,7 +256,7 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
         />
       )}
 
-      {/* Inline editor — shown when editing a file */}
+      {/* Inline editor - shown when editing a file */}
       {editingFile ? (
         <ComposeFileEditor
           file={editingFile}
@@ -265,7 +265,7 @@ export default function ComposeManager({ containers, onClose, lastUpdatedFile })
         />
       ) : (
         <>
-          {/* Drop zone — keyed so the picked-file list resets after each upload */}
+          {/* Drop zone - keyed so the picked-file list resets after each upload */}
           <FileUpload
             key={uploadKey}
             label={uploading ? 'Uploading…' : 'Drop compose files here, or select to browse (.yml / .yaml)'}

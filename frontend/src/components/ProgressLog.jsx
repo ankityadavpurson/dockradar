@@ -30,7 +30,7 @@ const ProgressLog = ({ messages, scanning, updating, visible = false, onDismiss 
     return () => window.removeEventListener('keydown', onKey)
   }, [fullscreen])
 
-  // Only shown when the user started a scan/update (visible) — never on a
+  // Only shown when the user started a scan/update (visible) - never on a
   // scan merely detected on page load.
   if (!visible || (!active && messages.length === 0)) return null
 
@@ -45,7 +45,7 @@ const ProgressLog = ({ messages, scanning, updating, visible = false, onDismiss 
         </Button>
       )}
 
-      {/* Non-modal: no backdrop — the page stays fully interactive. */}
+      {/* Non-modal: no backdrop - the page stays fully interactive. */}
       {open && (
         <div
           role="complementary" aria-label="Progress log"

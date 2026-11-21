@@ -41,7 +41,7 @@ export default function ContainerDetailDrawer({
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
 
-  // Action availability — driven by the list container (label compose +
+  // Action availability - driven by the list container (label compose +
   // update_status) and the stored association, not the details fetch.
   const updateAvailable = container?.update_status === 'update_available'
   const hasCompose = !!association || !!container?.compose
@@ -59,7 +59,7 @@ export default function ContainerDetailDrawer({
   const labels = data ? Object.entries(data.labels || {}) : []
   const networks = data?.networks || []
 
-  // Collapsed-state previews — one glance still tells the story.
+  // Collapsed-state previews - one glance still tells the story.
   const portPreview = ports.map(p => p.split(' → ')[0]?.split(':').pop()).filter(Boolean).join(' · ')
   const mountPreview = mounts.map(m => m.split(':')[1] || m.split(':')[0]).join(' · ')
   const envPreview = envKeys.slice(0, 3).join(' · ') + (envKeys.length > 3 ? ' …' : '')
@@ -115,11 +115,11 @@ export default function ContainerDetailDrawer({
               ))}
             </div>
           )}
-        <span className="text-xs text-app-muted">Values are hidden — they may contain secrets.</span>
+        <span className="text-xs text-app-muted">Values are hidden - they may contain secrets.</span>
       </>),
     }),
     section('network', <NetworkIcon {...ICON} />, 'Network', {
-      preview: netPreview || '—',
+      preview: netPreview || '-',
       content: (<>
         <KV k="mode" v={data.network_mode} />
         <KV k="networks" v={networks.join(', ')} />
@@ -128,7 +128,7 @@ export default function ContainerDetailDrawer({
       </>),
     }),
     (data.command || data.entrypoint || data.user || data.working_dir) && section('process', <TerminalIcon {...ICON} />, 'Process', {
-      preview: procPreview || '—',
+      preview: procPreview || '-',
       content: (<>
         <KV k="entrypoint" v={Array.isArray(data.entrypoint) ? data.entrypoint.join(' ') : data.entrypoint} />
         <KV k="command" v={Array.isArray(data.command) ? data.command.join(' ') : data.command} />
@@ -194,7 +194,7 @@ export default function ContainerDetailDrawer({
           <span className="text-app-soft">Preserved:</span> ports, bind mounts, env vars,
           restart policy, network mode, labels, command/entrypoint.{' '}
           <span className="text-app-soft">Not preserved:</span> named volumes attached
-          via <code>--mount</code>, multiple networks, and advanced options — use a
+          via <code>--mount</code>, multiple networks, and advanced options - use a
           compose association for containers that rely on them.
         </p>
       ),
@@ -224,7 +224,7 @@ export default function ContainerDetailDrawer({
 
         {/* Body */}
         <div className="flex flex-1 flex-col gap-2 overflow-y-auto px-6 pb-6">
-          {/* Actions — update (direct / compose) and compose file link/edit */}
+          {/* Actions - update (direct / compose) and compose file link/edit */}
           {container && (onDirectUpdate || onLinkCompose) && (
             <div className="mb-1 flex shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center [&>*]:w-full sm:[&>*]:w-auto">
               {updateAvailable && hasCompose && onComposeUpdate && (

@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react'
-import { Alert } from 'xedonium'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Alert, Button, KeyIcon } from 'xedonium'
 import radarLoader from '../assets/radar-loader.svg'
+import { AUTH_REQUIRED_EVENT } from './api/client'
+import ApiKeyPrompt from './components/ApiKeyPrompt'
 import ComposeFileEditor from './components/ComposeFileEditor'
 import ComposeLinkDialog from './components/ComposeLinkDialog'
 import ComposeManager from './components/ComposeManager'
@@ -13,9 +15,13 @@ import Header from './components/Header'
 import InfoBar from './components/InfoBar'
 import Modal from './components/Modal'
 import ProgressLog from './components/ProgressLog'
+import SettingsPage from './components/SettingsPage'
 import Toast from './components/Toast'
 import Toolbar from './components/Toolbar'
 import { useContainers } from './hooks/useContainers'
+
+const SETTINGS_HASH = '#/settings'
+const pageFromHash = () => (window.location.hash === SETTINGS_HASH ? 'settings' : 'home')
 
 const App = () => {
   const {
@@ -24,8 +30,53 @@ const App = () => {
     triggerScan, updateOne, updateSelected, updateAll, deleteContainer, testEmail,
     toggleSelect, selectAll, clearSelection,
     associations, fetchAssociations, composeUpdateOne,
-    logVisible, dismissLog,
+    logVisible, dismissLog, fetchHealth, fetchContainers, notify,
   } = useContainers()
+
+  // ── Page (hash route: #/settings) ─────────────────────────────────────────
+  const [page, setPage] = useState(pageFromHash)
+  const settingsDirtyRef = useRef(false)
+  const [pendingNav, setPendingNav] = useState(null)   // hash waiting on "discard changes?"
+
+  useEffect(() => {
+    const onHashChange = () => {
+      const next = pageFromHash()
+      if (page === 'settings' && next !== 'settings' && settingsDirtyRef.current) {
+        // Stay on Settings and ask first; replaceState doesn't fire hashchange.
+        setPendingNav(window.location.hash || '#/')
+        window.history.replaceState(null, '', SETTINGS_HASH)
+        return
+      }
+      setPage(next)
+    }
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [page])
+
+  useEffect(() => { window.scrollTo(0, 0) }, [page])
+
+  // ── API key prompt - opened by the first 401 from the API ─────────────────
+  const [authNeeded, setAuthNeeded] = useState(null)     // null | { hadKey }
+  const [showKeyPrompt, setShowKeyPrompt] = useState(false)
+  const keyPromptDismissedRef = useRef(false)
+
+  useEffect(() => {
+    const onAuthRequired = (e) => {
+      setAuthNeeded(prev => prev ?? { hadKey: !!e.detail?.hadKey })
+      // After "Not now", later 401s don't reopen it; the banner offers it again.
+      if (!keyPromptDismissedRef.current) setShowKeyPrompt(true)
+    }
+    window.addEventListener(AUTH_REQUIRED_EVENT, onAuthRequired)
+    return () => window.removeEventListener(AUTH_REQUIRED_EVENT, onAuthRequired)
+  }, [])
+
+  const openSettings = useCallback(() => { window.location.hash = SETTINGS_HASH }, [])
+  const openHome = useCallback(() => { window.location.hash = '#/' }, [])
+  const setSettingsDirty = useCallback((dirty) => { settingsDirtyRef.current = dirty }, [])
+  const onSettingsSaved = useCallback((changed) => {
+    fetchHealth()
+    if (changed.includes('HIDDEN_REPOSITORY')) fetchContainers()
+  }, [fetchHealth, fetchContainers])
 
   const [search, setSearch] = useState('')
   const [filterOutdated, setFilterOutdated] = useState(false)
@@ -86,7 +137,7 @@ const App = () => {
 
       {health && !health.docker_connected && (
         <Alert tone="danger" title="Docker unavailable.">
-          Can't reach the Docker daemon. DockRadar can't scan or update containers until it reconnects — check that Docker is running and the socket (or DOCKER_HOST) is accessible.
+          Can't reach the Docker daemon. DockRadar can't scan or update containers until it reconnects - check that Docker is running and the socket (or DOCKER_HOST) is accessible.
         </Alert>
       )}
 
@@ -95,13 +146,39 @@ const App = () => {
         health={health}
         containers={containers}
         scanStatus={scanStatus}
+        page={page}
+        onOpenSettings={openSettings}
+        onOpenHome={openHome}
       />
 
-      {/* Main content */}
+      {page === 'settings' ? (
+        <main className="mx-auto max-w-[1400px] px-4 pt-4 md:px-6 md:pt-6">
+          <SettingsPage
+            onBack={openHome}
+            onSaved={onSettingsSaved}
+            onTestEmail={testEmail}
+            notify={notify}
+            onDirtyChange={setSettingsDirty}
+          />
+        </main>
+      ) : (
       <main className="mx-auto max-w-[1400px] px-4 py-4 md:px-6 md:py-6">
 
-        {/* Connection error */}
-        {error && (
+        {/* API key missing or rejected */}
+        {authNeeded && !showKeyPrompt && (
+          <Alert tone="warning" className="mb-4" title="API key required.">
+            <div className="flex flex-wrap items-center gap-3">
+              <span>This DockRadar is protected with an API key, so containers can't be loaded without it.</span>
+              <Button variant="secondary" onClick={() => setShowKeyPrompt(true)}
+                className="inline-flex items-center gap-2">
+                <KeyIcon className="h-4 w-4 shrink-0" /> Enter API key
+              </Button>
+            </div>
+          </Alert>
+        )}
+
+        {/* Connection error (the API key banner above already explains a 401) */}
+        {error && !authNeeded && (
           <Alert tone="danger" className="mb-4">
             <span className="break-words">{error}</span>
           </Alert>
@@ -128,7 +205,7 @@ const App = () => {
         />
 
         {/* Info bar */}
-        <InfoBar health={health} onTestEmail={testEmail} />
+        <InfoBar health={health} onTestEmail={testEmail} onOpenSettings={openSettings} />
 
         {/* Container table */}
         <div className="overflow-hidden border border-app-border bg-app-card">
@@ -160,7 +237,7 @@ const App = () => {
           />
         </div>
 
-        {/* Progress log — only for user-initiated scans/updates, not on load */}
+        {/* Progress log - only for user-initiated scans/updates, not on load */}
         <ProgressLog
           messages={scanStatus?.progress ?? []}
           scanning={scanStatus?.scanning}
@@ -169,6 +246,7 @@ const App = () => {
           onDismiss={dismissLog}
         />
       </main>
+      )}
 
       {/* Footer */}
       <footer className="max-w-[1400px] mx-auto px-4 md:px-6 py-4 text-center text-xs text-app-muted">
@@ -177,13 +255,36 @@ const App = () => {
 
       {/* ── Dialogs ── */}
 
+      {showKeyPrompt && (
+        <ApiKeyPrompt
+          hadKey={authNeeded?.hadKey}
+          onClose={() => { keyPromptDismissedRef.current = true; setShowKeyPrompt(false) }}
+        />
+      )}
+
+      {/* Leaving Settings with unsaved changes */}
+      <ConfirmDialog
+        open={!!pendingNav}
+        title="Discard unsaved changes?"
+        message="Your changes to the settings haven't been saved."
+        confirmLabel="Discard"
+        danger
+        onConfirm={() => {
+          const target = pendingNav
+          settingsDirtyRef.current = false
+          setPendingNav(null)
+          window.location.hash = target
+        }}
+        onCancel={() => setPendingNav(null)}
+      />
+
       {/* Update single */}
       <ConfirmDialog
         open={!!confirmUpdate}
         title={`Update ${confirmUpdate?.name}?`}
         message={`This will stop, remove, and recreate the container using the latest image.
 Preserved: ports, bind mounts, env vars, restart policy, network mode, labels.
-Not preserved: named volumes attached via --mount, extra networks, and advanced options — use a compose association for those containers.`}
+Not preserved: named volumes attached via --mount, extra networks, and advanced options - use a compose association for those containers.`}
         confirmLabel="Update"
         onConfirm={() => { updateOne(confirmUpdate.name); setConfirmUpdate(null) }}
         onCancel={() => setConfirmUpdate(null)}
@@ -214,13 +315,13 @@ Not preserved: named volumes attached via --mount, extra networks, and advanced 
       <ConfirmDialog
         open={confirmSel}
         title={`Update ${selectedCount} selected container(s)?`}
-        message="This will stop, remove, and recreate every selected container with its latest image — including containers that are already up to date."
+        message="This will stop, remove, and recreate every selected container with its latest image - including containers that are already up to date."
         confirmLabel="Update Selected"
         onConfirm={() => { updateSelected(); setConfirmSel(false) }}
         onCancel={() => setConfirmSel(false)}
       />
 
-      {/* Compose update — edit file then run */}
+      {/* Compose update - edit file then run */}
       {confirmCompose && (
         <ComposeUpdateDialog
           container={confirmCompose}

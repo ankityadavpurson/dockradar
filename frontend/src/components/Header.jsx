@@ -1,4 +1,4 @@
-import { Divider, ThemeToggle } from 'xedonium'
+import { Button, Divider, SettingsIcon, ThemeToggle } from 'xedonium'
 import logo from '../../assets/logo.svg'
 
 /** "in 5h 12m" style countdown to a future date. */
@@ -13,17 +13,17 @@ function relativeTime(date) {
   return `in ${Math.floor(hours / 24)}d ${hours % 24}h`
 }
 
-export default function Header({ health, containers, scanStatus }) {
+export default function Header({ health, containers, scanStatus, page, onOpenSettings, onOpenHome }) {
   const total = containers.length
   const running = containers.filter(c => c.status === 'running').length
   const outdated = containers.filter(c => c.update_status === 'update_available').length
 
-  // scanStatus only exists once a scan has been polled — fall back to the
+  // scanStatus only exists once a scan has been polled - fall back to the
   // health endpoint, which also reports the next scheduled run.
   const nextScanRaw = scanStatus?.next_scan ?? health?.next_scan
   const nextScanDate = nextScanRaw ? new Date(nextScanRaw) : null
   const nextScanValid = nextScanDate && !Number.isNaN(nextScanDate.getTime())
-  const nextScanLabel = nextScanValid ? relativeTime(nextScanDate) : '—'
+  const nextScanLabel = nextScanValid ? relativeTime(nextScanDate) : '-'
   const nextScanTitle = nextScanValid ? nextScanDate.toLocaleString() : undefined
 
   const connected = !!health?.docker_connected
@@ -35,14 +35,15 @@ export default function Header({ health, containers, scanStatus }) {
       <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center gap-3 px-4 md:gap-5 md:px-6">
 
         {/* Logo */}
-        <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
+        <a href="#/" onClick={e => { if (onOpenHome) { e.preventDefault(); onOpenHome() } }}
+          className="flex shrink-0 items-center gap-2 sm:gap-2.5" aria-label="DockRadar dashboard">
           <img src={logo} alt="" className="h-6 w-6 sm:h-7 sm:w-7" />
           <span className="text-[15px] font-semibold text-app-strong sm:text-base">DockRadar</span>
-        </div>
+        </a>
 
         {divider('hidden sm:block')}
 
-        {/* Stat chips — "running" hides on mobile to save space */}
+        {/* Stat chips - "running" hides on mobile to save space */}
         <div className="flex shrink-0 items-center gap-3 whitespace-nowrap text-sm sm:gap-5">
           <StatChip label="containers" value={total} />
           <StatChip label="running" value={running} className="hidden sm:flex" />
@@ -68,6 +69,17 @@ export default function Header({ health, containers, scanStatus }) {
         </span>
 
         {divider('hidden sm:block')}
+
+        {onOpenSettings && (
+          <Button variant="flat" onClick={onOpenSettings}
+            aria-label="Settings" aria-current={page === 'settings' ? 'page' : undefined}
+            tooltip="Settings"
+            className={`!p-2 ${page === 'settings'
+              ? '!bg-app-text/10 !text-app-text'
+              : '!text-app-muted hover:!text-app-text'}`}>
+            <SettingsIcon className="h-[18px] w-[18px] shrink-0" />
+          </Button>
+        )}
 
         <ThemeToggle variant="toolbar" />
       </div>
