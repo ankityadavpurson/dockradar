@@ -9,7 +9,65 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [13.19.1] - 2026-10-05
+## [13.21.2] — 2026-11-01
+
+### Fixed
+- enhance installation instructions with styled bulleted lists
+
+## [13.21.1] — 2026-10-31
+
+### Changed
+- update workflow references from release.yml to pipeline.yml in documentation and code comments
+
+## [13.21.0] — 2026-10-31
+
+### Added
+- add landing page with Firebase Hosting deploy
+- add blog post on automated versioning and release pipeline
+
+## [13.20.0] — 2026-10-19
+
+### Added
+- replace PNG assets with SVG versions for favicon and logo; add radar loader SVG
+
+### Changed
+- Update SVG assets and loading animation in the frontend
+- replace favicon.svg with favicon.png and update logo; bump xedonium to version 1.15.0
+
+## [13.19.7] — 2026-10-07
+
+### Changed
+- update xedonium dependency to version 1.7.0 and adjust component layout
+
+## [13.19.6] — 2026-10-07
+
+### Changed
+- update xedonium dependency to version 1.6.0
+
+## [13.19.5] — 2026-10-07
+
+### Changed
+- update CI workflows to use ubuntu-24.04 for consistency
+
+## [13.19.4] — 2026-10-07
+
+### Changed
+- streamline OCI metadata handling in Dockerfile and workflows
+
+## [13.19.3] — 2026-10-07
+
+### Changed
+- Add OCI image metadata to Dockerfile
+
+## [13.19.2] — 2026-10-06
+
+### Changed
+- replace div elements with Divider components for consistent styling in Header, InfoBar, and Toolbar
+- remove unnecessary border styles from InfoBar and Toolbar components
+- Refactor code structure for improved readability and maintainability
+- replace lucide-react icons with xedonium components and remove theme management
+
+## [13.19.1] — 2026-10-05
 
 - Maintenance release.
 
@@ -247,7 +305,17 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.1...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.21.2...HEAD
+[13.21.2]: https://github.com/ankityadavpurson/dockradar/compare/v13.21.1...v13.21.2
+[13.21.1]: https://github.com/ankityadavpurson/dockradar/compare/v13.21.0...v13.21.1
+[13.21.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.20.0...v13.21.0
+[13.20.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.7...v13.20.0
+[13.19.7]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.6...v13.19.7
+[13.19.6]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.5...v13.19.6
+[13.19.5]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.4...v13.19.5
+[13.19.4]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.3...v13.19.4
+[13.19.3]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.2...v13.19.3
+[13.19.2]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.1...v13.19.2
 [13.19.1]: https://github.com/ankityadavpurson/dockradar/compare/v13.19.0...v13.19.1
 [13.19.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.18.0...v13.19.0
 [13.18.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.17.0...v13.18.0
