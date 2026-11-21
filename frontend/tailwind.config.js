@@ -2,7 +2,7 @@ import xedonium from 'xedonium/tailwind-preset'
 
 /** @type {import('tailwindcss').Config} */
 
-// System type stacks — resolved from the OS, no web-font request.
+// System type stacks - resolved from the OS, no web-font request.
 const segoe = [
   '"Segoe UI Variable Text"', '"Segoe UI Variable"', '"Segoe UI"', 'system-ui',
   '-apple-system', 'BlinkMacSystemFont', 'Roboto', '"Helvetica Neue"', 'sans-serif',

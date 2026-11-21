@@ -62,7 +62,7 @@ class ComposeFile:
             "file_id":   self.file_id,
             "filename":  self.filename,
             "services":  service_names,
-            "label":     self.filename,   # display label — same as filename, FE can add suffix
+            "label":     self.filename,   # display label - same as filename, FE can add suffix
         }
 
 
@@ -72,7 +72,7 @@ class ComposeService:
 
     Compose files are persisted to disk under COMPOSE_STORE_DIR so they
     survive server restarts. Associations between container names and compose
-    services are kept in memory (reset on restart) — intentionally lightweight,
+    services are kept in memory (reset on restart) - intentionally lightweight,
     since the user can re-associate after a restart.
     """
 
@@ -157,7 +157,7 @@ class ComposeService:
         try:
             parsed = yaml.safe_load(content)
             if not isinstance(parsed, dict) or "services" not in parsed:
-                raise ValueError("File does not contain a 'services' key — is this a valid compose file?")
+                raise ValueError("File does not contain a 'services' key - is this a valid compose file?")
         except yaml.YAMLError as exc:
             raise ValueError(f"Invalid YAML: {exc}") from exc
 
@@ -231,7 +231,7 @@ class ComposeService:
         try:
             parsed = yaml.safe_load(new_content)
             if not isinstance(parsed, dict) or "services" not in parsed:
-                raise ValueError("File does not contain a 'services' key — is this a valid compose file?")
+                raise ValueError("File does not contain a 'services' key - is this a valid compose file?")
         except yaml.YAMLError as exc:
             raise ValueError(f"Invalid YAML: {exc}") from exc
 
@@ -314,7 +314,7 @@ class ComposeService:
         """Decide how to run compose for a container.
 
         Prefers the container's **own** compose project (from Docker Compose
-        labels) when its config file(s) are readable by this process — that runs
+        labels) when its config file(s) are readable by this process - that runs
         against the real file and project name, avoiding the drift and
         network/volume-namespacing problems of an uploaded copy. Falls back to a
         stored (uploaded + associated) file otherwise.
@@ -322,7 +322,7 @@ class ComposeService:
         Returns ``{mode, service, flags, label}`` or None when neither is usable.
         ``flags`` is the compose flag list (``-p/--project-directory/-f`` …).
         """
-        # 1) Label mode — real file, real project, no upload needed.
+        # 1) Label mode - real file, real project, no upload needed.
         if labels and all(Path(f).is_file() for f in labels["config_files"]):
             flags = ["-p", labels["project"]]
             if labels.get("working_dir"):
@@ -336,7 +336,7 @@ class ComposeService:
                 "files": list(labels["config_files"]),
                 "label": f"{Path(labels['config_files'][0]).name} (project {labels['project']})",
             }
-        # 2) Stored-copy mode — uploaded file + association.
+        # 2) Stored-copy mode - uploaded file + association.
         assoc = self._associations.get(container_name)
         if assoc is not None:
             file_id, service_name = assoc
@@ -361,7 +361,7 @@ class ComposeService:
     ) -> tuple[bool, str]:
         """
         Run `docker compose pull <service>` then `docker compose up -d <service>`
-        for the container's compose service — using its own project labels when
+        for the container's compose service - using its own project labels when
         available, else a stored/associated file.
 
         In **label mode**, when ``target_image`` is given and the compose file
@@ -395,7 +395,7 @@ class ComposeService:
                 "Docker Compose on the host."
             )
 
-        report(f"Update mode: {target['mode']} — {target['label']}")
+        report(f"Update mode: {target['mode']} - {target['label']}")
         report(f"Service: {target['service']}")
 
         # ── P4: move a pinned tag by editing the real file (label mode only) ──
@@ -433,7 +433,7 @@ class ComposeService:
         # Prefer an in-place `up -d`: compose stops/recreates the container it
         # manages, so the old one keeps running if this fails for a config
         # reason. Only when compose refuses because the name is already taken by
-        # a container it did NOT create do we stop+remove and retry — that
+        # a container it did NOT create do we stop+remove and retry - that
         # name-conflict is the sole reason the manual removal ever existed (it
         # cannot happen in label mode, where the project owns the container).
         up_args = ["up", "-d", "--no-deps", service_name]
@@ -441,14 +441,14 @@ class ComposeService:
         up_ok, up_out = self._run_compose(compose_bin, flags, up_args, line_cb=report)
 
         if not up_ok and self._is_name_conflict(up_out):
-            report("Container was created outside this compose project — replacing it...")
+            report("Container was created outside this compose project - replacing it...")
             self._docker_stop_rm(container_name)
             up_ok, up_out = self._run_compose(compose_bin, flags, up_args, line_cb=report)
 
         if not up_ok:
             # The service may now be down. Try to bring the previous container
             # back (it survives a failed in-place up, or a stopped state).
-            report("✗ compose up failed — attempting to restore the previous container...")
+            report("✗ compose up failed - attempting to restore the previous container...")
             if self._docker_start(container_name):
                 report(f"Restored '{container_name}' on its previous image.")
                 return False, (
@@ -456,7 +456,7 @@ class ComposeService:
                     f"(still on the old image).\n{up_out}"
                 )
             return False, (
-                "compose up failed and the service is DOWN — manual intervention "
+                "compose up failed and the service is DOWN - manual intervention "
                 f"needed.\n{up_out}"
             )
 
@@ -489,7 +489,7 @@ class ComposeService:
 
     @staticmethod
     def _docker_start(container_name: str) -> bool:
-        """Attempt to (re)start an existing container. Returns True on success —
+        """Attempt to (re)start an existing container. Returns True on success -
         used to restore the previous container after a failed update."""
         try:
             result = subprocess.run(
@@ -537,7 +537,7 @@ class ComposeService:
         yaml_rt.preserve_quotes = True
         # Match the standard compose indentation (2-space nesting, list dash
         # offset 2) so round-tripping doesn't re-indent sequences (ports,
-        # volumes, …) and produce spurious diffs — only the image line changes.
+        # volumes, …) and produce spurious diffs - only the image line changes.
         yaml_rt.indent(mapping=2, sequence=4, offset=2)
         try:
             data = yaml_rt.load(content)
@@ -600,7 +600,7 @@ class ComposeService:
         return None
 
     # Cache the (relatively expensive) compose-binary probe for the process
-    # lifetime — a restart re-checks, which is enough to pick up an install.
+    # lifetime - a restart re-checks, which is enough to pick up an install.
     _compose_bin_cache: "list[str] | bool" = False  # False = not yet probed
 
     @classmethod
@@ -611,7 +611,7 @@ class ComposeService:
 
     @classmethod
     def compose_cli_available(cls) -> bool:
-        """True if a `docker compose` (or `docker-compose`) CLI is callable —
+        """True if a `docker compose` (or `docker-compose`) CLI is callable -
         e.g. false inside a container image that doesn't ship it."""
         return cls._compose_bin() is not None
 

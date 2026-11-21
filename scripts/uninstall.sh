@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────
-#  uninstall.sh — removes a native DockRadar install (Linux and macOS)
+#  uninstall.sh - removes a native DockRadar install (Linux and macOS)
 #
 #  Undoes what install.sh set up: the systemd service on Linux, the
 #  per-user LaunchAgent on macOS, and the application files.
@@ -108,7 +108,7 @@ if [ "$PURGE" = true ]; then
             warn "This permanently deletes $APP_ROOT (including config and compose files) and $LOG_DIR."
         fi
         read -r -p "  Continue? [y/N]: " answer </dev/tty
-        case "$answer" in [yY]*) ;; *) info "Cancelled — nothing was removed."; exit 0 ;; esac
+        case "$answer" in [yY]*) ;; *) info "Cancelled - nothing was removed."; exit 0 ;; esac
     fi
 fi
 

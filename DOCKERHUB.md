@@ -1,8 +1,8 @@
 # DockRadar
 
-**Know when your containers are out of date — and update them in one click.**
+**Know when your containers are out of date - and update them in one click.**
 
-DockRadar is a self-hosted dashboard that watches the Docker images running on your host. It periodically checks each container's image against its upstream registry, shows which ones have a newer tag or digest available, and lets you apply updates — one container, a selected few, or all at once. Compose-managed containers are updated by editing and re-running their compose file; the rest are recreated from their captured configuration. Optional email alerts tell you when something needs attention.
+DockRadar is a self-hosted dashboard that watches the Docker images running on your host. It periodically checks each container's image against its upstream registry, shows which ones have a newer tag or digest available, and lets you apply updates - one container, a selected few, or all at once. Compose-managed containers are updated by editing and re-running their compose file; the rest are recreated from their captured configuration. Optional email alerts tell you when something needs attention.
 
 It runs as a single container next to your Docker socket.
 
@@ -45,7 +45,7 @@ docker run -d --name dockradar \
   ankityadavpurson/dockradar:latest
 ```
 
-`--env-file` is optional — without it DockRadar starts on sensible defaults. Then open `http://<your-host>:8086`.
+`--env-file` is optional - without it DockRadar starts on sensible defaults. Then open `http://<your-host>:8086`.
 
 ### Docker Compose
 
@@ -104,11 +104,7 @@ All variables are optional. The full annotated list is in [`.env.example`](https
 
 **Email with Gmail:** use an [App Password](https://myaccount.google.com/apppasswords) (requires 2-Step Verification), not your account password. After starting the container, click the ⓘ icon next to **Email** in the UI → **Send test email** to verify.
 
-**API key in the UI:** store the key once from the browser console:
-
-```js
-localStorage.setItem('dockradar_api_key', '<your key>')
-```
+**API key in the UI:** when `API_KEY` is set, the UI asks for the key once and keeps it in the browser. You can also set or generate a key on the **Settings** page (gear icon).
 
 ## Update limitations
 
@@ -118,7 +114,7 @@ Containers not linked to a compose file are recreated from a captured subset of 
 
 ## Security
 
-Mounting the Docker socket gives DockRadar full control of the Docker host — treat it as a privileged service. It has no user accounts.
+Mounting the Docker socket gives DockRadar full control of the Docker host - treat it as a privileged service. It has no user accounts.
 
 - Set `API_KEY` to protect the API.
 - Do not expose DockRadar directly to the internet. Put it behind a reverse proxy with authentication and TLS.

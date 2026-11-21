@@ -8,7 +8,7 @@ import app.api.routes as routes
 
 
 def _container(name, latest_tag):
-    """Minimal stand-in for ContainerInfo — only the fields _maybe_notify reads."""
+    """Minimal stand-in for ContainerInfo - only the fields _maybe_notify reads."""
     return SimpleNamespace(
         name=name,
         latest_tag=latest_tag,
@@ -68,7 +68,7 @@ class TestMaybeNotify:
         # Simulate a restart: fresh in-memory set loaded from disk.
         monkeypatch.setattr(routes, "_notified_updates", routes._load_notified())
 
-        # Same outdated set — must NOT email again.
+        # Same outdated set - must NOT email again.
         routes._maybe_notify([_container("nginx", "1.27")])
         assert len(calls) == 1
 

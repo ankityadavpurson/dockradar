@@ -1,6 +1,6 @@
 @echo off
 :: ─────────────────────────────────────────────────────────────
-::  start.bat — DockRadar launcher (Windows CMD)
+::  start.bat - DockRadar launcher (Windows CMD)
 ::  Starts both the backend (FastAPI) and frontend (Vite dev server)
 :: ─────────────────────────────────────────────────────────────
 
@@ -38,7 +38,7 @@ if not exist "%VENV_DIR%\" (
     if errorlevel 1 ( echo [ERROR] Failed to create venv. & pause & exit /b 1 )
     echo [DockRadar] Virtual environment created.
 ) else (
-    echo [DockRadar] Virtual environment exists — skipping.
+    echo [DockRadar] Virtual environment exists - skipping.
 )
 
 call "%VENV_DIR%\Scripts\activate.bat"
@@ -60,7 +60,7 @@ if "%NEEDS_INSTALL%"=="1" (
     type nul > "%MARKER%"
     echo [DockRadar] Python dependencies installed.
 ) else (
-    echo [DockRadar] Python dependencies up to date — skipping.
+    echo [DockRadar] Python dependencies up to date - skipping.
 )
 
 :: ── Frontend dependencies (yarn) ─────────────────────────────
@@ -84,17 +84,17 @@ if "%NEEDS_YARN%"=="1" (
     type nul > "%YARN_MARKER%"
     echo [DockRadar] Frontend dependencies installed.
 ) else (
-    echo [DockRadar] Frontend dependencies up to date — skipping.
+    echo [DockRadar] Frontend dependencies up to date - skipping.
 )
 
 :: ── .env ──────────────────────────────────────────────────────
 if not exist "%ENV_FILE%" (
     if exist "%ENV_EXAMPLE%" (
         copy "%ENV_EXAMPLE%" "%ENV_FILE%" >nul
-        echo [DockRadar] .env created from .env.example — review it and re-run.
+        echo [DockRadar] .env created from .env.example - review it and re-run.
         pause & exit /b 0
     ) else (
-        echo [WARNING] .env not found — proceeding without it.
+        echo [WARNING] .env not found - proceeding without it.
     )
 )
 

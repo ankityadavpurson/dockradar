@@ -1,5 +1,8 @@
 import { useMemo } from 'react'
-import { ArrowUpCircleIcon, Badge, BoxIcon, Button, DataGrid, FileCode2Icon, Loader, ShieldCheckIcon, Skeleton, TagIcon } from 'xedonium'
+import {
+  ArrowUpCircleIcon, Badge, BoxIcon, Button, DataGrid, FileCode2Icon, Loader, ShieldCheckIcon,
+  Skeleton, TagIcon, TextLink, Chip, Flex, Stack,
+} from 'xedonium'
 import CheckBox from './CheckBox'
 import RowMenu from './RowMenu'
 
@@ -29,7 +32,7 @@ function shortDigest(digest) {
 function Pill({ color, children, className = '', ...rest }) {
   return (
     <Badge color={color} className={className} {...rest}
-      badgeContent={<span className="inline-flex items-center gap-1 px-1">{children}</span>} />
+      badgeContent={<Flex as="span" inline align="center" gap={1} className="px-1">{children}</Flex>} />
   )
 }
 
@@ -49,10 +52,9 @@ function TagLabel({ container: c }) {
     return <span className="inline-block font-mono text-[13px] text-app-muted">latest</span>
   }
   return (
-    <span className="inline-block w-fit border border-app-border px-1.5 py-0.5 font-mono text-[13px] text-app-text"
-      title={isDigestTag ? c.tag : undefined}>
+    <Chip size="sm" className="w-fit font-mono !text-[13px]" title={isDigestTag ? c.tag : undefined}>
       {label}
-    </span>
+    </Chip>
   )
 }
 
@@ -61,10 +63,10 @@ function VersionCheckCell({ container }) {
   const tagsMatch = !latest_tag || latest_tag === tag || latest_tag === 'unknown'
 
   if (update_status === 'unknown' || update_status === 'error') {
-    return <span className="text-app-muted">—</span>
+    return <span className="text-app-muted">-</span>
   }
 
-  // A newer tag exists — the genuinely interesting tag-level state.
+  // A newer tag exists - the genuinely interesting tag-level state.
   if (!tagsMatch) {
     return <Pill color="warning" title={`Newer tag available: ${latest_tag}`}>
       <TagIcon className="h-3 w-3 shrink-0" />→ {latest_tag}
@@ -103,7 +105,7 @@ function UpdateButton({ c, hasCompose, assoc, composeUnavailable, isBusy, onConf
   return hasCompose ? (
     <Button variant="secondary" disabled={isBusy || composeUnavailable}
       onClick={() => onComposeUpdate && onComposeUpdate(c)}
-      className="inline-flex items-center gap-1.5 !px-2 !py-1"
+      className="!px-2 !py-1"
       tooltip={composeUnavailable
         ? 'Compose CLI not available in this deployment'
         : `Update via compose: ${composeSvc}`}>
@@ -113,7 +115,7 @@ function UpdateButton({ c, hasCompose, assoc, composeUnavailable, isBusy, onConf
   ) : (
     <Button variant="warning" disabled={isBusy}
       onClick={() => onConfirmUpdate(c)}
-      className="inline-flex items-center gap-1.5 !px-2 !py-1"
+      className="!px-2 !py-1"
       tooltip={`Update ${c.name}`}>
       <ArrowUpCircleIcon className="h-3 w-3 shrink-0" />
       Update
@@ -130,30 +132,30 @@ function ContainerCard({
   const isRunning = c.status === 'running'
 
   return (
-    <div className={`flex flex-col gap-2.5 border-b border-app-border px-4 py-3 ${isSel ? 'bg-app-bg' : ''} ${isRunning ? '' : 'opacity-70 saturate-[0.4]'}`}>
-      <div className="flex items-center gap-2.5 min-w-0">
+    <Stack gap={2} className={`border-b border-app-border px-4 py-3 ${isSel ? 'bg-app-bg' : ''} ${isRunning ? '' : 'opacity-70 saturate-[0.4]'}`}>
+      <Flex align="center" gap={2} className="min-w-0">
         <CheckBox id={`card-check-${c.id}`} ariaLabel={`Select ${c.name}`}
           checked={isSel} onChange={() => onToggleSelect(c.id)} />
         <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`}
           role="img" aria-label={`Container ${c.status}`} />
-        <button type="button" className="truncate text-sm font-semibold text-app-strong hover:underline"
+        <TextLink linkComponent="button" type="button" className="truncate text-left text-sm font-semibold"
           title={`View details for ${c.name}`}
           onClick={() => onShowDetails && onShowDetails(c)}>
           {c.name}
-        </button>
+        </TextLink>
         <StoppedBadge status={c.status} />
-        <div className="ml-auto flex shrink-0 items-center gap-1.5">
+        <Flex align="center" gap={2} className="ml-auto shrink-0">
           <UpdateButton c={c} hasCompose={hasCompose} assoc={assoc} composeUnavailable={composeUnavailable}
             isBusy={isBusy} onConfirmUpdate={onConfirmUpdate} onComposeUpdate={onComposeUpdate} />
           <RowMenu container={c} hasCompose={hasCompose} isBusy={isBusy}
             onConfirmUpdate={onConfirmUpdate} onComposeUpdate={onComposeUpdate}
             onConfirmDelete={onConfirmDelete} onShowDetails={onShowDetails} />
-        </div>
-      </div>
+        </Flex>
+      </Flex>
 
       <div className="truncate font-mono text-xs text-app-muted">{c.repository}</div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <Flex align="center" wrap gap={2}>
         <TagLabel container={c} />
         {isUpdating
           ? <UpdatingPill />
@@ -167,8 +169,8 @@ function ContainerCard({
                 <StatusPill status={c.update_status} errorMessage={c.error_message}
                   onShowError={() => onShowError && onShowError(c)} />
               </>)}
-      </div>
-    </div>
+      </Flex>
+    </Stack>
   )
 }
 
@@ -229,12 +231,12 @@ export default function ContainerTable({
 
   if (containers.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-app-muted">
+      <Stack align="center" justify="center" gap={0} className="py-20 text-app-muted">
         <BoxIcon className="h-10 w-10 shrink-0 mb-4" />
         {isFiltered ? (
           <>
             <p className="mb-1 text-base font-semibold text-app-text">No matching containers</p>
-            <p className="text-sm">Nothing matches the current search or filter — clear them to see all containers.</p>
+            <p className="text-sm">Nothing matches the current search or filter - clear them to see all containers.</p>
           </>
         ) : (
           <>
@@ -242,7 +244,7 @@ export default function ContainerTable({
             <p className="text-sm">Select <span className="font-semibold text-app-text">Scan</span> to discover Docker containers.</p>
           </>
         )}
-      </div>
+      </Stack>
     )
   }
 
@@ -256,16 +258,16 @@ export default function ContainerTable({
       key: 'name', header: 'Container', sortable: true,
       render: c => dim(c, (
         <>
-          <div className="flex items-center gap-2">
+          <Flex align="center" gap={2}>
             <span className={`h-2 w-2 rounded-full ${DOCKER_DOT[c.status] ?? DEFAULT_DOT}`}
               title={c.status} role="img" aria-label={`Container ${c.status}`} />
-            <button type="button" className="text-sm font-semibold text-app-strong hover:underline"
+            <TextLink linkComponent="button" type="button" className="text-left text-sm font-semibold"
               title={`View details for ${c.name}`}
               onClick={() => onShowDetails && onShowDetails(c)}>
               {c.name}
-            </button>
+            </TextLink>
             <StoppedBadge status={c.status} />
-          </div>
+          </Flex>
           <span className="font-mono text-xs text-app-muted">{c.repository}</span>
           <div className="font-mono text-[11px] text-app-muted opacity-70">{c.short_id}</div>
         </>
@@ -274,20 +276,20 @@ export default function ContainerTable({
     {
       key: 'tag', header: 'Tag / Digest',
       render: c => dim(c, (
-        <div className="flex flex-col gap-1">
+        <Stack gap={1}>
           <TagLabel container={c} />
           {c.local_digest && (
             <span className="font-mono text-xs text-app-muted opacity-70" title={c.local_digest}>
               {shortDigest(c.local_digest)}
             </span>
           )}
-        </div>
+        </Stack>
       )),
     },
     {
       key: '_version', header: 'Version',
       render: c => dim(c, updatingNames.has(c.name)
-        ? <span className="text-[13px] text-app-muted">—</span>
+        ? <span className="text-[13px] text-app-muted">-</span>
         : scanning
           ? <Skeleton className="h-4 w-20" />
           : <VersionCheckCell container={c} />),
@@ -308,13 +310,13 @@ export default function ContainerTable({
         const assoc = associations[c.name]
         const hasCompose = !!assoc || !!c.compose
         return (
-          <div className="flex items-center gap-1.5">
+          <Flex align="center" gap={2}>
             <RowMenu container={c} hasCompose={hasCompose} isBusy={isBusy}
               onConfirmUpdate={onConfirmUpdate} onComposeUpdate={onComposeUpdate}
               onConfirmDelete={onConfirmDelete} onShowDetails={onShowDetails} />
             <UpdateButton c={c} hasCompose={hasCompose} assoc={assoc} composeUnavailable={composeUnavailable}
               isBusy={isBusy} onConfirmUpdate={onConfirmUpdate} onComposeUpdate={onComposeUpdate} />
-          </div>
+          </Flex>
         )
       },
     },

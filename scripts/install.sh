@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────
-#  install.sh — native installer for DockRadar (Linux and macOS)
+#  install.sh - native installer for DockRadar (Linux and macOS)
 #
 #  Detects the operating system and installs DockRadar as a background
 #  service: systemd on Linux, a per-user LaunchAgent on macOS.
@@ -8,13 +8,13 @@
 #  Install / upgrade (latest release):
 #    Linux:  curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install.sh | sudo bash
 #    macOS:  curl -fsSL https://github.com/ankityadavpurson/dockradar/releases/latest/download/install.sh | bash
-#            (on macOS, run as your normal user — without sudo)
+#            (on macOS, run as your normal user - without sudo)
 #
 #  Options (when piping, pass them after "bash -s --"):
 #    --version X.Y.Z     install a specific release instead of the latest
 #    --tarball PATH      install from a local dockradar-X.Y.Z.tar.gz
 #    --non-interactive   never prompt (email settings come from env vars)
-#    --uninstall         remove DockRadar (runs uninstall.sh — prefer that script)
+#    --uninstall         remove DockRadar (runs uninstall.sh - prefer that script)
 #    --purge             with --uninstall: also delete config, data and logs
 #
 #  Unattended email setup (on Linux, put the variables after sudo):
@@ -59,7 +59,7 @@ warn()    { echo -e "${YELLOW}[DockRadar]${NC} $1"; }
 error()   { echo -e "${RED}[DockRadar]${NC} $1" >&2; exit 1; }
 
 # Live progress (download bar, package names, startup wait) only when
-# stderr is a terminal — `curl … | sudo bash` still has one.
+# stderr is a terminal - `curl … | sudo bash` still has one.
 if [ -t 2 ]; then SHOW_PROGRESS=true; else SHOW_PROGRESS=false; fi
 STEP=0
 STEPS=6
@@ -98,7 +98,7 @@ while [ $# -gt 0 ]; do
 done
 
 # ── Uninstall (handled by uninstall.sh) ───────────────────────
-# Kept for compatibility: hands off to uninstall.sh — the copy next to
+# Kept for compatibility: hands off to uninstall.sh - the copy next to
 # this script, the installed copy, or the latest release's. --yes keeps
 # the old no-prompt behaviour of --uninstall --purge.
 if [ "$UNINSTALL" = true ]; then
@@ -112,7 +112,7 @@ if [ "$UNINSTALL" = true ]; then
     done
     info "Fetching uninstall.sh from the latest release..."
     UNINSTALLER="$(curl -fsSL "https://github.com/$REPO/releases/latest/download/uninstall.sh")" \
-        || error "Could not download uninstall.sh — get it from https://github.com/$REPO/releases/latest"
+        || error "Could not download uninstall.sh - get it from https://github.com/$REPO/releases/latest"
     exec bash -c "$UNINSTALLER" uninstall.sh "${UNINSTALL_ARGS[@]}"
 fi
 
@@ -120,7 +120,7 @@ fi
 case "$(uname -s)" in
     Linux)  OS="linux" ;;
     Darwin) OS="macos" ;;
-    *)      error "Unsupported operating system: $(uname -s). The native installer supports Linux and macOS — elsewhere, run DockRadar with Docker." ;;
+    *)      error "Unsupported operating system: $(uname -s). The native installer supports Linux and macOS - elsewhere, run DockRadar with Docker." ;;
 esac
 
 if [ "$OS" = "linux" ]; then
@@ -140,7 +140,7 @@ if [ "$OS" = "linux" ]; then
     RESTART_CMD="sudo systemctl restart $SVC_NAME"
     LOGS_CMD="journalctl -u $SVC_NAME -f"
 else
-    [ "$(id -u)" -ne 0 ] || error "On macOS, run the installer as your normal user, without sudo — DockRadar runs as a per-user LaunchAgent so it can reach Docker Desktop."
+    [ "$(id -u)" -ne 0 ] || error "On macOS, run the installer as your normal user, without sudo - DockRadar runs as a per-user LaunchAgent so it can reach Docker Desktop."
     if [ -z "${HOME:-}" ] || [ ! -d "$HOME" ]; then error "HOME is not set."; fi
     APP_ROOT="$HOME/Library/Application Support/DockRadar"
     ENV_FILE="$APP_ROOT/dockradar.env"
@@ -237,7 +237,7 @@ service_start() {
         macos_stop_agent
         launchctl enable "$DOMAIN/$LABEL" </dev/null 2>/dev/null || true
         launchctl bootstrap "$DOMAIN" "$PLIST" </dev/null \
-            || error "launchctl could not load $PLIST — see: launchctl print $DOMAIN/$LABEL"
+            || error "launchctl could not load $PLIST - see: launchctl print $DOMAIN/$LABEL"
     fi
 }
 
@@ -275,7 +275,7 @@ python_hint() {
 }
 
 # Newest suitable Python with venv support. On macOS, skip Apple's
-# /usr/bin/python3 stub when the Command Line Tools are absent — calling it
+# /usr/bin/python3 stub when the Command Line Tools are absent - calling it
 # would pop up an install dialog.
 find_python() {
     local c p
@@ -297,7 +297,7 @@ find_python() {
 
 PYTHON="$(find_python)" \
     || error "Python ${MIN_PY_MAJOR}.${MIN_PY_MINOR}+ with venv support not found. Install it: $(python_hint)"
-info "Detected $OS — using $("$PYTHON" -V 2>&1) ($PYTHON)"
+info "Detected $OS - using $("$PYTHON" -V 2>&1) ($PYTHON)"
 
 find_docker() {
     local p
@@ -314,12 +314,12 @@ if [ -z "$DOCKER_BIN" ]; then
     if [ "$OS" = "macos" ]; then
         warn "Docker CLI not found. Install Docker Desktop (https://www.docker.com/products/docker-desktop/), OrbStack or Colima."
     else
-        warn "Docker CLI not found. DockRadar needs a Docker daemon to monitor — install Docker Engine: https://docs.docker.com/engine/install/"
+        warn "Docker CLI not found. DockRadar needs a Docker daemon to monitor - install Docker Engine: https://docs.docker.com/engine/install/"
     fi
 elif ! "$DOCKER_BIN" info </dev/null &>/dev/null; then
-    warn "Docker is installed but not reachable — make sure the Docker daemon (or Docker Desktop) is running."
+    warn "Docker is installed but not reachable - make sure the Docker daemon (or Docker Desktop) is running."
 elif ! "$DOCKER_BIN" compose version </dev/null &>/dev/null && ! command -v docker-compose &>/dev/null; then
-    warn "Docker Compose not found — compose-based updates will be unavailable."
+    warn "Docker Compose not found - compose-based updates will be unavailable."
 fi
 
 # ── Fetch the release ─────────────────────────────────────────
@@ -361,7 +361,7 @@ else
     curl -fsSL -o "$TMP/$ASSET.sha256" "$BASE_URL/$ASSET.sha256" \
         || error "Checksum download failed: $BASE_URL/$ASSET.sha256"
     verify_checksum "$TMP" "$ASSET.sha256" \
-        || error "Checksum verification failed — refusing to install."
+        || error "Checksum verification failed - refusing to install."
     success "Checksum verified."
     ARCHIVE="$TMP/$ASSET"
 fi
@@ -383,7 +383,7 @@ if [ "$OS" = "linux" ]; then
     if getent group docker &>/dev/null; then
         usermod -aG docker "$SVC_USER"
     else
-        warn "No 'docker' group found — $SVC_USER may not be able to reach the Docker socket."
+        warn "No 'docker' group found - $SVC_USER may not be able to reach the Docker socket."
     fi
     # "Update via compose" edits each stack's real compose file, so the service
     # user needs read/write on those directories:
@@ -404,7 +404,7 @@ if [ "$OS" = "linux" ]; then
     chmod 755 "$APP_DIR"
 fi
 
-# pip_install ARGS… — quiet when there is no terminal; otherwise shows the
+# pip_install ARGS… - quiet when there is no terminal; otherwise shows the
 # package pip is working on as a single, updating line. The full output
 # is kept and printed if pip fails.
 pip_install() {
@@ -527,7 +527,7 @@ public_host() {
 
 configure_email_interactive() {
     echo ""
-    info "Email notifications — DockRadar can email you when image updates are found."
+    info "Email notifications - DockRadar can email you when image updates are found."
     local answer
     read -r -p "  Configure email notifications now? [y/N]: " answer </dev/tty
     case "$answer" in [yY]*) ;; *)
@@ -535,7 +535,7 @@ configure_email_interactive() {
         return ;;
     esac
 
-    echo "  (Gmail: use smtp.gmail.com, port 587, and an App Password — https://myaccount.google.com/apppasswords)"
+    echo "  (Gmail: use smtp.gmail.com, port 587, and an App Password - https://myaccount.google.com/apppasswords)"
     local host port user pass from to url
     host="$(ask "SMTP host" "smtp.gmail.com")"
     port="$(ask "SMTP port (587 = STARTTLS, 465 = SSL)" "587")"
@@ -555,7 +555,7 @@ configure_email_interactive() {
     set_env EMAIL_TO "$to"
     set_env APP_URL "$url"
     if [ -z "$to" ]; then
-        warn "No recipient given — email notifications stay disabled."
+        warn "No recipient given - email notifications stay disabled."
     else
         success "Email settings saved."
     fi
@@ -611,7 +611,7 @@ if [ "$FIRST_INSTALL" = true ] && [ "$INTERACTIVE" = true ]; then
     if have_tty; then
         configure_email_interactive
     else
-        warn "No terminal available — skipping email prompts. Edit $ENV_FILE to configure email."
+        warn "No terminal available - skipping email prompts. Edit $ENV_FILE to configure email."
     fi
 fi
 

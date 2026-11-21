@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Alert, Button, FileCode2Icon, LinkIcon } from 'xedonium'
+import { Alert, Button, FileCode2Icon, LinkIcon, Stack } from 'xedonium'
 import { composeApi } from '../api/client'
 import Modal from './Modal'
 import ServicePicker from './ServicePicker'
@@ -53,7 +53,7 @@ export default function ComposeLinkDialog({ container, onLinked, onClose, onOpen
 
   const title = (
     <span className="block min-w-0 normal-case tracking-normal">
-      <span className="block truncate">Link compose file — {container.name}</span>
+      <span className="block truncate">Link compose file - {container.name}</span>
       <span className="block truncate text-xs font-normal text-app-muted">
         Use <code>docker compose</code> to update this container.
       </span>
@@ -67,7 +67,7 @@ export default function ComposeLinkDialog({ container, onLinked, onClose, onOpen
           ? 'No compose files stored yet.'
           : 'Select the file and service that defines this container.'}
       </span>
-      <Button onClick={handleLink} disabled={!canLink} className="inline-flex items-center gap-1.5">
+      <Button onClick={handleLink} disabled={!canLink}>
         <LinkIcon className="h-[13px] w-[13px] shrink-0" />{saving ? 'Linking…' : 'Link'}
       </Button>
       <Button variant="secondary" onClick={onClose}>Cancel</Button>
@@ -81,11 +81,11 @@ export default function ComposeLinkDialog({ container, onLinked, onClose, onOpen
       {loading ? (
         <div className="py-6 text-center text-sm text-app-muted">Loading compose files…</div>
       ) : composeFiles.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-6 text-center">
+        <Stack align="center" gap={3} className="py-6 text-center">
           <FileCode2Icon className="h-7 w-7 shrink-0 text-app-muted" />
           <p className="text-sm text-app-soft">Upload a compose file first, then come back to link it.</p>
           {onOpenManager && <Button onClick={onOpenManager}>Open Compose Manager</Button>}
-        </div>
+        </Stack>
       ) : (
         <ServicePicker
           composeFiles={composeFiles}

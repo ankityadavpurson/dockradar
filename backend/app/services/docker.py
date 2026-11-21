@@ -38,7 +38,7 @@ class ContainerInfo:
 
 # Labels Docker Compose stamps on every container it creates. They let DockRadar
 # update a service against its *real* compose file/project instead of an uploaded
-# copy — no manual association needed.
+# copy - no manual association needed.
 _CL_PROJECT      = "com.docker.compose.project"
 _CL_SERVICE      = "com.docker.compose.service"
 _CL_CONFIG_FILES = "com.docker.compose.project.config_files"
@@ -199,13 +199,13 @@ class DockerService:
         try:
             logger.info("Pulling image %s:%s ...", repository, tag)
 
-            # Pull the new image — this always fetches from the registry
+            # Pull the new image - this always fetches from the registry
             new_image = self.client.images.pull(repository, tag=tag)
             logger.info("Successfully pulled %s:%s (id: %s)", repository, tag, new_image.short_id)
 
             return True
         except APIError as exc:
-            logger.error("Failed to pull %s:%s — %s", repository, tag, exc)
+            logger.error("Failed to pull %s:%s - %s", repository, tag, exc)
             return False
 
     def stop_container(self, container_name: str) -> bool:
@@ -245,7 +245,7 @@ class DockerService:
 
         After calling containers.run(), waits up to 10 seconds to verify the
         container reaches 'running' status. Raises RuntimeError if it ends up
-        in 'restarting', 'exited', or 'dead' — so the caller can report a
+        in 'restarting', 'exited', or 'dead' - so the caller can report a
         meaningful failure instead of silently returning a broken container.
         """
         if not self.client:
@@ -322,11 +322,11 @@ class DockerService:
                         f"Last logs:\n{logs}"
                     )
 
-            # Timed out waiting — return the container anyway (e.g. it's still
+            # Timed out waiting - return the container anyway (e.g. it's still
             # initialising) but log a warning so it appears in the progress log.
             container.reload()
             logger.warning(
-                "Container %s did not reach 'running' within 10s — current status: %s",
+                "Container %s did not reach 'running' within 10s - current status: %s",
                 name, container.status,
             )
             return container

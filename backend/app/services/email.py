@@ -49,10 +49,10 @@ class EmailService:
     def _friendly_error(exc: Exception) -> str:
         """Turn an SMTP/connection exception into an actionable message."""
         if isinstance(exc, smtplib.SMTPAuthenticationError):
-            return ("Authentication failed — check SMTP_USER / SMTP_PASSWORD "
+            return ("Authentication failed - check SMTP_USER / SMTP_PASSWORD "
                     "(for Gmail, use an App Password, not your account password).")
         if isinstance(exc, smtplib.SMTPConnectError) or isinstance(exc, (OSError, ssl.SSLError)):
-            return f"Could not connect to {config.SMTP_HOST}:{config.SMTP_PORT} — {exc}"
+            return f"Could not connect to {config.SMTP_HOST}:{config.SMTP_PORT} - {exc}"
         if isinstance(exc, smtplib.SMTPException):
             return f"SMTP error: {exc}"
         return f"Unexpected error: {exc}"
@@ -85,7 +85,7 @@ class EmailService:
         message is safe to show the user (the real SMTP error on failure).
         """
         if not config.email_configured():
-            return False, "Email is not configured — set SMTP_HOST and EMAIL_TO."
+            return False, "Email is not configured - set SMTP_HOST and EMAIL_TO."
         note = ("This is a test email confirming your SMTP settings are working. "
                 "The table below is sample data.")
         try:
@@ -197,7 +197,7 @@ class EmailService:
 </html>"""
 
     def _build_text(self, updates: list[dict], note: Optional[str] = None) -> str:
-        lines = ["DockRadar — Update Notification", "=" * 40, ""]
+        lines = ["DockRadar - Update Notification", "=" * 40, ""]
         if note:
             lines.append(note)
             lines.append("")

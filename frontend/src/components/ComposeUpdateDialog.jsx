@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Alert, Button, Loader, TextArea } from 'xedonium'
+import { Alert, Button, Card, CodeDisplay, Loader, TextArea, Flex, Stack } from 'xedonium'
 import { composeApi } from '../api/client'
 import DiffView from './DiffView'
 import Modal from './Modal'
@@ -26,7 +26,7 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
     setError(null)
     try {
       // Only stored (uploaded) files are editable/savable, and only when the
-      // content actually changed — otherwise skip the write. In label mode the
+      // content actually changed - otherwise skip the write. In label mode the
       // backend runs compose against the real file (and rewrites the tag itself).
       if (diff.editable && diff.file_id && content !== diff.current_content) {
         await composeApi.updateContent(diff.file_id, content)
@@ -45,7 +45,7 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
 
   const title = (
     <span className="block min-w-0 normal-case tracking-normal">
-      <span className="block truncate">Compose update — {container.name}</span>
+      <span className="block truncate">Compose update - {container.name}</span>
       {diff && (
         <span className="block truncate font-mono text-xs font-normal text-app-muted">
           {diff.filename} · service: {diff.service_name}
@@ -59,7 +59,7 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
     <>
       <span className={`flex-1 text-[13px] ${cannotWrite ? 'text-red-500' : 'text-app-muted'}`}>
         {cannotWrite
-          ? 'DockRadar can’t write this compose file — grant its user write access, or mount it read-write.'
+          ? 'DockRadar can’t write this compose file - grant its user write access, or mount it read-write.'
           : diff?.has_change
             ? (diff.editable === false
                 ? 'The tag in the container’s own compose file will be updated (backup kept), then pull + up -d.'
@@ -81,22 +81,19 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
 
       {diff && !loading && (<>
         {/* Image change summary */}
-        <div className="overflow-hidden border border-app-border">
-          <div className="border-b border-app-border px-3 py-2 text-xs font-semibold uppercase tracking-widest text-app-muted">
-            Image change
-          </div>
-          <div className="flex flex-col gap-1.5 p-3">
-            <div className="flex items-baseline gap-2">
+        <Card title="Image change" padded={false} className="overflow-hidden">
+          <Stack gap={2} className="p-3">
+            <Flex align="baseline" gap={2}>
               <span className="w-14 shrink-0 text-xs text-app-muted">Current</span>
               <code className="break-all bg-red-500/10 px-2 py-0.5 text-[13px] text-red-700 dark:text-red-300">{diff.current_image}</code>
-            </div>
-            <div className="flex items-baseline gap-2">
+            </Flex>
+            <Flex align="baseline" gap={2}>
               <span className="w-14 shrink-0 text-xs text-app-muted">Latest</span>
               <code className="break-all bg-emerald-500/10 px-2 py-0.5 text-[13px] text-emerald-800 dark:text-emerald-300">{diff.latest_image}</code>
-            </div>
+            </Flex>
             {!diff.has_change && (
               <div className="mt-1 text-[13px] text-app-muted">
-                ✓ Image tag is already up to date — <code>pull + up -d</code> will refresh the image without file changes.
+                ✓ Image tag is already up to date - <code>pull + up -d</code> will refresh the image without file changes.
               </div>
             )}
             {diff.has_change && diff.editable === false && (
@@ -106,31 +103,28 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
                 <code>.bak</code> backup, then run <code>pull + up -d</code>.
               </div>
             )}
-          </div>
-        </div>
+          </Stack>
+        </Card>
 
         {/* Compose file diff / editor (editable = uploaded copy) or read-only view (label mode) */}
-        <div className="overflow-hidden border border-app-border">
-          <div className="flex items-center justify-between border-b border-app-border bg-app-bg px-3 py-2">
-            <span className="text-xs font-semibold uppercase tracking-widest text-app-muted">
-              {diff.editable === false
-                ? (diff.has_change ? 'File change (applied on confirm)' : 'Compose file (read-only)')
-                : showFull ? 'Compose file (editable)' : 'File changes'}
-            </span>
-            {diff.editable !== false && (
-              <Button variant="flat" onClick={() => setShowFull(s => !s)}>
-                {showFull ? 'Show diff' : 'Edit full file'}
-              </Button>
-            )}
-          </div>
+        <Card
+          padded={false}
+          className="overflow-hidden"
+          title={diff.editable === false
+            ? (diff.has_change ? 'File change (applied on confirm)' : 'Compose file (read-only)')
+            : showFull ? 'Compose file (editable)' : 'File changes'}
+          actions={diff.editable !== false && (
+            <Button variant="flat" onClick={() => setShowFull(s => !s)}>
+              {showFull ? 'Show diff' : 'Edit full file'}
+            </Button>
+          )}
+        >
 
           {diff.editable === false ? (
             diff.has_change ? (
               <DiffView current={diff.current_content} proposed={diff.proposed_content} />
             ) : (
-              <pre className="m-0 max-h-[260px] w-full overflow-auto p-3 font-mono text-[13px] leading-relaxed text-app-soft">
-                {diff.current_content}
-              </pre>
+              <CodeDisplay code={diff.current_content} language="yaml" maxHeight={260} className="!border-0" />
             )
           ) : showFull ? (
             <TextArea
@@ -146,7 +140,7 @@ const ComposeUpdateDialog = ({ container, onConfirm, onCancel }) => {
               ? <DiffView current={diff.current_content} proposed={content} />
               : <div className="px-3 py-4 text-[13px] text-app-muted">No changes to the compose file.</div>
           )}
-        </div>
+        </Card>
       </>)}
     </Modal>
   )

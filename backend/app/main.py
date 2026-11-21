@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# Lifespan — start / stop the background scheduler
+# Lifespan - start / stop the background scheduler
 # ---------------------------------------------------------------------------
 
 @asynccontextmanager

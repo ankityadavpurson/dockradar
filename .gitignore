@@ -38,22 +38,22 @@ htmlcov/
 .mypy_cache/
 .pyright/
 
-# ── Frontend — Node ───────────────────────────────────────────
+# ── Frontend - Node ───────────────────────────────────────────
 frontend/node_modules/
 node_modules/
 
-# ── Frontend — Build output ───────────────────────────────────
+# ── Frontend - Build output ───────────────────────────────────
 frontend/dist/
 frontend/.vite/
 
-# ── Frontend — Local env files ────────────────────────────────
+# ── Frontend - Local env files ────────────────────────────────
 frontend/.env
 frontend/.env.local
 frontend/.env.development.local
 frontend/.env.test.local
 frontend/.env.production.local
 
-# ── Frontend — Cache ──────────────────────────────────────────
+# ── Frontend - Cache ──────────────────────────────────────────
 frontend/.cache/
 .eslintcache
 
@@ -79,8 +79,3 @@ compose_files/
 # ── Backend runtime data ───────────────────────────────────────────────────
 backend/compose_files/
 backend/*.log
-
-# ── Firebase ──────────────────────────────────────────────────
-.firebase/
-firebase-debug.log*
-firebase-debug.*.log

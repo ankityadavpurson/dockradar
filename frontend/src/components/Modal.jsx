@@ -1,4 +1,4 @@
-import { Modal as XModal } from 'xedonium'
+import { Modal as XModal, Stack } from 'xedonium'
 
 const WIDTHS = {
   sm: 'max-w-sm',
@@ -15,7 +15,7 @@ export default function Modal({ title, onClose, size = 'md', footer, children, a
   return (
     <XModal open onClose={onClose} title={title} footer={footer}
       maxWidth={WIDTHS[size] ?? WIDTHS.md} aria-label={ariaLabel} {...rest}>
-      <div className="flex flex-col gap-3 px-6 py-5">{children}</div>
+      <Stack gap={3} className="px-6 py-5">{children}</Stack>
     </XModal>
   )
 }

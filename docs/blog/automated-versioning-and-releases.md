@@ -1,10 +1,10 @@
 <!--
-Optional front-matter for static site generators — delete if you paste this
+Optional front-matter for static site generators - delete if you paste this
 into Dev.to, Hashnode or Medium.
 
 ---
 title: "Stop Cutting Releases by Hand: A Versioning Pipeline That Refuses to Guess"
-description: "How to turn conventional commits into version numbers, changelogs, tags, images and release assets — with the failure modes that matter."
+description: "How to turn conventional commits into version numbers, changelogs, tags, images and release assets - with the failure modes that matter."
 tags: [ci, github-actions, semver, devops, release-engineering]
 ---
 -->
@@ -30,14 +30,14 @@ of the two version files and ship an image labelled `2.4.0` whose health endpoin
 `2.3.0`. You tag, then the image build fails, and now a tag exists that nothing was ever built from.
 You write the changelog three weeks later from memory, and it reads like it.
 
-This post walks through a pipeline that does all nine steps on every merge to `main`, and — more
-importantly — the failure modes it was hardened against. The snippets are deliberately generic: plain
+This post walks through a pipeline that does all nine steps on every merge to `main`, and - more
+importantly - the failure modes it was hardened against. The snippets are deliberately generic: plain
 `bash` and `awk` you can drop into any project, with a per-ecosystem adapter table for the one part
 that differs. At the end there is a trimmed copy-paste workflow.
 
 The production case study is [DockRadar](https://github.com/ankityadavpurson/dockradar), a Docker
 container monitor that ships a container image to two registries **and** a native install tarball for
-Linux and macOS on every release — currently at v13.19.5, after 31 tagged releases. Every "in
+Linux and macOS on every release - currently at v13.19.5, after 31 tagged releases. Every "in
 production this is…" pointer below refers to
 [`.github/workflows/release.yml`](https://github.com/ankityadavpurson/dockradar/blob/main/.github/workflows/release.yml)
 in that repo.
@@ -48,18 +48,18 @@ in that repo.
 
 Everything below follows from two rules. If you take nothing else from this post, take these.
 
-**Rule 1 — one source of truth per artifact, and a machine that copies it.**
+**Rule 1 - one source of truth per artifact, and a machine that copies it.**
 
 A version number that lives in four files is four opportunities for drift. Pick exactly one home per
 build artifact (one per language runtime, usually), and let automation write the others. Then *verify
-the copy landed* — more on that in Stage 2, because this is the step everyone skips.
+the copy landed* - more on that in Stage 2, because this is the step everyone skips.
 
 In DockRadar there are two sources of truth, one per runtime: `backend/app/version.py` holds a bare
-`__version__ = "X.Y.Z"` — nothing else in the file, so the rewrite pattern can stay trivial — and
+`__version__ = "X.Y.Z"` - nothing else in the file, so the rewrite pattern can stay trivial - and
 `frontend/package.json` holds the `version` field. The API serves `__version__` back to the UI, so a
 missed bump is visible to every user, not just to whoever cut the release.
 
-**Rule 2 — nothing irreversible until everything reversible has passed.**
+**Rule 2 - nothing irreversible until everything reversible has passed.**
 
 Order your pipeline by how hard each step is to undo:
 
@@ -68,25 +68,25 @@ Order your pipeline by how hard each step is to undo:
 | Rewrite a version string | free |
 | Build an archive | free |
 | Push a commit | cheap |
-| **Push a tag** | **expensive — consumers may already have fetched it** |
+| **Push a tag** | **expensive - consumers may already have fetched it** |
 | Push `:latest` to a registry | expensive |
 | Publish a GitHub Release | public immediately |
 
 So everything free goes first. In DockRadar the native tarball is built *and smoke-tested* at
-`release.yml:170` — a hundred lines **before** `git tag` at `release.yml:284`. A broken build fails the
+`release.yml:170` - a hundred lines **before** `git tag` at `release.yml:284`. A broken build fails the
 job while the only damage is a red X in the Actions tab. Get this ordering backwards and a compile
 error leaves behind a tag you now have to explain to everyone who already fetched it.
 
 ---
 
-## Stage 1 — Derive the version from commits you already wrote
+## Stage 1 - Derive the version from commits you already wrote
 
 You already encoded your intent when you wrote `feat:` or `fix:` in the commit subject. Read it back
 instead of asking a human to decide again.
 
 ```bash
 # Latest released version, as a bare number. Requires the full tag list:
-# actions/checkout fetches no tags by default — use
+# actions/checkout fetches no tags by default - use
 #   with: { fetch-depth: 0, fetch-tags: true }
 LATEST=$(git tag -l 'v*' \
   | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
@@ -98,7 +98,7 @@ LATEST=$(git tag -l 'v*' \
 Two details in those four lines are load-bearing:
 
 - **`sort -V`, never plain `sort`.** Version sort understands that 16 > 9; lexical sort does not. Run
-  it yourself on `13.8.0, 13.9.0, 13.10.0, 13.16.3` — `sort -V | tail -1` gives `13.16.3`, plain
+  it yourself on `13.8.0, 13.9.0, 13.10.0, 13.16.3` - `sort -V | tail -1` gives `13.16.3`, plain
   `sort | tail -1` gives `13.9.0`. A pipeline using plain `sort` silently starts computing bumps from
   the wrong base the moment you reach a two-digit minor.
 - **The `grep -E` filter.** Without it, `v2.0.0-rc1` or `v2.0.0-hotfix` can win the sort and feed a
@@ -111,7 +111,7 @@ SUBJECTS=$(git log --format=%s "v$LATEST..HEAD")   # subjects: feat:, fix:, type
 BODIES=$(git log --format=%B "v$LATEST..HEAD")     # full bodies: BREAKING CHANGE footers
 
 if [ -z "$SUBJECTS" ]; then
-  echo "::error::No commits since v$LATEST — nothing to release."
+  echo "::error::No commits since v$LATEST - nothing to release."
   exit 1
 fi
 
@@ -142,7 +142,7 @@ esac
 ```
 
 > `<<<` is a bash here-string, and so are the `array=()` forms later in this post. GitHub Actions'
-> default shell on `ubuntu-latest` is `bash`, so these work as written — but they are **not** POSIX
+> default shell on `ubuntu-latest` is `bash`, so these work as written - but they are **not** POSIX
 > `sh`. If you port this to a container whose `/bin/sh` is dash, set `shell: bash` explicitly.
 
 ### Refuse rather than guess
@@ -161,7 +161,7 @@ if git tag -l "v$VERSION" | grep -q .; then
   echo "::error::Tag v$VERSION already exists"; exit 1
 fi
 
-# 3. Never go backwards — catches typos like 2.1.0 when 2.10.0 is out.
+# 3. Never go backwards - catches typos like 2.1.0 when 2.10.0 is out.
 HIGHEST=$(printf '%s\n%s\n' "$LATEST" "$VERSION" | sort -V | tail -1)
 if [ "$HIGHEST" != "$VERSION" ]; then
   echo "::error::Version $VERSION is not higher than the latest release $LATEST"; exit 1
@@ -204,11 +204,11 @@ BUMP="${BUMP:-auto}"      # inputs are empty on non-dispatch triggers
 
 ---
 
-## Stage 2 — Bump every file, then prove the bump happened
+## Stage 2 - Bump every file, then prove the bump happened
 
 Writing the version is one line per ecosystem. Here is the part that matters: **`sed` exits 0 when it
-matches nothing.** Rename the file, reformat the line, add a type annotation — `__version__: str = "1.0.0"`
-no longer matches `^__version__ = ".*"` — and your bump step goes green while changing nothing. You then
+matches nothing.** Rename the file, reformat the line, add a type annotation - `__version__: str = "1.0.0"`
+no longer matches `^__version__ = ".*"` - and your bump step goes green while changing nothing. You then
 publish an image tagged `2.4.0` containing version `2.3.0`, and you find out from a user.
 
 So always pair the write with an independent read-back:
@@ -225,7 +225,7 @@ APP_VERSION=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' pkg/version.py)
 PKG_VERSION=$(node -p "require('./frontend/package.json').version")
 echo "release=$V  backend=$APP_VERSION  frontend=$PKG_VERSION"
 if [ "$V" != "$APP_VERSION" ] || [ "$V" != "$PKG_VERSION" ]; then
-  echo "::error::Version bump failed — backend '$APP_VERSION' / frontend '$PKG_VERSION' do not match '$V'"
+  echo "::error::Version bump failed - backend '$APP_VERSION' / frontend '$PKG_VERSION' do not match '$V'"
   exit 1
 fi
 ```
@@ -240,7 +240,7 @@ Four extra lines, and the class of bug "we shipped a mislabelled build" is gone 
 | Python (bare `__version__`) | `sed -i 's/^__version__ = ".*"/__version__ = "'"$V"'"/' pkg/version.py` | `sed -n 's/^__version__ = "\(.*\)"/\1/p' pkg/version.py` |
 | Python (`pyproject.toml`) | `sed -i '0,/^version =/s/^version = ".*"/version = "'"$V"'"/' pyproject.toml` | `python -c "import tomllib,pathlib;print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])"` |
 | Rust | `cargo set-version "$V"` (cargo-edit) | `cargo metadata --no-deps --format-version 1 \| jq -r '.packages[0].version'` |
-| Go | nothing to bump — inject at build: `-ldflags "-X main.version=$V"` | `./myapp --version` |
+| Go | nothing to bump - inject at build: `-ldflags "-X main.version=$V"` | `./myapp --version` |
 | Java / Maven | `mvn -q versions:set -DnewVersion="$V" -DgenerateBackupPoms=false` | `mvn -q help:evaluate -Dexpression=project.version -DforceStdout` |
 | .NET | `sed -i "s#<Version>.*</Version>#<Version>$V</Version>#" MyApp.csproj` | `dotnet msbuild -getProperty:Version` |
 
@@ -252,7 +252,7 @@ the only source of truth you need.
 
 The check above runs inside the release job, where the version came from a variable, so it mostly proves
 `sed` worked. Add an independent gate in whatever workflow builds images from tags, where the version
-arrives from a completely different source — the git ref:
+arrives from a completely different source - the git ref:
 
 ```yaml
 - name: Verify version consistency (tag builds only)
@@ -261,7 +261,7 @@ arrives from a completely different source — the git ref:
     TAG_VERSION="${GITHUB_REF_NAME#v}"
     APP_VERSION=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' pkg/version.py)
     if [ "$TAG_VERSION" != "$APP_VERSION" ]; then
-      echo "::error::Version mismatch — tag v$TAG_VERSION, code $APP_VERSION. Bump before tagging."
+      echo "::error::Version mismatch - tag v$TAG_VERSION, code $APP_VERSION. Bump before tagging."
       exit 1
     fi
 ```
@@ -273,7 +273,7 @@ Two cheap checks from two different angles beat one clever check.
 
 ---
 
-## Stage 3 — Rotate the changelog instead of writing one
+## Stage 3 - Rotate the changelog instead of writing one
 
 Adopt the [Keep a Changelog](https://keepachangelog.com/) layout and treat `## [Unreleased]` as an
 inbox:
@@ -283,7 +283,7 @@ inbox:
 
 ## [Unreleased]
 
-## [2.3.0] — 2026-04-02
+## [2.3.0] - 2026-04-02
 
 ### Added
 - Thing you can now do
@@ -321,7 +321,7 @@ CHANGED=$(subj | grep -viE '^(feat|fix)(\([^)]*\))?:' \
 
 : > section_body.txt
 add_group() {                       # add_group "Added" "$ADDED"
-  [ -n "$2" ] || return 0           # skip empty groups — no bald "### Fixed" headings
+  [ -n "$2" ] || return 0           # skip empty groups - no bald "### Fixed" headings
   { printf '\n### %s\n' "$1"; printf '%s\n' "$2" | sed 's/^/- /'; } >> section_body.txt
 }
 add_group Added   "$ADDED"
@@ -333,7 +333,7 @@ grep -qE '\S' section_body.txt || printf '\n- Maintenance release.\n' >> section
 ```
 
 `--no-merges` keeps "Merge pull request #24" out of your release notes. Excluding `chore(release)`
-keeps the *previous* release commit from showing up in the *next* release's notes — a small thing that
+keeps the *previous* release commit from showing up in the *next* release's notes - a small thing that
 looks sloppy on every release page until you fix it.
 
 Then splice: re-emit an empty `[Unreleased]`, insert the new dated section, and drop the old body.
@@ -342,7 +342,7 @@ Then splice: re-emit an empty `[Unreleased]`, insert the new dated section, and 
 # awk -v ver=2.4.0 -v date=2026-04-02 -v bodyfile=section_body.txt
 /^## \[Unreleased\]/ && !done {
   print "## [Unreleased]"; print "";            # leave a fresh, empty inbox
-  print "## [" ver "] — " date;
+  print "## [" ver "] - " date;
   while ((getline line < bodyfile) > 0) print line;
   print "";
   done=1; skip=1; next                          # skip = swallow the old body
@@ -352,7 +352,7 @@ skip             { next }
 { print }
 ```
 
-And refresh the reference links in one more pass — repoint `[Unreleased]` at the new tag and insert the
+And refresh the reference links in one more pass - repoint `[Unreleased]` at the new tag and insert the
 new version's compare link above the rest:
 
 ```awk
@@ -369,7 +369,7 @@ One trick worth stealing when you later extract that section for the release bod
 rather than a regex.
 
 ```awk
-# "## [2.4.0]" as a literal prefix — no escaping the [brackets], no regex surprises
+# "## [2.4.0]" as a literal prefix - no escaping the [brackets], no regex surprises
 index($0, "## [" ver "]") == 1 { grab=1; next }
 grab && index($0, "## [") == 1 { exit }
 grab                           { print }
@@ -382,7 +382,7 @@ Interpolating a version into a regex means escaping `[`, `]` and `.` correctly e
 
 ---
 
-## Stage 4 — Commit, tag and push atomically
+## Stage 4 - Commit, tag and push atomically
 
 ```bash
 git config user.name  "github-actions[bot]"
@@ -398,7 +398,7 @@ git push --atomic origin HEAD "v$V"
 
 `--atomic` is the important word. Here is the exact scenario it prevents: your release job starts, and
 while it is building, a teammate merges another PR. Your branch push is now rejected as non-fast-forward.
-Without `--atomic`, git has already pushed the tag — so the remote carries `v2.4.0` pointing at a commit
+Without `--atomic`, git has already pushed the tag - so the remote carries `v2.4.0` pointing at a commit
 that is not on `main` and never will be, and your release references a version bump nobody can see.
 With `--atomic`, the rejection takes the tag down with it and the job fails clean; you re-run it and it
 recalculates from the new `main`.
@@ -412,19 +412,19 @@ concurrency:
 ```
 
 `cancel-in-progress: true` is the right default for CI on pull requests and the wrong default here. A
-cancelled release job is a release stopped at a random line — tag pushed, image not built; image pushed,
+cancelled release job is a release stopped at a random line - tag pushed, image not built; image pushed,
 release not created. Releases should queue and run to completion, however slow that feels.
 
 *In production: `release.yml:46-50` and `release.yml:284-293`.*
 
 ---
 
-## Stage 5 — Publish artifacts, and the part everyone gets wrong
+## Stage 5 - Publish artifacts, and the part everyone gets wrong
 
 This is the stage that bit DockRadar in production, three releases in a row, and the lesson generalizes
 to any release tool.
 
-`softprops/action-gh-release` — and most equivalents — does this internally:
+`softprops/action-gh-release` - and most equivalents - does this internally:
 
 1. create the release as a **draft**,
 2. upload each asset,
@@ -432,7 +432,7 @@ to any release tool.
 
 Sensible. But if step 2 throws, the job dies before step 3, and the release stays a draft. Drafts are
 invisible to everyone but maintainers. Meanwhile the tag is pushed and the image is on the registry. So
-v13.16.0, v13.16.1 and v13.16.2 all "shipped" with an invisible release page — and GitHub's upload
+v13.16.0, v13.16.1 and v13.16.2 all "shipped" with an invisible release page - and GitHub's upload
 endpoint turned out to be the culprit: sporadic server-side errors (`Error saving asset`,
 `Error creating asset temp dir`) that hit assets of *any* size. v13.16.2 failed on `install.sh`, a few
 kilobytes.
@@ -461,7 +461,7 @@ The general principle:
     upload() {
       for attempt in 1 2 3 4 5; do
         # Quiet on the first try; every retry dumps the full HTTP exchange, so a
-        # recurring failure is diagnosable from the log alone — status code plus
+        # recurring failure is diagnosable from the log alone - status code plus
         # the x-github-request-id header, which is what support will ask for.
         [ "$attempt" -gt 1 ] && export GH_DEBUG=api
 
@@ -480,10 +480,10 @@ The general principle:
 Three ideas in that function are worth lifting wholesale:
 
 - **Idempotent retries.** `--clobber` (or your tool's equivalent upsert flag) means attempt 4 does not
-  care what attempts 1–3 half-did. Retry logic without idempotency creates duplicates.
+  care what attempts 1-3 half-did. Retry logic without idempotency creates duplicates.
 - **Escalating observability.** Debug logging off on the happy path, on from attempt 2. Healthy runs
   stay readable; the one run you need to debug carries everything. (Actions masks `GITHUB_TOKEN` in all
-  log output, so `GH_DEBUG=api` does not leak it — verify the equivalent guarantee before doing this on
+  log output, so `GH_DEBUG=api` does not leak it - verify the equivalent guarantee before doing this on
   another platform.)
 - **Linear backoff, bounded attempts.** Five tries over about two and a half minutes. Long enough to
   outlive a blip, short enough that a real outage fails the job instead of burning runner minutes.
@@ -520,7 +520,7 @@ fi
 ```
 
 Writing recovery commands into `$GITHUB_STEP_SUMMARY` is a habit worth forming. When a partial failure
-happens, the person fixing it is already looking at the run page — put the fix there, pre-filled with the
+happens, the person fixing it is already looking at the run page - put the fix there, pre-filled with the
 real version and image name, instead of making them reconstruct it from the workflow source.
 
 *In production: `release.yml:390-463`. The comment block above that step names the three releases it
@@ -528,7 +528,7 @@ came from; incident notes belong next to the code that carries the scar.*
 
 ---
 
-## Stage 6 — Smoke-test what you actually shipped
+## Stage 6 - Smoke-test what you actually shipped
 
 A successful build proves your code compiles and your `Dockerfile` has valid syntax. It does not prove
 the thing you are about to publish *runs*. Two checks, seconds each, catch an embarrassing share of bad
@@ -586,17 +586,17 @@ One GitHub-specific gotcha that will cost you an afternoon if you do not know it
 
 > **A tag pushed using `GITHUB_TOKEN` does not trigger other workflows.**
 
-This is deliberate — it stops a workflow from triggering itself forever. But it means a `release.yml`
+This is deliberate - it stops a workflow from triggering itself forever. But it means a `release.yml`
 that pushes `v2.4.0` and expects the tag-triggered image build to fire will wait forever. Two ways out:
 
-1. **Build the versioned image inside the release job** — what DockRadar does at `release.yml:309-338`,
+1. **Build the versioned image inside the release job** - what DockRadar does at `release.yml:309-338`,
    reusing `docker/metadata-action` to tag both `X.Y.Z` and `latest`. No extra credentials, and one job
    you can read top to bottom.
 2. **Push the tag with a PAT or GitHub App token**, which *does* trigger workflows. More moving parts, a
    secret to rotate, and a genuine self-trigger loop risk.
 
 Option 1 is the safer default. Whichever you pick, write down *why* in a comment at the top of the
-workflow — this is exactly the kind of thing that looks like a redundant duplicate build to whoever
+workflow - this is exactly the kind of thing that looks like a redundant duplicate build to whoever
 reads it next. (On GitLab CI the equivalent chaining is `needs:` plus `rules: - if: $CI_COMMIT_TAG`; on
 Jenkins it is a downstream `build job:` step. The token gotcha is GitHub-specific, but "does my tag push
 retrigger the pipeline?" is a question worth answering explicitly on every platform.)
@@ -684,7 +684,7 @@ jobs:
           GOT=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' pkg/version.py)
           [ "$V" = "$GOT" ] || { echo "::error::bump failed: got '$GOT'"; exit 1; }
 
-      # TODO: build + smoke-test your artifacts HERE — before the tag exists.
+      # TODO: build + smoke-test your artifacts HERE - before the tag exists.
 
       - name: Rotate changelog
         run: |
@@ -702,7 +702,7 @@ jobs:
           git tag "v$V"
           git push --atomic origin HEAD "v$V"
 
-      - name: Create release (no assets — cannot fail transiently)
+      - name: Create release (no assets - cannot fail transiently)
         uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ steps.version.outputs.value }}
@@ -757,7 +757,7 @@ implements each stage.
 
 ## The checklist
 
-1. **One source of truth per artifact** — everything else is generated.
+1. **One source of truth per artifact** - everything else is generated.
 2. **Verify every bump by reading the file back.** A `sed` that matched nothing still exits 0.
 3. **Build and smoke-test before you tag.** The tag is the first step you cannot take back.
 4. **Push branch and tag with `--atomic`.** Never leave an orphaned tag behind.
@@ -776,5 +776,5 @@ behind that you have to explain.
 
 *The full workflow this was drawn from:
 [`release.yml`](https://github.com/ankityadavpurson/dockradar/blob/main/.github/workflows/release.yml)
-in [DockRadar](https://github.com/ankityadavpurson/dockradar) — self-hosted Docker container monitoring.
+in [DockRadar](https://github.com/ankityadavpurson/dockradar) - self-hosted Docker container monitoring.
 Every line reference in this post points there.*
