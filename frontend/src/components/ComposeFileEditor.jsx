@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Alert, Button, Card, FileCode2Icon, SaveIcon, TextArea, XCircleIcon, Flex } from 'xedonium'
+import Alert from 'xedonium/Alert'
+import Button from 'xedonium/Button'
+import Card from 'xedonium/Card'
+import FileCode2Icon from 'xedonium/icons/FileCode2'
+import SaveIcon from 'xedonium/icons/Save'
+import TextArea from 'xedonium/TextArea'
+import XCircleIcon from 'xedonium/icons/XCircle'
+import Flex from 'xedonium/Flex'
 import { composeApi } from '../api/client'
 
 /**

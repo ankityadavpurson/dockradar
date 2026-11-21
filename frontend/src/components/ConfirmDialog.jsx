@@ -1,4 +1,4 @@
-import { ConfirmDialog as XConfirmDialog } from 'xedonium'
+import XConfirmDialog from 'xedonium/ConfirmDialog'
 
 export default function ConfirmDialog({
   open, title, message, onConfirm, onCancel,

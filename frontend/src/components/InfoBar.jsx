@@ -1,4 +1,8 @@
-import { ClockIcon, Divider, Flex, HistoryIcon, TimerIcon } from 'xedonium'
+import ClockIcon from 'xedonium/icons/Clock'
+import Divider from 'xedonium/Divider'
+import Flex from 'xedonium/Flex'
+import HistoryIcon from 'xedonium/icons/History'
+import TimerIcon from 'xedonium/icons/Timer'
 
 /** "3m ago" style age for a past ISO timestamp; null → 'never'. */
 function timeAgo(iso) {

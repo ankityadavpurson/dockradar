@@ -1,9 +1,26 @@
 import { useEffect, useState } from 'react'
-import {
-  Accordion, Alert, ArrowUpCircleIcon, Badge, BoxIcon, Button, Chip, Drawer, EditIcon,
-  FileCode2Icon, GlobeIcon, HardDriveIcon, HelperText, InfoIcon, KeyRoundIcon, LinkIcon, Loader,
-  NetworkIcon, TagsIcon, TerminalIcon, Flex, Stack,
-} from 'xedonium'
+import Accordion from 'xedonium/Accordion'
+import Alert from 'xedonium/Alert'
+import ArrowUpCircleIcon from 'xedonium/icons/ArrowUpCircle'
+import Badge from 'xedonium/Badge'
+import BoxIcon from 'xedonium/icons/Box'
+import Button from 'xedonium/Button'
+import Chip from 'xedonium/Chip'
+import Drawer from 'xedonium/Drawer'
+import EditIcon from 'xedonium/icons/Edit'
+import FileCode2Icon from 'xedonium/icons/FileCode2'
+import GlobeIcon from 'xedonium/icons/Globe'
+import HardDriveIcon from 'xedonium/icons/HardDrive'
+import HelperText from 'xedonium/HelperText'
+import InfoIcon from 'xedonium/icons/Info'
+import KeyRoundIcon from 'xedonium/icons/KeyRound'
+import LinkIcon from 'xedonium/icons/Link'
+import Loader from 'xedonium/Loader'
+import NetworkIcon from 'xedonium/icons/Network'
+import TagsIcon from 'xedonium/icons/Tags'
+import TerminalIcon from 'xedonium/icons/Terminal'
+import Flex from 'xedonium/Flex'
+import Stack from 'xedonium/Stack'
 import { api } from '../api/client'
 
 const ICON = { className: 'h-4 w-4 shrink-0 text-app-soft' }

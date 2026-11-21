@@ -1,8 +1,18 @@
 import { useMemo } from 'react'
-import {
-  ArrowUpCircleIcon, Badge, BoxIcon, Button, DataGrid, FileCode2Icon, Loader, ShieldCheckIcon,
-  Skeleton, TagIcon, TextLink, Chip, Flex, Stack,
-} from 'xedonium'
+import ArrowUpCircleIcon from 'xedonium/icons/ArrowUpCircle'
+import Badge from 'xedonium/Badge'
+import BoxIcon from 'xedonium/icons/Box'
+import Button from 'xedonium/Button'
+import DataGrid from 'xedonium/DataGrid'
+import FileCode2Icon from 'xedonium/icons/FileCode2'
+import Loader from 'xedonium/Loader'
+import ShieldCheckIcon from 'xedonium/icons/ShieldCheck'
+import Skeleton from 'xedonium/Skeleton'
+import TagIcon from 'xedonium/icons/Tag'
+import TextLink from 'xedonium/TextLink'
+import Chip from 'xedonium/Chip'
+import Flex from 'xedonium/Flex'
+import Stack from 'xedonium/Stack'
 import CheckBox from './CheckBox'
 import RowMenu from './RowMenu'
 

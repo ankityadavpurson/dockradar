@@ -1,4 +1,10 @@
-import { Button, Divider, SettingsIcon, TextLink, ThemeToggle, Container, Flex } from 'xedonium'
+import Button from 'xedonium/Button'
+import Divider from 'xedonium/Divider'
+import SettingsIcon from 'xedonium/icons/Settings'
+import TextLink from 'xedonium/TextLink'
+import ThemeToggle from 'xedonium/ThemeToggle'
+import Container from 'xedonium/Container'
+import Flex from 'xedonium/Flex'
 import logo from '../../assets/logo.svg'
 
 export default function Header({ health, containers, page, onOpenSettings, onOpenHome }) {
