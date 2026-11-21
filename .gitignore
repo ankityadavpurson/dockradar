@@ -79,8 +79,3 @@ compose_files/
 # ── Backend runtime data ───────────────────────────────────────────────────
 backend/compose_files/
 backend/*.log
-
-# ── Firebase ──────────────────────────────────────────────────
-.firebase/
-firebase-debug.log*
-firebase-debug.*.log

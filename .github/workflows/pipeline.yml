@@ -1,16 +1,15 @@
 name: Pipeline
 
-# One pipeline, in order:  test -> docker -> deploy-landing -> release
+# One pipeline, in order:  test -> docker -> release
 #
-#   test            backend tests, frontend + landing builds, shell lint (ci.yml)
+#   test            backend tests, frontend build, shell lint (ci.yml)
 #   docker          build and push the :latest / :sha image to GHCR + Docker Hub
-#   deploy-landing  publish landing/ to Firebase Hosting (main only)
 #   release         main only. Determines the next version, bumps it, rotates
 #                   CHANGELOG.md, tags vX.Y.Z, pushes the versioned image and
 #                   creates the GitHub Release with its assets
 #
 # Each stage needs the previous one, so a failure stops everything after it.
-# A push to main runs all four. A pushed v* tag runs test + docker only (the
+# A push to main runs all three. A pushed v* tag runs test + docker only (the
 # version check below guards hand-made tags). Run it manually (workflow_dispatch)
 # on main to release with an explicit version or bump level.
 #
@@ -140,49 +139,12 @@ jobs:
           short-description: Monitors your Docker containers for outdated images and lets you update them.
           readme-filepath: ./DOCKERHUB.md
 
-  # Publish the landing page (landing/) to Firebase Hosting once the image is
-  # out. Main only — tag builds publish an image but don't touch the site.
-  # Needs the FIREBASE_SERVICE_ACCOUNT_DOCKRADAR secret (service account JSON);
-  # the project comes from landing/.firebaserc. See landing/README.md.
-  # The release job needs this one, so a failed deploy also holds back the release.
-  deploy-landing:
-    runs-on: ubuntu-24.04
-    needs: docker
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v5
-
-      - name: Set up Node
-        uses: actions/setup-node@v5
-        with:
-          node-version: 20
-          cache: yarn
-          cache-dependency-path: landing/yarn.lock
-
-      - name: Install dependencies
-        working-directory: landing
-        run: yarn install --frozen-lockfile
-
-      - name: Build
-        working-directory: landing
-        run: yarn build
-
-      - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DOCKRADAR }}
-          entryPoint: landing
-          channelId: live
-
-  # Cut the release: runs only on main, after the image and the landing page
-  # are out. Pushing the release commit and tag uses GITHUB_TOKEN, so it does
-  # not start another pipeline run.
+  # Cut the release: runs only on main, after the image is out. Pushing the
+  # release commit and tag uses GITHUB_TOKEN, so it does not start another
+  # pipeline run.
   release:
     runs-on: ubuntu-24.04
-    needs: deploy-landing
+    needs: docker
     # Pushes to main and manual dispatches on main; never for tag pushes.
     if: github.ref == 'refs/heads/main'
     permissions:

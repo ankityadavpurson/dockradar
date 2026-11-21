@@ -1,8 +1,8 @@
 name: CI
 
-# Quality gate: backend tests + frontend and landing-page production builds.
+# Quality gate: backend tests + frontend production build.
 # Runs standalone on PRs; on main it runs as the first stage of the Pipeline
-# workflow via workflow_call (test -> docker -> deploy-landing -> release,
+# workflow via workflow_call (test -> docker -> release,
 # see pipeline.yml), gating everything after it.
 
 on:
@@ -53,27 +53,6 @@ jobs:
 
       - name: Build production bundle
         working-directory: frontend
-        run: yarn build
-
-  landing-build:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v5
-
-      - name: Set up Node
-        uses: actions/setup-node@v5
-        with:
-          node-version: 20
-          cache: yarn
-          cache-dependency-path: landing/yarn.lock
-
-      - name: Install dependencies
-        working-directory: landing
-        run: yarn install --frozen-lockfile
-
-      - name: Build landing page
-        working-directory: landing
         run: yarn build
 
   shell-lint:
