@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Alert, Button, KeyIcon } from 'xedonium'
+import { Alert, Button, Card, KeyIcon, Container, Flex, Stack } from 'xedonium'
 import radarLoader from '../assets/radar-loader.svg'
 import { AUTH_REQUIRED_EVENT } from './api/client'
 import ApiKeyPrompt from './components/ApiKeyPrompt'
@@ -125,10 +125,10 @@ const App = () => {
   // UI is never blank (or a misleading "no containers found") on load.
   if (initialLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-sm text-app-muted">
+      <Stack align="center" justify="center" gap={4} className="min-h-screen text-sm text-app-muted">
         <img src={radarLoader} alt="" className="h-28 w-28" />
         <div>Connecting to DockRadar…</div>
-      </div>
+      </Stack>
     )
   }
 
@@ -145,14 +145,13 @@ const App = () => {
       <Header
         health={health}
         containers={containers}
-        scanStatus={scanStatus}
         page={page}
         onOpenSettings={openSettings}
         onOpenHome={openHome}
       />
 
       {page === 'settings' ? (
-        <main className="mx-auto max-w-[1400px] px-4 pt-4 md:px-6 md:pt-6">
+        <Container as="main" maxWidth="max-w-[1400px]" className="pt-4 md:pt-6">
           <SettingsPage
             onBack={openHome}
             onSaved={onSettingsSaved}
@@ -160,20 +159,19 @@ const App = () => {
             notify={notify}
             onDirtyChange={setSettingsDirty}
           />
-        </main>
+        </Container>
       ) : (
-      <main className="mx-auto max-w-[1400px] px-4 py-4 md:px-6 md:py-6">
+      <Container as="main" maxWidth="max-w-[1400px]" className="py-4 md:py-6">
 
         {/* API key missing or rejected */}
         {authNeeded && !showKeyPrompt && (
           <Alert tone="warning" className="mb-4" title="API key required.">
-            <div className="flex flex-wrap items-center gap-3">
+            <Flex align="center" wrap gap={3}>
               <span>This DockRadar is protected with an API key, so containers can't be loaded without it.</span>
-              <Button variant="secondary" onClick={() => setShowKeyPrompt(true)}
-                className="inline-flex items-center gap-2">
+              <Button variant="secondary" onClick={() => setShowKeyPrompt(true)}>
                 <KeyIcon className="h-4 w-4 shrink-0" /> Enter API key
               </Button>
-            </div>
+            </Flex>
           </Alert>
         )}
 
@@ -183,6 +181,9 @@ const App = () => {
             <span className="break-words">{error}</span>
           </Alert>
         )}
+
+        {/* Info bar */}
+        <InfoBar health={health} scanStatus={scanStatus} />
 
         {/* Toolbar */}
         <Toolbar
@@ -204,19 +205,18 @@ const App = () => {
           showFirstRunHint={showFirstRunHint}
         />
 
-        {/* Info bar */}
-        <InfoBar health={health} onTestEmail={testEmail} onOpenSettings={openSettings} />
-
         {/* Container table */}
-        <div className="overflow-hidden border border-app-border bg-app-card">
-          <div className="flex items-center justify-between border-b border-app-border px-4 py-3">
-            <span className="text-xs font-semibold uppercase tracking-widest text-app-muted">
-              Containers
-            </span>
+        <Card
+          title="Containers"
+          headingLevel={2}
+          padded={false}
+          className="overflow-hidden"
+          actions={
             <span className="text-xs tabular-nums text-app-muted">
               {visible.length} of {containers.length}
             </span>
-          </div>
+          }
+        >
 
           <ContainerTable
             containers={visible}
@@ -235,7 +235,7 @@ const App = () => {
             onShowDetails={c => setDetailName(c.name)}
             onShowError={c => setErrorDetail(c)}
           />
-        </div>
+        </Card>
 
         {/* Progress log - only for user-initiated scans/updates, not on load */}
         <ProgressLog
@@ -245,13 +245,13 @@ const App = () => {
           visible={logVisible}
           onDismiss={dismissLog}
         />
-      </main>
+      </Container>
       )}
 
       {/* Footer */}
-      <footer className="max-w-[1400px] mx-auto px-4 md:px-6 py-4 text-center text-xs text-app-muted">
+      <Container as="footer" maxWidth="max-w-[1400px]" className="py-4 text-center text-xs text-app-muted">
         DockRadar{health?.version && ` v${health.version}`}
-      </footer>
+      </Container>
 
       {/* ── Dialogs ── */}
 

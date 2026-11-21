@@ -1,4 +1,4 @@
-import { Select } from 'xedonium'
+import { Select, Flex } from 'xedonium'
 
 /**
  * Two linked selects: pick a stored compose file, then a service inside it.
@@ -11,7 +11,7 @@ export default function ServicePicker({ composeFiles, labels = {}, selectedFileI
   const services = file?.services || []
 
   return (
-    <div className="flex gap-2">
+    <Flex gap={2}>
       <div className="min-w-0 flex-[3]">
       <Select
         className="w-full"
@@ -33,6 +33,6 @@ export default function ServicePicker({ composeFiles, labels = {}, selectedFileI
         options={services.map(s => ({ value: s, label: s }))}
       />
       </div>
-    </div>
+    </Flex>
   )
 }

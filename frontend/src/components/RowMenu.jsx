@@ -12,7 +12,7 @@ const RowMenu = ({ container: c, hasCompose, isBusy, onConfirmUpdate, onComposeU
       label: outdated ? 'Update (pull + recreate)' : 'Re-pull & recreate',
       onClick: () => onConfirmUpdate(c),
     },
-    { key: 'remove', label: 'Remove container', tone: 'warning', hasDialog: true, onClick: () => onConfirmDelete(c) },
+    { key: 'remove', label: 'Remove container', tone: 'danger', hasDialog: true, onClick: () => onConfirmDelete(c) },
   ].filter(Boolean).map(i => ({ ...i, disabled: isBusy }))
 
   return (

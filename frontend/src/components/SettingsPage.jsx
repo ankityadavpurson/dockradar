@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  Alert, ArrowLeftIcon, Button, Input, KeyIcon, NumberField, PasswordInput,
-  RotateCcwIcon, SaveIcon, SendIcon, Switch, useLeaveWarning,
+  Alert, ArrowLeftIcon, Button, Card, Chip, HelperText, Input, KeyIcon, Label, NumberField,
+  PageHeader, PasswordInput, RotateCcwIcon, SaveIcon, SendIcon, Switch, useLeaveWarning, Flex,
+  Grid, Stack,
 } from 'xedonium'
 import radarLoader from '../../assets/radar-loader.svg'
 import { setApiKey, settingsApi } from '../api/client'
@@ -158,7 +159,7 @@ export default function SettingsPage({ onBack, onSaved, onTestEmail, notify, onD
   // ── Render ──────────────────────────────────────────────────────────────────
   if (!data) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 py-24 text-sm text-app-muted">
+      <Stack align="center" justify="center" gap={4} className="py-24 text-sm text-app-muted">
         {loadError ? (
           <>
             <Alert tone="danger" className="w-full max-w-lg">
@@ -172,25 +173,26 @@ export default function SettingsPage({ onBack, onSaved, onTestEmail, notify, onD
             <div>Loading settings…</div>
           </>
         )}
-      </div>
+      </Stack>
     )
   }
 
   const envFile = data.env_file
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center gap-3">
-        <Button variant="flat" onClick={onBack} className="inline-flex items-center gap-1.5 !px-2">
-          <ArrowLeftIcon className="h-4 w-4 shrink-0" />
-          Dashboard
-        </Button>
-        <h1 className="text-xl font-semibold text-app-strong">Settings</h1>
-      </div>
+    <>
+    {/* PageHeader brings its own bottom margin, so it sits outside the Stack's gap. */}
+    <PageHeader title="Settings" subtitle="Changes apply as soon as you save, without a restart.">
+      <Button variant="flat" onClick={onBack}>
+        <ArrowLeftIcon className="h-4 w-4 shrink-0" />
+        Dashboard
+      </Button>
+    </PageHeader>
 
+    <Stack gap={6}>
       <Alert tone="info">
-        Changes apply as soon as you save, without a restart. Values saved here take priority
-        over the env file; use <strong>Reset</strong> on a setting to follow the env file again.
+        Values saved here take priority over the env file; use <strong>Reset</strong> on a
+        setting to follow the env file again.
       </Alert>
 
       {GROUPS.map(group => {
@@ -198,26 +200,25 @@ export default function SettingsPage({ onBack, onSaved, onTestEmail, notify, onD
         if (!items?.length) return null
         const readOnly = group.id === 'server'
         return (
-          <section key={group.id} aria-labelledby={`group-${group.id}`}
-            className="overflow-hidden border border-app-border bg-app-card">
-            <header className="flex flex-wrap items-start gap-3 border-b border-app-border px-4 py-3 md:px-5">
-              <div className="min-w-0 flex-1">
-                <h2 id={`group-${group.id}`} className="text-[15px] font-semibold text-app-strong">{group.title}</h2>
-                <p className="mt-0.5 text-[13px] text-app-muted">
-                  {group.subtitle}
-                  {readOnly && <> Change them in {envFile ? <code className="break-all">{envFile}</code> : <>your <code>.env</code> file (or <code>docker-compose.yml</code>)</>} and restart.</>}
-                </p>
-              </div>
-              {group.id === 'email' && onTestEmail && (
-                <Button variant="secondary" onClick={testEmail} disabled={testing || emailDirty}
-                  tooltip={emailDirty ? 'Save your changes first' : 'Send a test email with the saved settings'}
-                  className="inline-flex shrink-0 items-center gap-2">
-                  <SendIcon className="h-[13px] w-[13px] shrink-0" />
-                  {testing ? 'Sending…' : 'Send test email'}
-                </Button>
-              )}
-            </header>
-
+          <Card
+            key={group.id}
+            title={<span className='font-bold text-lg'>{group.title}</span>}
+            headingLevel={2}
+            padded={false}
+            className="overflow-hidden"
+            subtitle={<>
+              {group.subtitle}
+              {readOnly && <> Change them in {envFile ? <code className="break-all">{envFile}</code> : <>your <code>.env</code> file (or <code>docker-compose.yml</code>)</>} and restart.</>}
+            </>}
+            footer={group.id === 'email' && onTestEmail ? (
+              <TestEmailFooter
+                recipient={items.find(s => s.key === 'EMAIL_TO')?.value}
+                dirty={emailDirty}
+                testing={testing}
+                onTest={testEmail}
+              />
+            ) : undefined}
+          >
             <div className="divide-y divide-app-border">
               {items.map(item => readOnly
                 ? <ReadOnlyRow key={item.key} item={item} />
@@ -235,28 +236,55 @@ export default function SettingsPage({ onBack, onSaved, onTestEmail, notify, onD
                   />
                 ))}
             </div>
-          </section>
+          </Card>
         )
       })}
 
-      <p className="text-xs text-app-muted">
+      <HelperText>
         Saved settings are stored in <code className="break-all">{data.store_path}</code>.
-      </p>
+      </HelperText>
 
       {/* Save bar */}
-      <div className="sticky bottom-0 z-30 -mx-4 border-t border-app-border bg-app-bg/95 px-4 py-3 backdrop-blur md:-mx-6 md:px-6">
-        <div className="mx-auto flex max-w-[1400px] items-center gap-3">
+      <div className="sticky bottom-0 z-30 -mx-4 border-t border-app-border bg-app-bg/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+        <Flex align="center" gap={3}>
           <span className="mr-auto text-sm text-app-muted" aria-live="polite">
             {dirty ? `${changeCount} unsaved` : <>No<span className="hidden sm:inline"> unsaved</span> changes</>}
           </span>
           <Button variant="secondary" onClick={discard} disabled={!dirty || saving} className="whitespace-nowrap">Discard</Button>
-          <Button onClick={save} disabled={!dirty || saving} className="inline-flex items-center gap-2 whitespace-nowrap">
+          <Button onClick={save} disabled={!dirty || saving} className="whitespace-nowrap">
             <SaveIcon className="h-4 w-4 shrink-0" />
             {saving ? 'Saving…' : 'Save changes'}
           </Button>
-        </div>
+        </Flex>
       </div>
-    </div>
+    </Stack>
+    </>
+  )
+}
+
+// ── Email test footer ─────────────────────────────────────────────────────────
+
+function TestEmailFooter({ recipient, dirty, testing, onTest }) {
+  const note = dirty
+    ? 'Save your changes first to test them.'
+    : recipient
+      ? <>Sends a test email to <span className="break-all font-mono text-app-text">{recipient}</span> using the saved settings.</>
+      : 'Add a recipient and save to send a test email.'
+  // Same two columns as the setting rows: text on the left, the button under the inputs.
+  return (
+    <Grid cols={1} responsive={false} gap={2}
+      className="items-center py-1 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-6">
+      <div className="min-w-0">
+        <Label className="!text-app-text">Test email</Label>
+        <HelperText className="mt-1 !text-[13px] leading-relaxed">{note}</HelperText>
+      </div>
+      <div>
+        <Button variant="secondary" onClick={onTest} disabled={testing || dirty || !recipient}>
+          <SendIcon className="h-[13px] w-[13px] shrink-0" />
+          {testing ? 'Sending…' : 'Send test email'}
+        </Button>
+      </div>
+    </Grid>
   )
 }
 
@@ -265,27 +293,32 @@ export default function SettingsPage({ onBack, onSaved, onTestEmail, notify, onD
 function RowShell({ item, children }) {
   const id = `setting-${item.key}`
   return (
-    <div className="grid gap-2 px-4 py-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-6 md:px-5">
-      <div className="min-w-0">
-        <label htmlFor={id} id={`${id}-label`} className="text-sm font-medium text-app-text">{item.label}</label>
-        <div className="font-mono text-[11px] text-app-muted">{item.key}</div>
-        {item.help && <p className="mt-1 text-[13px] leading-relaxed text-app-muted">{item.help}</p>}
-      </div>
-      <div className="flex min-w-0 max-w-2xl flex-col gap-1.5">{children}</div>
+    <Grid cols={1} responsive={false} gap={2} className="px-5 py-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-6">
+      <SettingInfo item={item} htmlFor={id} />
+      <Stack gap={2} className="min-w-0 max-w-2xl">{children}</Stack>
+    </Grid>
+  )
+}
+
+/** Left column of a row: name (as the field's label), env key and help. */
+function SettingInfo({ item, htmlFor }) {
+  return (
+    <div className="min-w-0">
+      <Label htmlFor={htmlFor} id={htmlFor ? `${htmlFor}-label` : undefined} className="!text-app-text">
+        {item.label}
+      </Label>
+      <div className="font-mono text-[11px] text-app-muted">{item.key}</div>
+      {item.help && <HelperText className="mt-1 !text-[13px] leading-relaxed">{item.help}</HelperText>}
     </div>
   )
 }
 
 function SourceTag({ source, pending }) {
-  const cls = pending
-    ? 'border-amber-500/40 text-amber-600 dark:text-amber-400'
-    : source === 'saved'
-      ? 'border-sky-500/40 text-sky-700 dark:text-sky-400'
-      : 'border-app-border text-app-muted'
+  const tone = pending ? 'warning' : source === 'saved' ? 'info' : 'default'
   return (
-    <span className={`inline-flex items-center border px-1.5 py-px text-[11px] font-medium ${cls}`}>
+    <Chip size="sm" tone={tone}>
       {pending ? 'Unsaved' : SOURCE_LABEL[source] ?? source}
-    </span>
+    </Chip>
   )
 }
 
@@ -313,21 +346,21 @@ function SettingRow({ item, draft, hasDraft, pendingReset, error, onChange, onUn
     const placeholder = removing ? 'Will be removed when you save'
       : item.is_set ? '•••••••• saved - type to replace' : 'Not set'
     control = (
-      <div className="flex flex-wrap items-center gap-2">
+      <Flex align="center" wrap gap={2}>
         <div className="min-w-0 flex-1 basis-56">
           <PasswordInput id={id} value={removing ? '' : (draft ?? '')} onChange={onChange}
             placeholder={placeholder} autoComplete="new-password" aria-invalid={!!error} />
         </div>
         {item.key === 'API_KEY' && (
           <Button variant="flat" onClick={() => onChange(randomKey())}
-            tooltip="Fill in a random 48-character key" className="inline-flex items-center gap-1.5">
+            tooltip="Fill in a random 48-character key">
             <KeyIcon className="h-4 w-4 shrink-0" /> Generate
           </Button>
         )}
         {item.is_set && !removing && (
           <Button variant="flat" onClick={() => onChange(null)}>Remove</Button>
         )}
-      </div>
+      </Flex>
     )
   } else {
     control = (
@@ -340,8 +373,8 @@ function SettingRow({ item, draft, hasDraft, pendingReset, error, onChange, onUn
   return (
     <RowShell item={item}>
       {control}
-      {error && <p className="text-[13px] text-red-600 dark:text-red-400" role="alert">{error}</p>}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-app-muted">
+      {error && <HelperText role="alert" className="!text-[13px] !text-red-600 dark:!text-red-400">{error}</HelperText>}
+      <Flex align="center" wrap gap={1} className="gap-x-3 text-xs text-app-muted">
         <SourceTag source={item.source} pending={pending} />
         {pendingReset && (
           <span>Reverts to the {fallbackLabel}{isSecret ? '' : `: ${fmt(item.fallback, item.kind)}`}</span>
@@ -352,34 +385,37 @@ function SettingRow({ item, draft, hasDraft, pendingReset, error, onChange, onUn
         )}
         <span className="flex-1" />
         {pending ? (
-          <button type="button" onClick={onUndo} className="font-medium text-sky-700 hover:underline dark:text-sky-400">
-            Undo
-          </button>
+          <Button variant="flat" onClick={onUndo} className="!px-2 !py-1">Undo</Button>
         ) : item.source === 'saved' && (
-          <button type="button" onClick={onReset}
-            title={`Stop overriding and use the ${fallbackLabel}`}
-            className="inline-flex items-center gap-1 font-medium text-sky-700 hover:underline dark:text-sky-400">
+          <Button variant="flat" onClick={onReset} className="!px-2 !py-1"
+            tooltip={`Stop overriding and use the ${fallbackLabel}`}>
             <RotateCcwIcon className="h-3 w-3 shrink-0" /> Reset
-          </button>
+          </Button>
         )}
-      </div>
+      </Flex>
     </RowShell>
   )
 }
 
+/** A setting that can't be changed here: plain text, not a form field. */
 function ReadOnlyRow({ item }) {
+  const empty = item.value === null || item.value === ''
+  const showDefault = item.default !== null && item.default !== undefined
+    && String(item.default) !== String(item.value)
   return (
-    <RowShell item={item}>
-      <div id={`setting-${item.key}`}
-        className="break-all border border-app-border bg-app-bg px-3 py-2 font-mono text-[13px] text-app-text">
-        {item.value === null || item.value === '' ? <span className="text-app-muted">(Docker default)</span> : String(item.value)}
-      </div>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-app-muted">
-        <SourceTag source={item.source} />
-        {item.default !== null && item.default !== undefined && (
-          <span>Default: <span className="break-all font-mono">{fmt(item.default, item.kind)}</span></span>
-        )}
-      </div>
-    </RowShell>
+    <Grid cols={1} responsive={false} gap={1} className="px-5 py-3 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-6">
+      <SettingInfo item={item} />
+      <Stack gap={1} className="min-w-0 md:pt-0.5">
+        <div id={`setting-${item.key}`} className="break-all font-mono text-[13px] text-app-strong">
+          {empty ? <span className="font-sans text-app-muted">Docker default (local socket)</span> : String(item.value)}
+        </div>
+        <Flex align="center" wrap gap={1} className="gap-x-3 text-xs text-app-muted">
+          <SourceTag source={item.source} />
+          {showDefault && (
+            <span>Default: <span className="break-all font-mono">{fmt(item.default, item.kind)}</span></span>
+          )}
+        </Flex>
+      </Stack>
+    </Grid>
   )
 }

@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Accordion, Alert, ArrowUpCircleIcon, Badge, BoxIcon, Button, Drawer, EditIcon, FileCode2Icon, GlobeIcon, HardDriveIcon, InfoIcon, KeyRoundIcon, LinkIcon, Loader, NetworkIcon, TagsIcon, TerminalIcon } from 'xedonium'
+import {
+  Accordion, Alert, ArrowUpCircleIcon, Badge, BoxIcon, Button, Chip, Drawer, EditIcon,
+  FileCode2Icon, GlobeIcon, HardDriveIcon, HelperText, InfoIcon, KeyRoundIcon, LinkIcon, Loader,
+  NetworkIcon, TagsIcon, TerminalIcon, Flex, Stack,
+} from 'xedonium'
 import { api } from '../api/client'
 
 const ICON = { className: 'h-4 w-4 shrink-0 text-app-soft' }
@@ -7,10 +11,10 @@ const ICON = { className: 'h-4 w-4 shrink-0 text-app-soft' }
 function KV({ k, v, title }) {
   if (v === null || v === undefined || v === '') return null
   return (
-    <div className="flex gap-3 font-mono text-[13px]">
+    <Flex gap={3} className="font-mono text-[13px]">
       <span className="w-24 shrink-0 font-sans text-app-muted">{k}</span>
       <span className="break-all text-app-soft" title={title}>{v}</span>
-    </div>
+    </Flex>
   )
 }
 
@@ -80,18 +84,18 @@ export default function ContainerDetailDrawer({
   const section = (key, icon, label, { count, preview, content }) => ({
     key,
     title: (
-      <span className="flex w-full min-w-0 items-center gap-2">
+      <Flex as="span" align="center" gap={2} className="w-full min-w-0">
         {icon}
         <span className="shrink-0 font-normal">{label}</span>
-        {count > 0 && <Badge badgeContent={count} color="secondary" className="shrink-0" />}
+        {count > 0 && <Chip size="sm" className="shrink-0 tabular-nums">{count}</Chip>}
         {!openKeys.includes(key) && preview && (
           <span className="ml-auto min-w-0 max-w-[55%] truncate text-right font-mono text-xs font-normal text-app-muted">
             {preview}
           </span>
         )}
-      </span>
+      </Flex>
     ),
-    content: <div className="flex flex-col gap-1.5 pt-2">{content}</div>,
+    content: <Stack gap={2} className="pt-2">{content}</Stack>,
   })
 
   const accordionItems = !data ? [] : [
@@ -109,13 +113,13 @@ export default function ContainerDetailDrawer({
         {envKeys.length === 0
           ? <Line>none</Line>
           : (
-            <div className="flex flex-wrap gap-1.5">
+            <Flex wrap gap={2}>
               {envKeys.map(k => (
-                <span key={k} className="border border-app-border bg-app-card px-1.5 py-0.5 font-mono text-xs text-app-soft">{k}</span>
+                <Chip key={k} size="sm" className="font-mono">{k}</Chip>
               ))}
-            </div>
+            </Flex>
           )}
-        <span className="text-xs text-app-muted">Values are hidden - they may contain secrets.</span>
+        <HelperText as="span">Values are hidden - they may contain secrets.</HelperText>
       </>),
     }),
     section('network', <NetworkIcon {...ICON} />, 'Network', {
@@ -144,7 +148,7 @@ export default function ContainerDetailDrawer({
           <KV k="service" v={data.compose.service_name} />
           {isLinked && onEditCompose && (
             <div className="mt-2">
-              <Button variant="secondary" className="inline-flex items-center gap-2"
+              <Button variant="secondary"
                 onClick={onEditCompose} tooltip="Edit the linked compose file">
                 <EditIcon className="h-3.5 w-3.5 shrink-0" />
                 Edit compose file
@@ -157,7 +161,7 @@ export default function ContainerDetailDrawer({
         preview: 'no compose file linked',
         content: onLinkCompose && (
           <div>
-            <Button variant="secondary" className="inline-flex items-center gap-2"
+            <Button variant="secondary"
               onClick={onLinkCompose} tooltip="Link this container to a compose file">
               <LinkIcon className="h-3.5 w-3.5 shrink-0" />
               Link compose file
@@ -189,31 +193,31 @@ export default function ContainerDetailDrawer({
     section('coverage', <InfoIcon className="h-4 w-4 shrink-0 text-amber-500" />, 'Direct update coverage', {
       preview: 'what survives an update?',
       content: (
-        <p className="text-xs leading-relaxed text-app-muted">
+        <HelperText className="leading-relaxed">
           Direct updates recreate this container from the configuration above.{' '}
           <span className="text-app-soft">Preserved:</span> ports, bind mounts, env vars,
           restart policy, network mode, labels, command/entrypoint.{' '}
           <span className="text-app-soft">Not preserved:</span> named volumes attached
           via <code>--mount</code>, multiple networks, and advanced options - use a
           compose association for containers that rely on them.
-        </p>
+        </HelperText>
       ),
     }),
   ].filter(Boolean)
 
   const title = (
-    <span className="flex min-w-0 items-center gap-2 normal-case tracking-normal">
+    <Flex as="span" align="center" gap={2} className="min-w-0 normal-case tracking-normal">
       <span className="truncate text-base font-semibold">{name}</span>
       {data && (
         <Badge color={data.status === 'running' ? 'success' : 'warning'} badgeContent={data.status}
           className="shrink-0 capitalize" />
       )}
-    </span>
+    </Flex>
   )
 
   return (
     <Drawer open onClose={onClose} title={title} width="max-w-[520px]" padded={false}>
-      <div className="flex h-full flex-col">
+      <Stack gap={0} className="h-full">
         {data && (
           <span className="truncate px-6 pb-3 pt-4 font-mono text-xs text-app-muted"
             title={data.local_digest || undefined}>
@@ -223,12 +227,12 @@ export default function ContainerDetailDrawer({
         )}
 
         {/* Body */}
-        <div className="flex flex-1 flex-col gap-2 overflow-y-auto px-6 pb-6">
+        <Stack gap={2} className="flex-1 overflow-y-auto px-6 pb-6">
           {/* Actions - update (direct / compose) and compose file link/edit */}
           {container && (onDirectUpdate || onLinkCompose) && (
-            <div className="mb-1 flex shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center [&>*]:w-full sm:[&>*]:w-auto">
+            <Stack gap={2} className="mb-1 shrink-0 sm:flex-row sm:flex-wrap sm:items-center [&>*]:w-full sm:[&>*]:w-auto">
               {updateAvailable && hasCompose && onComposeUpdate && (
-                <Button variant="secondary" className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
+                <Button variant="secondary" className="w-full sm:w-auto"
                   disabled={isBusy || composeUnavailable}
                   onClick={() => onComposeUpdate(container)}
                   tooltip={composeUnavailable
@@ -239,7 +243,7 @@ export default function ContainerDetailDrawer({
                 </Button>
               )}
               {updateAvailable && onDirectUpdate && (
-                <Button variant="warning" className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
+                <Button variant="warning" className="w-full sm:w-auto"
                   disabled={isBusy}
                   onClick={() => onDirectUpdate(container)}
                   tooltip="Stop, remove, and recreate with the latest image">
@@ -247,7 +251,7 @@ export default function ContainerDetailDrawer({
                   Update (pull + recreate)
                 </Button>
               )}
-            </div>
+            </Stack>
           )}
 
           {error && (
@@ -268,8 +272,8 @@ export default function ContainerDetailDrawer({
               className="shrink-0 bg-app-card [&_h3_button>span:first-child]:flex-1"
             />
           )}
-        </div>
-      </div>
+        </Stack>
+      </Stack>
     </Drawer>
   )
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, KeyIcon, PasswordInput } from 'xedonium'
+import { Button, HelperText, KeyIcon, PasswordInput, Stack } from 'xedonium'
 import { setApiKey, verifyApiKey } from '../api/client'
 import Modal from './Modal'
 
@@ -35,8 +35,7 @@ export default function ApiKeyPrompt({ hadKey, onClose }) {
   const footer = (
     <>
       <Button variant="secondary" onClick={onClose} disabled={checking}>Not now</Button>
-      <Button type="submit" form="api-key-form" disabled={!key.trim() || checking}
-        className="inline-flex items-center gap-2">
+      <Button type="submit" form="api-key-form" disabled={!key.trim() || checking}>
         <KeyIcon className="h-4 w-4 shrink-0" />
         {checking ? 'Checking…' : 'Unlock'}
       </Button>
@@ -45,12 +44,12 @@ export default function ApiKeyPrompt({ hadKey, onClose }) {
 
   return (
     <Modal title="API key required" onClose={onClose} size="sm" footer={footer} ariaLabel="API key required">
-      <p className="text-[13px] leading-relaxed text-app-muted">
+      <HelperText className="!text-[13px] leading-relaxed">
         {hadKey
           ? 'The API key saved in this browser is no longer accepted. Enter the current key to continue.'
           : 'This DockRadar is protected with an API key. Enter it to view and manage your containers.'}
-      </p>
-      <form id="api-key-form" onSubmit={submit} className="flex flex-col gap-2">
+      </HelperText>
+      <Stack as="form" gap={2} id="api-key-form" onSubmit={submit}>
         <PasswordInput
           label="API key"
           value={key}
@@ -60,11 +59,11 @@ export default function ApiKeyPrompt({ hadKey, onClose }) {
           autoComplete="current-password"
           spellCheck={false}
         />
-      </form>
-      <p className="text-xs text-app-muted">
+      </Stack>
+      <HelperText>
         It's the <code>API_KEY</code> value from your env file, or the key set on the Settings page.
         It is kept in this browser only.
-      </p>
+      </HelperText>
     </Modal>
   )
 }

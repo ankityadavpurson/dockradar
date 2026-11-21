@@ -1,4 +1,4 @@
-import { Alert, Button } from 'xedonium'
+import { Alert, Button, HelperText } from 'xedonium'
 import Modal from './Modal'
 
 /**
@@ -26,12 +26,12 @@ export default function ErrorDetailDialog({ container, onClose }) {
         </span>
       </Alert>
 
-      <p className="text-[13px] leading-relaxed text-app-muted">
+      <HelperText className="!text-[13px] leading-relaxed">
         DockRadar couldn’t check this image against its registry, so its update
         status is unknown. Common causes: the image is private (needs
         authentication), the repository was renamed or removed, or the registry
         was unreachable. Fix access and run a scan again.
-      </p>
+      </HelperText>
     </Modal>
   )
 }

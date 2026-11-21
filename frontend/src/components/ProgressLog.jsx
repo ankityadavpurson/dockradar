@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button, CloseIcon, MaximizeIcon, MinimizeIcon, TerminalIcon } from 'xedonium'
+import { Button, CloseIcon, MaximizeIcon, MinimizeIcon, TerminalIcon, Flex, Stack } from 'xedonium'
 
 const ProgressLog = ({ messages, scanning, updating, visible = false, onDismiss }) => {
   const endRef = useRef(null)
@@ -38,7 +38,7 @@ const ProgressLog = ({ messages, scanning, updating, visible = false, onDismiss 
     <>
       {!open && (
         <Button variant="secondary" onClick={() => setOpen(true)}
-          className="fixed bottom-4 right-4 z-[40] inline-flex items-center gap-2 shadow-lg">
+          className="fixed bottom-4 right-4 z-[40] shadow-lg">
           <TerminalIcon className="h-3.5 w-3.5 shrink-0" />
           <span>{active ? (scanning ? 'Scanning…' : 'Updating…') : 'View log'}</span>
           {active && <span className="h-1.5 w-1.5 animate-pulse_soft rounded-full bg-amber-500" />}
@@ -53,20 +53,20 @@ const ProgressLog = ({ messages, scanning, updating, visible = false, onDismiss 
             ? 'z-[60] max-w-none border-l-0'
             : 'z-[40] max-w-[480px]'}`}
         >
-          <div className="flex h-full flex-col overflow-hidden">
-            <div className="flex items-center justify-between border-b border-app-border px-5 py-4">
-              <div className="flex items-center gap-2.5 text-app-text">
+          <Stack gap={0} className="h-full overflow-hidden">
+            <Flex align="center" justify="between" gap={0} className="border-b border-app-border px-5 py-4">
+              <Flex align="center" gap={2} className="text-app-text">
                 <TerminalIcon className={`h-[18px] w-[18px] shrink-0 ${active ? (scanning ? 'text-amber-500' : 'text-emerald-500') : ''}`} />
                 <span className="text-sm font-semibold uppercase tracking-widest">
                   {scanning ? 'Scanning…' : updating ? 'Updating…' : 'Progress log'}
                 </span>
                 {active && <span className="ml-1 h-1.5 w-1.5 animate-pulse_soft rounded-full bg-amber-500" />}
-              </div>
+              </Flex>
 
               <Button variant="secondary" onClick={close} aria-label="Close progress log">
                 <CloseIcon className="h-4 w-4 shrink-0" />
               </Button>
-            </div>
+            </Flex>
 
             <div className="px-5 py-3 text-xs text-app-muted">
               {messages.length} line{messages.length === 1 ? '' : 's'}
@@ -80,9 +80,9 @@ const ProgressLog = ({ messages, scanning, updating, visible = false, onDismiss 
               <div ref={endRef} />
             </div>
 
-            <div className="flex items-center justify-end gap-3 border-t border-app-border px-5 py-4">
+            <Flex align="center" justify="end" gap={3} className="border-t border-app-border px-5 py-4">
               <Button variant="secondary" onClick={() => setFullscreen(f => !f)}
-                aria-pressed={fullscreen} className="inline-flex items-center gap-2">
+                aria-pressed={fullscreen}>
                 {fullscreen ? <MinimizeIcon className="h-3.5 w-3.5 shrink-0" /> : <MaximizeIcon className="h-3.5 w-3.5 shrink-0" />}
                 {fullscreen ? 'Exit full screen' : 'Full screen'}
               </Button>
@@ -90,8 +90,8 @@ const ProgressLog = ({ messages, scanning, updating, visible = false, onDismiss 
                 tooltip={active ? 'Available when the current operation finishes' : undefined}>
                 Close
               </Button>
-            </div>
-          </div>
+            </Flex>
+          </Stack>
         </div>
       )}
     </>
