@@ -1,5 +1,9 @@
 import { useState } from 'react'
-import { Button, HelperText, KeyIcon, PasswordInput, Stack } from 'xedonium'
+import Button from 'xedonium/Button'
+import HelperText from 'xedonium/HelperText'
+import KeyIcon from 'xedonium/icons/Key'
+import PasswordInput from 'xedonium/PasswordInput'
+import Stack from 'xedonium/Stack'
 import { setApiKey, verifyApiKey } from '../api/client'
 import Modal from './Modal'
 

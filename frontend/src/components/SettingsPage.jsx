@@ -1,9 +1,24 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import {
-  Alert, ArrowLeftIcon, Button, Card, Chip, HelperText, Input, KeyIcon, Label, NumberField,
-  PageHeader, PasswordInput, RotateCcwIcon, SaveIcon, SendIcon, Switch, useLeaveWarning, Flex,
-  Grid, Stack,
-} from 'xedonium'
+import Alert from 'xedonium/Alert'
+import ArrowLeftIcon from 'xedonium/icons/ArrowLeft'
+import Button from 'xedonium/Button'
+import Card from 'xedonium/Card'
+import Chip from 'xedonium/Chip'
+import HelperText from 'xedonium/HelperText'
+import Input from 'xedonium/Input'
+import KeyIcon from 'xedonium/icons/Key'
+import Label from 'xedonium/Label'
+import NumberField from 'xedonium/NumberField'
+import PageHeader from 'xedonium/PageHeader'
+import PasswordInput from 'xedonium/PasswordInput'
+import RotateCcwIcon from 'xedonium/icons/RotateCcw'
+import SaveIcon from 'xedonium/icons/Save'
+import SendIcon from 'xedonium/icons/Send'
+import Switch from 'xedonium/Switch'
+import useLeaveWarning from 'xedonium/hooks/useLeaveWarning'
+import Flex from 'xedonium/Flex'
+import Grid from 'xedonium/Grid'
+import Stack from 'xedonium/Stack'
 import radarLoader from '../../assets/radar-loader.svg'
 import { setApiKey, settingsApi } from '../api/client'
 

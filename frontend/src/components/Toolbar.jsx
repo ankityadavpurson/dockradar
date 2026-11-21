@@ -1,7 +1,14 @@
-import {
-  ArrowUpCircleIcon, Badge, Button, CloudUploadIcon, Divider, FileCode2Icon, Input,
-  RefreshCwIcon, SearchIcon, Switch, Flex,
-} from 'xedonium'
+import ArrowUpCircleIcon from 'xedonium/icons/ArrowUpCircle'
+import Badge from 'xedonium/Badge'
+import Button from 'xedonium/Button'
+import CloudUploadIcon from 'xedonium/icons/CloudUpload'
+import Divider from 'xedonium/Divider'
+import FileCode2Icon from 'xedonium/icons/FileCode2'
+import Input from 'xedonium/Input'
+import RefreshCwIcon from 'xedonium/icons/RefreshCw'
+import SearchIcon from 'xedonium/icons/Search'
+import Switch from 'xedonium/Switch'
+import Flex from 'xedonium/Flex'
 
 export default function Toolbar({
   isBusy, selectedCount, outdatedCount, visibleCount, totalCount,

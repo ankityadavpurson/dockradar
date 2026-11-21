@@ -1,4 +1,5 @@
-import { ActionMenu, MoreVerticalIcon } from 'xedonium'
+import ActionMenu from 'xedonium/ActionMenu'
+import MoreVerticalIcon from 'xedonium/icons/MoreVertical'
 
 /** Per-row ⋮ actions menu (xedonium ActionMenu: portalled, flips near viewport edges). */
 const RowMenu = ({ container: c, hasCompose, isBusy, onConfirmUpdate, onComposeUpdate, onConfirmDelete, onShowDetails }) => {

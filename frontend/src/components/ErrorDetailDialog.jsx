@@ -1,4 +1,6 @@
-import { Alert, Button, HelperText } from 'xedonium'
+import Alert from 'xedonium/Alert'
+import Button from 'xedonium/Button'
+import HelperText from 'xedonium/HelperText'
 import Modal from './Modal'
 
 /**

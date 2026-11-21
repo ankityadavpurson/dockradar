@@ -1,4 +1,5 @@
-import { Select, Flex } from 'xedonium'
+import Select from 'xedonium/Select'
+import Flex from 'xedonium/Flex'
 
 /**
  * Two linked selects: pick a stored compose file, then a service inside it.

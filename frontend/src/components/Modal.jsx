@@ -1,4 +1,5 @@
-import { Modal as XModal, Stack } from 'xedonium'
+import XModal from 'xedonium/Modal'
+import Stack from 'xedonium/Stack'
 
 const WIDTHS = {
   sm: 'max-w-sm',

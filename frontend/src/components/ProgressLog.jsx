@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button, CloseIcon, MaximizeIcon, MinimizeIcon, TerminalIcon, Flex, Stack } from 'xedonium'
+import Button from 'xedonium/Button'
+import CloseIcon from 'xedonium/icons/Close'
+import MaximizeIcon from 'xedonium/icons/Maximize'
+import MinimizeIcon from 'xedonium/icons/Minimize'
+import TerminalIcon from 'xedonium/icons/Terminal'
+import Flex from 'xedonium/Flex'
+import Stack from 'xedonium/Stack'
 
 const ProgressLog = ({ messages, scanning, updating, visible = false, onDismiss }) => {
   const endRef = useRef(null)
