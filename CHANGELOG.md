@@ -9,6 +9,15 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.22.0] - 2026-11-21
+
+### Added
+- add Settings page and API key prompt to the UI
+
+### Changed
+- build the frontend on xedonium 1.28 components
+- code structure and remove redundant changes
+
 ## [13.21.2] — 2026-11-01
 
 ### Fixed
@@ -305,7 +314,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.21.2...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.22.0...HEAD
+[13.22.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.21.2...v13.22.0
 [13.21.2]: https://github.com/ankityadavpurson/dockradar/compare/v13.21.1...v13.21.2
 [13.21.1]: https://github.com/ankityadavpurson/dockradar/compare/v13.21.0...v13.21.1
 [13.21.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.20.0...v13.21.0
