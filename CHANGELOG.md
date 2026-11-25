@@ -9,6 +9,11 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [13.22.2] - 2026-11-25
+
+### Changed
+- improve Header component layout and responsiveness for stats display
+
 ## [13.22.1] - 2026-11-21
 
 ### Changed
@@ -319,7 +324,8 @@ DockRadar uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.22.1...HEAD
+[Unreleased]: https://github.com/ankityadavpurson/dockradar/compare/v13.22.2...HEAD
+[13.22.2]: https://github.com/ankityadavpurson/dockradar/compare/v13.22.1...v13.22.2
 [13.22.1]: https://github.com/ankityadavpurson/dockradar/compare/v13.22.0...v13.22.1
 [13.22.0]: https://github.com/ankityadavpurson/dockradar/compare/v13.21.2...v13.22.0
 [13.21.2]: https://github.com/ankityadavpurson/dockradar/compare/v13.21.1...v13.21.2
